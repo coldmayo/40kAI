@@ -15,7 +15,7 @@ for i in range(200):
     
     if inAttack == 1:
         print("The units are fighting")
-    print("Episode {} ended with reward {}, enemy health {}, model health {}".format(i, reward, enemy_health, unit_health))
+    print("Iteration {} ended with reward {}, enemy health {}, model health {}".format(i, reward, enemy_health, unit_health))
     if done == True:
         print("Restarting...")
         env.reset()
