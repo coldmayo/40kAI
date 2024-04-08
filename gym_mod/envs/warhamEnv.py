@@ -1,10 +1,16 @@
 import gym
 from gym import spaces
 import numpy as np
+import matplotlib.pyplot as plt
+import os
 
 class Warhammer40kEnv(gym.Env):
     def __init__(self):
         
+        savePath = "display/"
+        for fil in os.listdir(savePath):
+            os.remove(os.path.join(savePath, fil))
+
         self.action_space = spaces.Dict({
             'move': spaces.Discrete(4),  # Four directions: Up, Down, Left, Right
             'attack': spaces.Discrete(2),  # Two attack options: Engage Attack, Leave Attack/move
@@ -12,6 +18,8 @@ class Warhammer40kEnv(gym.Env):
         self.observation_space = spaces.Box(low=0, high=1, shape=(7,), dtype=np.float32)  # 5-dimensional observation space
 
         # Initialize game state + board
+        self.iter = 0
+        self.restarts = 0
         self.b_len = 15
         self.b_hei = 15
         self.board = np.zeros((self.b_len,self.b_hei))
@@ -51,6 +59,8 @@ class Warhammer40kEnv(gym.Env):
         return coords
 
     def reset(self):
+        self.iter = 0
+        self.restarts += 1
         self.board = np.zeros((self.b_len,self.b_hei))
         self.unit_health = 10.0
         self.enemy_health = 10.0
@@ -84,7 +94,7 @@ class Warhammer40kEnv(gym.Env):
                 self.inAttack = 1
 
         else:
-            decide = np.random.randint(0,15)
+            decide = np.random.randint(0,30)
             if decide == 5:
                 self.enemy_coords[0] -= 7
                 self.enemy_coords = self.bounds(self.enemy_coords)
@@ -152,7 +162,6 @@ class Warhammer40kEnv(gym.Env):
                     reward = 0.1
                 else:
                     reward = -0.1
-
             
         elif self.inAttack == 1:
             reward = 0.1
@@ -200,22 +209,53 @@ class Warhammer40kEnv(gym.Env):
         if self.game_over:
             reward += self._calculate_reward()
 
+        self.iter += 1
+
         return self._get_observation(), reward, self.game_over, self.unit_health, self.enemy_health, self.inAttack
 
     def updateBoard(self):
         self.board = np.zeros((self.b_len,self.b_hei))
+        self.unit_coords = self.bounds(self.unit_coords)
+        self.enemy_coords = self.bounds(self.enemy_coords)
+
         self.board[self.unit_coords[0]][self.unit_coords[1]] = 1
         self.board[self.enemy_coords[0]][self.enemy_coords[1]] = 2
 
     def render(self, mode='human'):
         self.updateBoard()
-        print(self.board)
+        
+        title = "Iteration "+str(self.iter)+" Lifetime "+str(self.restarts)
+        plt.title(title)
+        
+        if self.inAttack == 0:
+            plt.xlabel("Moving")
+        elif self.inAttack == 1:
+            plt.xlabel("In Combat") 
+
+        plt.xlim(-1,self.b_len+1)
+        plt.ylim(-1,self.b_hei+1)
+        x1 = np.linspace(0,self.b_len,10)
+        y1 = np.zeros(10)
+        x2 = np.zeros(10)
+        y2 = np.linspace(0, self.b_hei,10)
+        plt.plot(x1,y1,color="black")
+        plt.plot(x2,y2,color="black")
+        plt.plot(x1,y1+self.b_hei,color="black")
+        plt.plot(x2+self.b_len,y2,color="black")
+        plt.plot(self.unit_coords[0],self.unit_coords[1], 'bo')
+        plt.plot(self.enemy_coords[0],self.enemy_coords[1], 'ro')
+
+        fileName = "display/"+str(self.restarts)+"_"+str(self.iter)+".png"
+        plt.savefig(fileName)
+        plt.cla()
+
+        return self.board
 
     def close(self):
         pass
 
     def _get_observation(self):
-        return np.array([self.unit_health, self.enemy_health, int(self.game_over), 0, 0], dtype=np.float32)
+        return np.array([self.unit_health, self.enemy_health, int(self.game_over), self.unit_coords[0], self.unit_coords[1], self.enemy_coords[0], self.enemy_coords[1]], dtype=np.float32)
 
     def _calculate_reward(self):
         if self.unit_health > 0:

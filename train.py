@@ -12,9 +12,12 @@ for i in range(200):
     env.enemyTurn()
 
     next_observation, reward, done, unit_health, enemy_health, inAttack = env.step(action)
-    
+
     if inAttack == 1:
         print("The units are fighting")
+
+    board = env.render()
+
     print("Iteration {} ended with reward {}, enemy health {}, model health {}".format(i, reward, enemy_health, unit_health))
     if done == True:
         print("Restarting...")
