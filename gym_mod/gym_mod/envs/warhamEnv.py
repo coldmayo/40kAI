@@ -15,7 +15,7 @@ class Warhammer40kEnv(gym.Env):
             'move': spaces.Discrete(4),  # Four directions: Up, Down, Left, Right
             'attack': spaces.Discrete(2),  # Two attack options: Engage Attack, Leave Attack/move
         })
-        self.observation_space = spaces.Box(low=0, high=1, shape=(7,), dtype=np.float32)  # 5-dimensional observation space
+        self.observation_space = spaces.Box(low=0, high=1, shape=(7,), dtype=np.float32)  # 7-dimensional observation space
 
         # Initialize game state + board
         self.iter = 0
@@ -211,7 +211,9 @@ class Warhammer40kEnv(gym.Env):
 
         self.iter += 1
 
-        return self._get_observation(), reward, self.game_over, self.unit_health, self.enemy_health, self.inAttack
+        info = {"unit health":self.unit_health, "enemy health": self.enemy_health, "in attack": self.inAttack}
+        place_holder = {"pleeb": "pleeb"}
+        return self._get_observation(), reward, self.game_over, info, place_holder
 
     def updateBoard(self):
         self.board = np.zeros((self.b_len,self.b_hei))
