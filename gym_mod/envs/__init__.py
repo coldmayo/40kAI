@@ -1,1 +1,1 @@
-from gym_mod.envs.warhamEnv import *
+from gym_mod.envs.warhamEnv import Warhammer40kEnv

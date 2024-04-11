@@ -1,8 +1,16 @@
+from unit import *
+
 import numpy as np
 import gym
 from gym_mod.envs.warhamEnv import *
 
-env = Warhammer40kEnv()
+b_len = 15
+b_hei = 15
+
+enemy = Unit({"Army": "Space Marine","Name": "Eliminator Squad", "Movement": 6, "#OfModels": 4, "T": 4, "Sv": 3}, {"Name":"Bolt Pistol","BS":3,"S":4,"AP":0,"Range": 6, "Damage": 1}, np.random.randint(0,b_len), np.random.randint(0,b_hei))
+model = Unit({"Army": "Space Marine","Name": "Eliminator Squad", "Movement": 6, "#OfModels": 4, "T": 4, "Sv": 3}, {"Name":"Bolt Pistol","BS":3,"S":4,"AP":0,"Range": 6, "Damage": 1}, np.random.randint(0,b_len), np.random.randint(0,b_hei))
+
+env = Warhammer40kEnv(enemy, model, b_len, b_hei)
 
 observation = env.reset()
 

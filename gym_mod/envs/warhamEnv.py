@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import os
 
 class Warhammer40kEnv(gym.Env):
-    def __init__(self):
+    def __init__(self, enemy, model, b_len, b_hei):
         
         savePath = "display/"
         for fil in os.listdir(savePath):
@@ -20,15 +20,15 @@ class Warhammer40kEnv(gym.Env):
         # Initialize game state + board
         self.iter = 0
         self.restarts = 0
-        self.b_len = 15
-        self.b_hei = 15
+        self.b_len = b_len
+        self.b_hei = b_hei
         self.board = np.zeros((self.b_len,self.b_hei))
-        self.unit_weapon = {"Name":"Bolt Pistol","BS":3,"S":4,"AP":0,"Range": 6, "Damage": 1}
-        self.enemy_weapon = {"Name":"Bolt Pistol","BS":3,"S":4,"AP":0,"Range": 6, "Damage": 1}
-        self.unit_data = {"Army": "Space Marine","Name": "Eliminator Squad", "Movement": 6, "#OfModels": 4, "T": 4, "Sv": 3}
-        self.enemy_data = {"Army": "Space Marine","Name": "Eliminator Squad", "Movement": 6, "#OfModels": 4, "T": 4, "Sv": 3}
-        self.unit_coords = [np.random.randint(0,self.b_len), np.random.randint(0,self.b_hei)]
-        self.enemy_coords = [np.random.randint(0,self.b_len), np.random.randint(0,self.b_hei)]
+        self.unit_weapon = model.showWeapon()
+        self.enemy_weapon = enemy.showWeapon()
+        self.unit_data = model.showUnitData()
+        self.enemy_data = enemy.showUnitData()
+        self.unit_coords = [model.showCoords()[0], model.showCoords()[1]]
+        self.enemy_coords = [enemy.showCoords()[0], enemy.showCoords()[1]]
         self.unit_health = 10.0
         self.enemy_health = 10.0
         self.game_over = False
