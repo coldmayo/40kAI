@@ -34,7 +34,8 @@ class Warhammer40kEnv(gym.Env):
         self.game_over = False
 
         self.inAttack = 0
-
+    def get_info(self):
+        return {"unit health":self.unit_health, "enemy health": self.enemy_health, "in attack": self.inAttack}
     def distance(self, p1, p2):
         return np.sqrt((p2[0]-p1[0])**2 + (p2[1]-p1[1])**2)
 
@@ -68,7 +69,8 @@ class Warhammer40kEnv(gym.Env):
         self.enemy_coords = [np.random.randint(0,self.b_len), np.random.randint(0,self.b_hei)]
         self.game_over = False
         self.current_action_index = 0
-        return self._get_observation()
+        info = self.get_info()
+        return self._get_observation(), info
 
     def enemyTurn(self):
         if self.inAttack == 0:
@@ -211,9 +213,8 @@ class Warhammer40kEnv(gym.Env):
 
         self.iter += 1
 
-        info = {"unit health":self.unit_health, "enemy health": self.enemy_health, "in attack": self.inAttack}
-        place_holder = {"pleeb": "pleeb"}
-        return self._get_observation(), reward, self.game_over, info, place_holder
+        info = self.get_info()
+        return self._get_observation(), reward, self.game_over, 0, info
 
     def updateBoard(self):
         self.board = np.zeros((self.b_len,self.b_hei))
@@ -244,9 +245,9 @@ class Warhammer40kEnv(gym.Env):
         plt.plot(x2,y2,color="black")
         plt.plot(x1,y1+self.b_hei,color="black")
         plt.plot(x2+self.b_len,y2,color="black")
-        plt.plot(self.unit_coords[0],self.unit_coords[1], 'bo')
-        plt.plot(self.enemy_coords[0],self.enemy_coords[1], 'ro')
-
+        plt.plot(self.unit_coords[0],self.unit_coords[1], 'bo', label="Model Unit")
+        plt.plot(self.enemy_coords[0],self.enemy_coords[1], 'ro', label="Enemy Unit")
+        plt.legend()
         fileName = "display/"+str(self.restarts)+"_"+str(self.iter)+".png"
         plt.savefig(fileName)
         plt.cla()
