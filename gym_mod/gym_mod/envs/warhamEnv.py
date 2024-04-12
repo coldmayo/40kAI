@@ -74,15 +74,17 @@ class Warhammer40kEnv(gym.Env):
 
     def enemyTurn(self):
         if self.inAttack == 0:
+
+            # the enemy used for training will try to get as close to the model units as possible
+
             movement = self.dice()+self.enemy_data["Movement"]
-            dire = np.random.randint(0,3)
-            if dire == 0:
+            if self.distance(self.unit_coords, [self.enemy_coords[0], self.enemy_coords[1] - movement]) < self.distance(self.unit_coords, self.enemy_coords):
                 self.enemy_coords[1] -= movement
-            elif dire == 1:
+            elif self.distance(self.unit_coords, [self.enemy_coords[0], self.enemy_coords[1] + movement]) < self.distance(self.unit_coords, self.enemy_coords):
                 self.enemy_coords[1] += movement
-            elif dire == 2:
+            elif self.distance(self.unit_coords, [self.enemy_coords[0] - movement, self.enemy_coords[1]]) < self.distance(self.unit_coords, self.enemy_coords):
                 self.enemy_coords[0] -= movement
-            elif dire == 3:
+            elif self.distance(self.unit_coords, [self.enemy_coords[0] + movement, self.enemy_coords[1]]) < self.distance(self.unit_coords, self.enemy_coords):
                 self.enemy_coords[0] += movement
 
             # staying in bounds

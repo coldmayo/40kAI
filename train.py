@@ -38,9 +38,9 @@ while end == False:
         print("Restarting...")
         numLifeT+=1
         env.reset()
-    if numLifeT == 2:
+    if numLifeT == 15:
         end = True
     i+=1
 
 env.close()
-makeGif()
+genDisplay.makeGif()
