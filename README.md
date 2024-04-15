@@ -28,3 +28,20 @@ $ cd gym_mod
 # create Python package
 $ pip install .
 ```
+
+### Using the GUI
+
+```bash 
+# cd into gui directory
+$ cd gui
+
+# run the executable
+$ ./main
+```
+
+### Using the Shell Script
+
+```bash
+# run train.sh
+$ ./train.sh
+```
