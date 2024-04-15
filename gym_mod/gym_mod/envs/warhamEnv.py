@@ -15,7 +15,7 @@ class Warhammer40kEnv(gym.Env):
             'move': spaces.Discrete(4),  # Four directions: Up, Down, Left, Right
             'attack': spaces.Discrete(2),  # Two attack options: Engage Attack, Leave Attack/move
         })
-        self.observation_space = spaces.Box(low=0, high=1, shape=(7,), dtype=np.float32)  # 7-dimensional observation space
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(7,), dtype=np.float32)  # 7-dimensional observation space
 
         # Initialize game state + board
         self.iter = 0
