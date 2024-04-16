@@ -33,10 +33,10 @@ $ pip install .
 
 ```bash 
 # cd into gui directory
-$ cd gui
+$ cd gui/build
 
 # run the executable
-$ ./main
+$ ./Application
 ```
 
 ### Using the Shell Script
