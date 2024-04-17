@@ -29,7 +29,9 @@ $ cd gym_mod
 $ pip install .
 ```
 
-### Using the GUI
+### Using the GUI (for Linux)
+
+Make sure you have gtkmm installed
 
 ```bash 
 # cd into gui directory
