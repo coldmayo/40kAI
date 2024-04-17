@@ -23,19 +23,35 @@ class Warhammer40kEnv(gym.Env):
         self.b_len = b_len
         self.b_hei = b_hei
         self.board = np.zeros((self.b_len,self.b_hei))
-        self.unit_weapon = model.showWeapon()
-        self.enemy_weapon = enemy.showWeapon()
-        self.unit_data = model.showUnitData()
-        self.enemy_data = enemy.showUnitData()
-        self.unit_coords = [model.showCoords()[0], model.showCoords()[1]]
-        self.enemy_coords = [enemy.showCoords()[0], enemy.showCoords()[1]]
-        self.unit_health = 10.0
-        self.enemy_health = 10.0
+        self.unit_weapon = []
+        self.enemy_weapon = []
+        self.unit_data = []
+        self.enemy_data = []
+        self.unit_coords = []
+        self.enemy_coords = []
+        self.unit_health = []
+        self.enemy_health = []
         self.game_over = False
+        self.unitInAttack = []
+        self.enemyInAttack = []
 
-        self.inAttack = 0
+        for i in range(len(enemy)):
+            self.enemy_weapon.append(enemy[i].showWeapon())
+            self.enemy_data.append(enemy[i].showUnitData())
+            self.enemy_coords.append([enemy[i].showCoords()[0], enemy[i].showCoords()[1]])
+            self.enemy_health.append(10)
+            self.enemyInAttack.append([0,0])   # in attack, index of enemy attacking
+
+        for i in range(len(model)):
+            self.unit_weapon.append(model[i].showWeapon())
+            self.unit_data.append(model[i].showUnitData())
+            self.unit_coords.append([model[i].showCoords()[0], model[i].showCoords()[1]])
+            self.unit_health.append(10)
+            self.unitInAttack.append([0,0])   # in attack, index of enemy attacking
+
     def get_info(self):
-        return {"unit health":self.unit_health, "enemy health": self.enemy_health, "in attack": self.inAttack}
+        return {"unit health":self.unit_health, "enemy health": self.enemy_health, "in attack": self.unitInAttack}
+    
     def distance(self, p1, p2):
         return np.sqrt((p2[0]-p1[0])**2 + (p2[1]-p1[1])**2)
 
@@ -63,168 +79,220 @@ class Warhammer40kEnv(gym.Env):
         self.iter = 0
         self.restarts += 1
         self.board = np.zeros((self.b_len,self.b_hei))
-        self.unit_health = 10.0
-        self.enemy_health = 10.0
-        self.unit_coords = [np.random.randint(0,self.b_len), np.random.randint(0,self.b_hei)]
-        self.enemy_coords = [np.random.randint(0,self.b_len), np.random.randint(0,self.b_hei)]
+        self.enemy_coords = []
+        self.unit_coords = []
+        self.enemy_health = []
+        self.unit_health = []
+        self.enemyInAttack = []
+        self.unitInAttack = []
+        for i in range(len(self.enemy_data)):
+            self.enemy_coords.append([np.random.randint(0,self.b_len), np.random.randint(0,self.b_hei)])
+            self.enemy_health.append(10)
+            self.enemyInAttack.append([0,0])   # in attack, index of enemy attacking
+
+        for i in range(len(self.unit_data)):
+            self.unit_coords.append([np.random.randint(0,self.b_len), np.random.randint(0,self.b_hei)])
+            self.unit_health.append(10)
+            self.unitInAttack.append([0,0])   # in attack, index of enemy attacking
+        
         self.game_over = False
         self.current_action_index = 0
         info = self.get_info()
         return self._get_observation(), info
 
     def enemyTurn(self):
-        if self.inAttack == 0:
+        for i in range(len(self.enemy_health)):
+            if self.enemyInAttack[i][0] == 0 and self.enemy_health[i] > 0:
 
-            # the enemy used for training will try to get as close to the model units as possible
+                # the enemy used for training will try to get as close to the model units as possible
 
-            movement = self.dice()+self.enemy_data["Movement"]
-            if self.distance(self.unit_coords, [self.enemy_coords[0], self.enemy_coords[1] - movement]) < self.distance(self.unit_coords, self.enemy_coords):
-                self.enemy_coords[1] -= movement
-            elif self.distance(self.unit_coords, [self.enemy_coords[0], self.enemy_coords[1] + movement]) < self.distance(self.unit_coords, self.enemy_coords):
-                self.enemy_coords[1] += movement
-            elif self.distance(self.unit_coords, [self.enemy_coords[0] - movement, self.enemy_coords[1]]) < self.distance(self.unit_coords, self.enemy_coords):
-                self.enemy_coords[0] -= movement
-            elif self.distance(self.unit_coords, [self.enemy_coords[0] + movement, self.enemy_coords[1]]) < self.distance(self.unit_coords, self.enemy_coords):
-                self.enemy_coords[0] += movement
+                # follow random model unit
+                aliveUnits = []
+                for j in range(len(self.unit_health)):
+                    if self.unit_health[j] > 0:
+                        aliveUnits.append(j)
+                if len(aliveUnits) == 0:
+                    break
+                idOfM = np.random.choice(aliveUnits)
 
-            # staying in bounds
+                movement = self.dice()+self.enemy_data[i]["Movement"]
+                if self.distance(self.unit_coords[idOfM], [self.enemy_coords[i][0], self.enemy_coords[i][1] - movement]) < self.distance(self.unit_coords[idOfM], self.enemy_coords[i]):
+                    self.enemy_coords[i][1] -= movement
+                elif self.distance(self.unit_coords[idOfM], [self.enemy_coords[i][0], self.enemy_coords[i][1] + movement]) < self.distance(self.unit_coords[idOfM], self.enemy_coords[i]):
+                    self.enemy_coords[i][1] += movement
+                elif self.distance(self.unit_coords[idOfM], [self.enemy_coords[i][0] - movement, self.enemy_coords[i][1]]) < self.distance(self.unit_coords[idOfM], self.enemy_coords[i]):
+                    self.enemy_coords[i][0] -= movement
+                elif self.distance(self.unit_coords[idOfM], [self.enemy_coords[i][0] + movement, self.enemy_coords[i][1]]) < self.distance(self.unit_coords[idOfM], self.enemy_coords[i]):
+                    self.enemy_coords[i][0] += movement
 
-            self.enemy_coords = self.bounds(self.enemy_coords)
-            if self.enemy_coords == self.enemy_coords:
-                self.enemy_coords[0] -= 1
+                # staying in bounds
 
-            if self.distance(self.enemy_coords, self.unit_coords) <= self.enemy_weapon["Range"]:
-                self.unit_health -= self.enemy_weapon["Damage"]
-                self.inAttack = 1
+                self.enemy_coords[i] = self.bounds(self.enemy_coords[i])
+                for j in range(len(self.unit_health)):
+                    if self.enemy_coords[i] == self.unit_coords[j]:
+                        self.enemy_coords[i][0] -= 1
 
-        else:
-            decide = np.random.randint(0,30)
-            if decide == 5:
-                self.enemy_coords[0] -= 7
-                self.enemy_coords = self.bounds(self.enemy_coords)
-                self.inAttack = 0
-            else:
-                # hit rolls
-                rolls = self.dice(num=self.enemy_data["#OfModels"])
-                hits = 0
-                for i in range(len(rolls)):
-                    if rolls[i] <= self.enemy_weapon["BS"]:
-                        hits+=1
-                # wound rolls
-                dmg = np.array([])
-                for i in range(hits):
-                    if self.enemy_weapon["S"] >= self.unit_data["T"]*2:
-                        if self.dice() <= 2:
-                            dmg = np.append(dmg, self.enemy_weapon["Damage"])
-                    elif self.enemy_weapon["S"] > self.unit_data["T"]:
-                        if self.dice() <= 3:
-                            dmg = np.append(dmg, self.enemy_weapon["Damage"])
-                    elif self.enemy_weapon["S"] == self.unit_data["T"]:
-                        if self.dice() <= 4:
-                            dmg = np.append(dmg, self.enemy_weapon["Damage"])
-                    elif self.enemy_weapon["S"]/2 <= self.unit_data["T"]:
-                        if self.dice() <= 5:
-                            dmg = np.append(dmg, self.enemy_weapon["Damage"])
-                    elif self.enemy_weapon["S"] < self.unit_data["T"]:
-                        if self.dice() == 6:
-                            dmg = np.append(dmg, self.enemy_weapon["Damage"])
-                # saving throws
-                for i in range(len(dmg)):
-                    if self.dice()-self.enemy_weapon["AP"] > self.unit_data["Sv"]:
-                        dmg[i] = 0
-                # allocating damage
-                for i in dmg:
-                    self.unit_health -= i
+                for j in range(len(self.unit_health)):
+                    if self.distance(self.enemy_coords[i], self.unit_coords[j]) <= self.enemy_weapon[i]["Range"] and self.unitInAttack[j][0] == 0:
+                        self.unit_health[j] -= self.enemy_weapon[i]["Damage"]
+                        self.unitInAttack[j][0] = 1
+                        self.unitInAttack[j][1] = i
+
+                        self.enemyInAttack[i][0] = 1
+                        self.enemyInAttack[i][1] = j
+                        break
+
+            elif self.enemyInAttack[i][0] == 1 and self.enemy_health[i] > 0:
+                decide = np.random.randint(0,30)
+                idOfM = self.enemyInAttack[i][1]
+                if decide == 5:
+                    self.enemy_coords[i][0] -= 7
+                    self.enemy_coords[i] = self.bounds(self.enemy_coords[i])
+                    self.unitInAttack[idOfM][0] = 0
+                    self.unitInAttack[idOfM][1] = 0
+
+                    self.enemyInAttack[i][0] = 0
+                    self.enemyInAttack[i][1] = 0
+                else:
+                    # hit rolls
+                    rolls = self.dice(num=self.enemy_data[i]["#OfModels"])
+                    hits = 0
+                    for k in range(len(rolls)):
+                        if rolls[k] <= self.enemy_weapon[i]["BS"]:
+                            hits+=1
+                    # wound rolls
+                    dmg = np.array([])
+                    for k in range(hits):
+                        if self.enemy_weapon[i]["S"] >= self.unit_data[idOfM]["T"]*2:
+                            if self.dice() <= 2:
+                                dmg = np.append(dmg, self.enemy_weapon[i]["Damage"])
+                        elif self.enemy_weapon[i]["S"] > self.unit_data[idOfM]["T"]:
+                            if self.dice() <= 3:
+                                dmg = np.append(dmg, self.enemy_weapon[i]["Damage"])
+                        elif self.enemy_weapon[i]["S"] == self.unit_data[idOfM]["T"]:
+                            if self.dice() <= 4:
+                                dmg = np.append(dmg, self.enemy_weapon[i]["Damage"])
+                        elif self.enemy_weapon[i]["S"]/2 <= self.unit_data[idOfM]["T"]:
+                            if self.dice() <= 5:
+                                dmg = np.append(dmg, self.enemy_weapon[idOfM]["Damage"])
+                        elif self.enemy_weapon[i]["S"] < self.unit_data[idOfM]["T"]:
+                            if self.dice() == 6:
+                                dmg = np.append(dmg, self.enemy_weapon[i]["Damage"])
+                    # saving throws
+                    for k in range(len(dmg)):
+                        if self.dice()-self.enemy_weapon[i]["AP"] > self.unit_data[idOfM]["Sv"]:
+                            dmg[k] = 0
+                    # allocating damage
+                    for k in dmg:
+                        self.unit_health[idOfM] -= k
+                        if self.unit_health[idOfM] < 0:
+                            self.unit_health[idOfM] = 0
     
     def step(self, action):
-        if self.inAttack == 0:
-            movement = self.dice()+self.unit_data["Movement"]
-            dist_before = self.distance(self.enemy_coords, self.unit_coords)
-            reward = 0.1
-            if action["move"] == 0:
-                self.unit_coords[1] -= movement
-            elif action["move"] == 1:
-                self.unit_coords[1] += movement
-            elif action["move"] == 2:
-                self.unit_coords[0] -= movement
-            elif action["move"] == 3:
-                self.unit_coords[0] += movement
-
-            if dist_before > self.distance(self.enemy_coords, self.unit_coords):
-                reward = -0.1
+        reward = 0
+        for i in range(len(self.unit_health)):
+            if self.unitInAttack[i][1] == 0 and self.unit_health[i] > 0:
+                movement = self.dice()+self.unit_data[i]["Movement"]
+                reward = 0.1
+                if action["move"] == 0:
+                    self.unit_coords[i][1] -= movement
+                elif action["move"] == 1:
+                    self.unit_coords[i][1] += movement
+                elif action["move"] == 2:
+                    self.unit_coords[i][0] -= movement
+                elif action["move"] == 3:
+                    self.unit_coords[i][0] += movement
 
             # staying in bounds
 
-            self.unit_coords = self.bounds(self.unit_coords)
-            if self.unit_coords == self.enemy_coords:
-                self.unit_coords[0] -= 1
+                self.unit_coords[i] = self.bounds(self.unit_coords[i])
+                for j in range(len(self.enemy_health)):
+                    if self.unit_coords[i] == self.enemy_coords[j]:
+                        self.unit_coords[i][0] -= 1
 
-            if action["attack"] == 1:
-                if self.distance(self.enemy_coords, self.unit_coords) <= self.unit_weapon["Range"]:
-                    self.enemy_health -= self.unit_weapon["Damage"]
-                    self.inAttack = 1
-                    reward = 0.1
-                else:
-                    reward = -0.1
+                if action["attack"] == 1:
+                    for j in range(len(self.enemy_health)):
+                        if self.distance(self.enemy_coords[j], self.unit_coords[i]) <= self.unit_weapon[i]["Range"] and self.enemyInAttack[j][0] == 0:
+                            self.enemy_health[j] -= self.unit_weapon[i]["Damage"]
+                            self.unitInAttack[i][0] = 1
+                            self.unitInAttack[i][1] = j
+
+                            self.enemyInAttack[j][0] = 1
+                            self.enemyInAttack[j][1] = i
+
+                            reward = 0.1
+                            break
+                        else:
+                            reward = -0.1
             
-        elif self.inAttack == 1:
-            reward = 0.1
-            if action["attack"] == 1:
-                # hit rolls
-                rolls = self.dice(num=self.unit_data["#OfModels"])
-                hits = 0
-                for i in range(len(rolls)):
-                    if rolls[i] <= self.unit_weapon["BS"]:
-                        hits+=1
+            elif self.unitInAttack[i][0] == 1 and self.unit_health[i] > 0:
+                reward = 0.1
+                idOfE = self.unitInAttack[i][1]
+                if action["attack"] == 1:
+                    # hit rolls
+                    rolls = self.dice(num=self.unit_data[i]["#OfModels"])
+                    hits = 0
+                    for k in range(len(rolls)):
+                        if rolls[k] <= self.unit_weapon[i]["BS"]:
+                            hits+=1
                 # wound rolls
-                dmg = np.array([])
-                for i in range(hits):
-                    if self.unit_weapon["S"] >= self.enemy_data["T"]*2:
-                        if self.dice() <= 2:
-                            dmg = np.append(dmg, self.unit_weapon["Damage"])
-                    elif self.unit_weapon["S"] > self.enemy_data["T"]:
-                        if self.dice() <= 3:
-                            dmg = np.append(dmg, self.unit_weapon["Damage"])
-                    elif self.unit_weapon["S"] == self.enemy_data["T"]:
-                        if self.dice() <= 4:
-                            dmg = np.append(dmg, self.unit_weapon["Damage"])
-                    elif self.unit_weapon["S"]/2 <= self.enemy_data["T"]:
-                        if self.dice() <= 5:
-                            dmg = np.append(dmg, self.unit_weapon["Damage"])
-                    elif self.unit_weapon["S"] < self.enemy_data["T"]:
-                        if self.dice() == 6:
-                            dmg = np.append(dmg, self.unit_weapon["Damage"])
-                # saving throws
-                for i in range(len(dmg)):
-                    if self.dice()-self.unit_weapon["AP"] > self.enemy_data["Sv"]:
-                        dmg[i] = 0
-                # allocating damage
-                for i in dmg:
-                    self.enemy_health -= i
-            else:
-                self.unit_coords[0] += 7
-                self.inAttack = 0
-                if self.enemy_health <= self.unit_health:
-                    reward = -0.1
-        
-        if self.unit_health <= 0 or self.enemy_health <= 0:
-            self.game_over = True
+                    dmg = np.array([])
+                    for k in range(hits):
+                        if self.unit_weapon[i]["S"] >= self.enemy_data[idOfE]["T"]*2:
+                            if self.dice() <= 2:
+                                dmg = np.append(dmg, self.unit_weapon[i]["Damage"])
+                        elif self.unit_weapon[i]["S"] > self.enemy_data[idOfE]["T"]:
+                            if self.dice() <= 3:
+                                dmg = np.append(dmg, self.unit_weapon[i]["Damage"])
+                        elif self.unit_weapon[i]["S"] == self.enemy_data[idOfE]["T"]:
+                            if self.dice() <= 4:
+                                dmg = np.append(dmg, self.unit_weapon[i]["Damage"])
+                        elif self.unit_weapon[i]["S"]/2 <= self.enemy_data[idOfE]["T"]:
+                            if self.dice() <= 5:
+                                dmg = np.append(dmg, self.unit_weapon[i]["Damage"])
+                        elif self.unit_weapon[i]["S"] < self.enemy_data[idOfE]["T"]:
+                            if self.dice() == 6:
+                                dmg = np.append(dmg, self.unit_weapon[i]["Damage"])
+                    # saving throws
+                    for k in range(len(dmg)):
+                        if self.dice()-self.unit_weapon[i]["AP"] > self.enemy_data[idOfE]["Sv"]:
+                            dmg[k] = 0
+                    # allocating damage
+                    for k in dmg:
+                        self.enemy_health[idOfE] -= k
+                        if self.enemy_health[idOfE] < 0:
+                            self.enemy_health[idOfE] = 0
+                else:
+                    self.unit_coords[i][0] += 7
+                    self.unitInAttack[i][0] = 0
+                    self.unitInAttack[i][1] = 0
 
-        if self.game_over:
-            reward += self._calculate_reward()
+                    self.enemyInAttack[idOfE][0] = 0
+                    self.enemyInAttack[idOfE][1] = 0
+                    if self.enemy_health[idOfE] <= self.unit_health[i]:
+                        reward = -0.1
 
-        self.iter += 1
+            if sum(self.unit_health) <= 0 or sum(self.enemy_health) <= 0:
+                self.game_over = True
 
-        info = self.get_info()
-        return self._get_observation(), reward, self.game_over, 0, info
+            if self.game_over:
+                reward += self._calculate_reward()
+
+            self.iter += 1
+
+            info = self.get_info()
+            return self._get_observation(), reward, self.game_over, 0, info
 
     def updateBoard(self):
         self.board = np.zeros((self.b_len,self.b_hei))
-        self.unit_coords = self.bounds(self.unit_coords)
-        self.enemy_coords = self.bounds(self.enemy_coords)
 
-        self.board[self.unit_coords[0]][self.unit_coords[1]] = 1
-        self.board[self.enemy_coords[0]][self.enemy_coords[1]] = 2
+        for i in range(len(self.unit_health)):
+            self.unit_coords[i] = self.bounds(self.unit_coords[i])
+            self.board[self.unit_coords[i][0]][self.unit_coords[i][1]] = 1
+
+        for i in range(len(self.enemy_health)):
+            self.enemy_coords[i] = self.bounds(self.enemy_coords[i])
+            self.board[self.enemy_coords[i][0]][self.enemy_coords[i][1]] = 2
 
     def render(self, mode='human'):
         self.updateBoard()
@@ -232,13 +300,17 @@ class Warhammer40kEnv(gym.Env):
         title = "Iteration "+str(self.iter)+" Lifetime "+str(self.restarts)
         plt.title(title)
         
-        if self.inAttack == 0:
-            plt.xlabel("Moving")
-        elif self.inAttack == 1:
-            plt.xlabel("In Combat") 
 
-        plt.xlim(-1,self.b_len+1)
-        plt.ylim(-1,self.b_hei+1)
+        message = ""
+
+        for i in range(len(self.unit_health)):
+            if self.unit_health[i] <= 0:
+                message += "Unit model "+str(i)+" is Dead"
+            elif self.unitInAttack[i][0] == 0:
+                message += "Unit model "+str(i)+" is Moving"
+            elif self.unitInAttack[i][0] == 1:
+                message += "Unit model "+str(i)+" is in Combat"
+        plt.xlabel(message)
         x1 = np.linspace(0,self.b_len,10)
         y1 = np.zeros(10)
         x2 = np.zeros(10)
@@ -247,8 +319,16 @@ class Warhammer40kEnv(gym.Env):
         plt.plot(x2,y2,color="black")
         plt.plot(x1,y1+self.b_hei,color="black")
         plt.plot(x2+self.b_len,y2,color="black")
-        plt.plot(self.unit_coords[0],self.unit_coords[1], 'bo', label="Model Unit")
-        plt.plot(self.enemy_coords[0],self.enemy_coords[1], 'ro', label="Enemy Unit")
+        for i in range(len(self.unit_health)):
+            if i == 0:
+                plt.plot(self.unit_coords[i][0],self.unit_coords[i][1], 'bo', label="Model Unit")
+            else:
+                plt.plot(self.unit_coords[i][0],self.unit_coords[i][1], 'bo')
+        for i in range(len(self.enemy_health)):
+            if i == 0:
+                plt.plot(self.enemy_coords[i][0],self.enemy_coords[i][1], 'ro', label="Enemy Unit")
+            else:
+                plt.plot(self.enemy_coords[i][0],self.enemy_coords[i][1], 'ro')
         plt.legend()
         fileName = "display/"+str(self.restarts)+"_"+str(self.iter)+".png"
         plt.savefig(fileName)
@@ -260,10 +340,20 @@ class Warhammer40kEnv(gym.Env):
         pass
 
     def _get_observation(self):
-        return np.array([self.unit_health, self.enemy_health, int(self.game_over), self.unit_coords[0], self.unit_coords[1], self.enemy_coords[0], self.enemy_coords[1]], dtype=np.float32)
+        obs = []
+        
+        for i in range(len(self.unit_health)):
+            obs.append(self.unit_health[i])
+
+        for i in range(len(self.enemy_health)):
+            obs.append(self.enemy_health[i])
+
+        obs.append(int(self.game_over))
+
+        return obs
 
     def _calculate_reward(self):
-        if self.unit_health > 0:
+        if sum(self.unit_health) > 0:
             return 1.0
         else:
             return -1.0
