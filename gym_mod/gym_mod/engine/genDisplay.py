@@ -15,6 +15,7 @@ def makeGif():
     for fil in tqdm(files):
         images.append(imageio.imread(fil))
     imageio.mimsave('model_train.gif', images)
+    imageio.mimsave('gui/img/model_train.gif', images)
     print("Done")
 
 if __name__ == "__main__":

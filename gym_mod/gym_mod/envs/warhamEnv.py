@@ -15,7 +15,6 @@ class Warhammer40kEnv(gym.Env):
             'move': spaces.Discrete(4),  # Four directions: Up, Down, Left, Right
             'attack': spaces.Discrete(2),  # Two attack options: Engage Attack, Leave Attack/move
         })
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(7,), dtype=np.float32)  # 7-dimensional observation space
 
         # Initialize game state + board
         self.iter = 0
@@ -39,15 +38,19 @@ class Warhammer40kEnv(gym.Env):
             self.enemy_weapon.append(enemy[i].showWeapon())
             self.enemy_data.append(enemy[i].showUnitData())
             self.enemy_coords.append([enemy[i].showCoords()[0], enemy[i].showCoords()[1]])
-            self.enemy_health.append(10)
+            self.enemy_health.append(enemy[i].showUnitData()["W"]*enemy[i].showUnitData()["#OfModels"])
             self.enemyInAttack.append([0,0])   # in attack, index of enemy attacking
 
         for i in range(len(model)):
             self.unit_weapon.append(model[i].showWeapon())
             self.unit_data.append(model[i].showUnitData())
             self.unit_coords.append([model[i].showCoords()[0], model[i].showCoords()[1]])
-            self.unit_health.append(10)
+            self.unit_health.append(model[i].showUnitData()["W"]*model[i].showUnitData()["#OfModels"])
             self.unitInAttack.append([0,0])   # in attack, index of enemy attacking
+
+        obsSpace = (len(model)*3)+(len(enemy)*3)+1
+
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(obsSpace,), dtype=np.float32)  # 7-dimensional observation space
 
     def get_info(self):
         return {"unit health":self.unit_health, "enemy health": self.enemy_health, "in attack": self.unitInAttack}
@@ -87,12 +90,12 @@ class Warhammer40kEnv(gym.Env):
         self.unitInAttack = []
         for i in range(len(self.enemy_data)):
             self.enemy_coords.append([np.random.randint(0,self.b_len), np.random.randint(0,self.b_hei)])
-            self.enemy_health.append(10)
+            self.enemy_health.append(self.enemy_data[i]["W"]*self.enemy_data[i]["#OfModels"])
             self.enemyInAttack.append([0,0])   # in attack, index of enemy attacking
 
         for i in range(len(self.unit_data)):
             self.unit_coords.append([np.random.randint(0,self.b_len), np.random.randint(0,self.b_hei)])
-            self.unit_health.append(10)
+            self.unit_health.append(self.unit_data[i]["W"]*self.unit_data[i]["#OfModels"])
             self.unitInAttack.append([0,0])   # in attack, index of enemy attacking
         
         self.game_over = False
@@ -102,6 +105,7 @@ class Warhammer40kEnv(gym.Env):
 
     def enemyTurn(self):
         for i in range(len(self.enemy_health)):
+            #print(i)
             if self.enemyInAttack[i][0] == 0 and self.enemy_health[i] > 0:
 
                 # the enemy used for training will try to get as close to the model units as possible
@@ -143,7 +147,7 @@ class Warhammer40kEnv(gym.Env):
                         break
 
             elif self.enemyInAttack[i][0] == 1 and self.enemy_health[i] > 0:
-                decide = np.random.randint(0,30)
+                decide = np.random.randint(0,10)
                 idOfM = self.enemyInAttack[i][1]
                 if decide == 5:
                     self.enemy_coords[i][0] -= 7
@@ -183,6 +187,7 @@ class Warhammer40kEnv(gym.Env):
                         if self.dice()-self.enemy_weapon[i]["AP"] > self.unit_data[idOfM]["Sv"]:
                             dmg[k] = 0
                     # allocating damage
+                    #print("enemy:", dmg)
                     for k in dmg:
                         self.unit_health[idOfM] -= k
                         if self.unit_health[idOfM] < 0:
@@ -191,7 +196,7 @@ class Warhammer40kEnv(gym.Env):
     def step(self, action):
         reward = 0
         for i in range(len(self.unit_health)):
-            if self.unitInAttack[i][1] == 0 and self.unit_health[i] > 0:
+            if self.unitInAttack[i][0] == 0 and self.unit_health[i] > 0:
                 movement = self.dice()+self.unit_data[i]["Movement"]
                 reward = 0.1
                 if action["move"] == 0:
@@ -221,7 +226,6 @@ class Warhammer40kEnv(gym.Env):
                             self.enemyInAttack[j][1] = i
 
                             reward = 0.1
-                            break
                         else:
                             reward = -0.1
             
@@ -258,12 +262,13 @@ class Warhammer40kEnv(gym.Env):
                         if self.dice()-self.unit_weapon[i]["AP"] > self.enemy_data[idOfE]["Sv"]:
                             dmg[k] = 0
                     # allocating damage
+                    #print("model",dmg)
                     for k in dmg:
                         self.enemy_health[idOfE] -= k
                         if self.enemy_health[idOfE] < 0:
                             self.enemy_health[idOfE] = 0
-                else:
-                    self.unit_coords[i][0] += 7
+                elif action["attack"] == 0:
+                    self.unit_coords[i][0] += self.unit_weapon[i]["Range"]+6
                     self.unitInAttack[i][0] = 0
                     self.unitInAttack[i][1] = 0
 
@@ -272,16 +277,16 @@ class Warhammer40kEnv(gym.Env):
                     if self.enemy_health[idOfE] <= self.unit_health[i]:
                         reward = -0.1
 
-            if sum(self.unit_health) <= 0 or sum(self.enemy_health) <= 0:
-                self.game_over = True
+        if sum(self.unit_health) <= 0 or sum(self.enemy_health) <= 0:
+            self.game_over = True
 
-            if self.game_over:
-                reward += self._calculate_reward()
+        if self.game_over:
+            reward += self._calculate_reward()
 
-            self.iter += 1
+        self.iter += 1
 
-            info = self.get_info()
-            return self._get_observation(), reward, self.game_over, 0, info
+        info = self.get_info()
+        return self._get_observation(), reward, self.game_over, 0, info
 
     def updateBoard(self):
         self.board = np.zeros((self.b_len,self.b_hei))
@@ -305,11 +310,11 @@ class Warhammer40kEnv(gym.Env):
 
         for i in range(len(self.unit_health)):
             if self.unit_health[i] <= 0:
-                message += "Unit model "+str(i)+" is Dead"
+                message += "Unit model "+str(i)+" is Dead "
             elif self.unitInAttack[i][0] == 0:
-                message += "Unit model "+str(i)+" is Moving"
+                message += "Unit model "+str(i)+" is Moving "
             elif self.unitInAttack[i][0] == 1:
-                message += "Unit model "+str(i)+" is in Combat"
+                message += "Unit model "+str(i)+" is in Combat "
         plt.xlabel(message)
         x1 = np.linspace(0,self.b_len,10)
         y1 = np.zeros(10)
@@ -344,13 +349,17 @@ class Warhammer40kEnv(gym.Env):
         
         for i in range(len(self.unit_health)):
             obs.append(self.unit_health[i])
+            obs.append(self.unit_coords[i][0])
+            obs.append(self.unit_coords[i][1])
 
         for i in range(len(self.enemy_health)):
             obs.append(self.enemy_health[i])
+            obs.append(self.enemy_coords[i][0])
+            obs.append(self.enemy_coords[i][1])
 
         obs.append(int(self.game_over))
 
-        return obs
+        return np.array(obs, dtype=np.float32)
 
     def _calculate_reward(self):
         if sum(self.unit_health) > 0:
