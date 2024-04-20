@@ -1,0 +1,23 @@
+{
+    "Type": "Units",
+    "Data": [
+        {
+            "Army": "Space Marine",
+            "Name": "Eliminator Squad",
+            "Movement": 6,
+            "#OfModels": 4,
+            "T": 4,
+            "Sv": 3,
+            "W": 2
+        },
+        {
+            "Army": "Space Marine",
+            "Name": "Apothecary",
+            "Movement": 6,
+            "#OfModels": 1,
+            "T": 4,
+            "Sv": 3,
+            "W": 4
+        }
+    ]
+}

@@ -1,0 +1,14 @@
+import json
+import os
+
+def unitData(army, unitName):
+    with open(os.path.abspath("gym_mod/gym_mod/engine/unitData.json")) as j:
+        data = json.loads(j.read())
+    for i in data["Data"]:
+        if i["Army"].lower() == army.lower() and i["Name"].lower() == unitName.lower():
+            return i
+    print("Unit Not Available")
+    return {}
+
+if __name__ == "__main__":
+    print(unitData("Space Marine", "Eliminator Squad"))

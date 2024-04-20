@@ -138,6 +138,7 @@ class Warhammer40kEnv(gym.Env):
 
                 for j in range(len(self.unit_health)):
                     if self.distance(self.enemy_coords[i], self.unit_coords[j]) <= self.enemy_weapon[i]["Range"] and self.unitInAttack[j][0] == 0:
+                        print("Enemy unit", i,"started attack with Model unit", j)
                         self.unit_health[j] -= self.enemy_weapon[i]["Damage"]
                         self.unitInAttack[j][0] = 1
                         self.unitInAttack[j][1] = i
@@ -150,6 +151,7 @@ class Warhammer40kEnv(gym.Env):
                 decide = np.random.randint(0,10)
                 idOfM = self.enemyInAttack[i][1]
                 if decide == 5:
+                    print("Enemy unit", i,"pulled out of fight with Model unit", idOfM)
                     self.enemy_coords[i][0] -= 7
                     self.enemy_coords[i] = self.bounds(self.enemy_coords[i])
                     self.unitInAttack[idOfM][0] = 0
@@ -161,8 +163,12 @@ class Warhammer40kEnv(gym.Env):
                     # hit rolls
                     rolls = self.dice(num=self.enemy_data[i]["#OfModels"])
                     hits = 0
-                    for k in range(len(rolls)):
-                        if rolls[k] <= self.enemy_weapon[i]["BS"]:
+                    if type(rolls) != type(1):
+                        for k in range(len(rolls)):
+                            if rolls[k] <= self.enemy_weapon[i]["BS"]:
+                                hits+=1
+                    else: 
+                        if rolls <= self.enemy_weapon[i]["BS"]:
                             hits+=1
                     # wound rolls
                     dmg = np.array([])
@@ -187,7 +193,7 @@ class Warhammer40kEnv(gym.Env):
                         if self.dice()-self.enemy_weapon[i]["AP"] > self.unit_data[idOfM]["Sv"]:
                             dmg[k] = 0
                     # allocating damage
-                    #print("enemy:", dmg)
+                    print("enemy",i, dmg)
                     for k in dmg:
                         self.unit_health[idOfM] -= k
                         if self.unit_health[idOfM] < 0:
@@ -198,7 +204,6 @@ class Warhammer40kEnv(gym.Env):
         for i in range(len(self.unit_health)):
             if self.unitInAttack[i][0] == 0 and self.unit_health[i] > 0:
                 movement = self.dice()+self.unit_data[i]["Movement"]
-                reward = 0.1
                 if action["move"] == 0:
                     self.unit_coords[i][1] -= movement
                 elif action["move"] == 1:
@@ -218,6 +223,7 @@ class Warhammer40kEnv(gym.Env):
                 if action["attack"] == 1:
                     for j in range(len(self.enemy_health)):
                         if self.distance(self.enemy_coords[j], self.unit_coords[i]) <= self.unit_weapon[i]["Range"] and self.enemyInAttack[j][0] == 0:
+                            print("Model unit", i,"started attack with Enemy unit", j)
                             self.enemy_health[j] -= self.unit_weapon[i]["Damage"]
                             self.unitInAttack[i][0] = 1
                             self.unitInAttack[i][1] = j
@@ -225,9 +231,10 @@ class Warhammer40kEnv(gym.Env):
                             self.enemyInAttack[j][0] = 1
                             self.enemyInAttack[j][1] = i
 
-                            reward = 0.1
+                            reward = 0.5
+                            break
                         else:
-                            reward = -0.1
+                            reward = -0.5
             
             elif self.unitInAttack[i][0] == 1 and self.unit_health[i] > 0:
                 reward = 0.1
@@ -236,8 +243,12 @@ class Warhammer40kEnv(gym.Env):
                     # hit rolls
                     rolls = self.dice(num=self.unit_data[i]["#OfModels"])
                     hits = 0
-                    for k in range(len(rolls)):
-                        if rolls[k] <= self.unit_weapon[i]["BS"]:
+                    if type(rolls) != type(1):
+                        for k in range(len(rolls)):
+                            if rolls[k] <= self.unit_weapon[i]["BS"]:
+                                hits+=1
+                    else:
+                        if rolls <= self.unit_weapon[i]["BS"]:
                             hits+=1
                 # wound rolls
                     dmg = np.array([])
@@ -262,20 +273,19 @@ class Warhammer40kEnv(gym.Env):
                         if self.dice()-self.unit_weapon[i]["AP"] > self.enemy_data[idOfE]["Sv"]:
                             dmg[k] = 0
                     # allocating damage
-                    #print("model",dmg)
+                    print("model unit",i,dmg)
                     for k in dmg:
                         self.enemy_health[idOfE] -= k
                         if self.enemy_health[idOfE] < 0:
                             self.enemy_health[idOfE] = 0
                 elif action["attack"] == 0:
+                    print("Model unit", i,"pulled out of fight with Enemy unit", idOfE)
                     self.unit_coords[i][0] += self.unit_weapon[i]["Range"]+6
                     self.unitInAttack[i][0] = 0
                     self.unitInAttack[i][1] = 0
 
                     self.enemyInAttack[idOfE][0] = 0
                     self.enemyInAttack[idOfE][1] = 0
-                    if self.enemy_health[idOfE] <= self.unit_health[i]:
-                        reward = -0.1
 
         if sum(self.unit_health) <= 0 or sum(self.enemy_health) <= 0:
             self.game_over = True
