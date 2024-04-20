@@ -1,6 +1,5 @@
 {
-    "Type": "Units",
-    "Data": [
+    "UnitData": [
         {
             "Army": "Space Marine",
             "Name": "Eliminator Squad",
@@ -18,6 +17,24 @@
             "T": 4,
             "Sv": 3,
             "W": 4
+        }
+    ],
+    "WeaponData": [
+        {
+            "Name":"Bolt Pistol",
+            "BS":3,
+            "S":4,
+            "AP":0,
+            "Range": 6,
+            "Damage": 1
+        },
+        {
+            "Name": "Absolver Bolt Pistol",
+            "BS": 3,
+            "S": 5,
+            "AP":-1,
+            "Range": 18,
+            "Damage": 2
         }
     ]
 }
