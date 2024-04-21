@@ -39,7 +39,7 @@ while end == False:
 
     print("Iteration {} ended with reward {}, enemy health {}, model health {}".format(i, reward, enemy_health, unit_health))
     if done == True:
-        if reward >= 1:
+        if reward > 0:
             print("model won!")
         else:
             print("enemy won!")
