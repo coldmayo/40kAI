@@ -39,14 +39,14 @@ while end == False:
 
     print("Iteration {} ended with reward {}, enemy health {}, model health {}".format(i, reward, enemy_health, unit_health))
     if done == True:
-        if enemy_health[0] < 0 and enemy_health[1] < 0:
+        if reward >= 1:
             print("model won!")
         else:
             print("enemy won!")
         print("Restarting...")
         numLifeT+=1
         env.reset()
-    if numLifeT == 50:
+    if numLifeT == 10:
         end = True
     i+=1
 

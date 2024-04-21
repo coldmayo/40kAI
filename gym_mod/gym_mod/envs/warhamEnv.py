@@ -136,15 +136,63 @@ class Warhammer40kEnv(gym.Env):
                     if self.enemy_coords[i] == self.unit_coords[j]:
                         self.enemy_coords[i][0] -= 1
 
+                # Shooting phase (if applicable)
                 for j in range(len(self.unit_health)):
-                    if self.distance(self.enemy_coords[i], self.unit_coords[j]) <= self.enemy_weapon[i]["Range"] and self.unitInAttack[j][0] == 0:
-                        print("Enemy unit", i,"started attack with Model unit", j)
-                        self.unit_health[j] -= self.enemy_weapon[i]["Damage"]
-                        self.unitInAttack[j][0] = 1
-                        self.unitInAttack[j][1] = i
+                    if self.distance(self.enemy_coords[i], self.unit_coords[j]) <= self.enemy_weapon[i]["Range"]:
+                        idOfM = j
+                        rolls = self.dice(num=self.enemy_data[i]["#OfModels"])
+                        hits = 0
+                        if type(rolls) != type(1):
+                            for k in range(len(rolls)):
+                                if rolls[k] <= self.enemy_weapon[i]["BS"]:
+                                    hits+=1
+                        else: 
+                            if rolls <= self.enemy_weapon[i]["BS"]:
+                                hits+=1
+                        # wound rolls
+                        dmg = np.array([])
+                        for k in range(hits):
+                            if self.enemy_weapon[i]["S"] >= self.unit_data[idOfM]["T"]*2:
+                                if self.dice() <= 2:
+                                    dmg = np.append(dmg, self.enemy_weapon[i]["Damage"])
+                            elif self.enemy_weapon[i]["S"] > self.unit_data[idOfM]["T"]:
+                                if self.dice() <= 3:
+                                    dmg = np.append(dmg, self.enemy_weapon[i]["Damage"])
+                            elif self.enemy_weapon[i]["S"] == self.unit_data[idOfM]["T"]:
+                                if self.dice() <= 4:
+                                    dmg = np.append(dmg, self.enemy_weapon[i]["Damage"])
+                            elif self.enemy_weapon[i]["S"]/2 <= self.unit_data[idOfM]["T"]:
+                                if self.dice() <= 5:
+                                    dmg = np.append(dmg, self.enemy_weapon[idOfM]["Damage"])
+                            elif self.enemy_weapon[i]["S"] < self.unit_data[idOfM]["T"]:
+                                if self.dice() == 6:
+                                    dmg = np.append(dmg, self.enemy_weapon[i]["Damage"])
+                        # saving throws
+                        for k in range(len(dmg)):
+                            if self.dice()-self.enemy_weapon[i]["AP"] > self.unit_data[idOfM]["Sv"]:
+                                dmg[k] = 0
+                        # allocating damage
+                        for k in dmg:
+                            self.unit_health[idOfM] -= k
+                            if self.unit_health[idOfM] < 0:
+                                self.unit_health[idOfM] = 0
+                        print("Enemy Unit",i,"shoots Model Unit",idOfM,sum(dmg),"times")
+                # Charging (if applicable)
+                for j in range(len(self.unit_health)):
+                    if self.distance(self.enemy_coords[i], self.unit_coords[j]) <= 12 and self.unitInAttack[j][0] == 0:
+                        if self.distance(self.enemy_coords[j], self.unit_coords[i]) - sum(self.dice(num=2)) <= 5:
+                            print("Enemy unit", i,"started attack with Model unit", j)
+                            self.unit_health[j] -= self.enemy_weapon[i]["Damage"]
 
-                        self.enemyInAttack[i][0] = 1
-                        self.enemyInAttack[i][1] = j
+                            self.enemy_coords[i][0] = self.unit_coords[j][0] + 1
+                            self.enemy_coords[i][1] = self.unit_coords[j][1] + 1
+                            self.enemy_coords[i] = self.bounds(self.enemy_coords[i])
+
+                            self.unitInAttack[j][0] = 1
+                            self.unitInAttack[j][1] = i
+
+                            self.enemyInAttack[i][0] = 1
+                            self.enemyInAttack[i][1] = j
                         break
 
             elif self.enemyInAttack[i][0] == 1 and self.enemy_health[i] > 0:
@@ -220,18 +268,69 @@ class Warhammer40kEnv(gym.Env):
                     if self.unit_coords[i] == self.enemy_coords[j]:
                         self.unit_coords[i][0] -= 1
 
+                # shooting phase (if eligible)
+
+                for j in range(len(self.enemy_health)):
+                    if self.distance(self.unit_coords[i], self.enemy_coords[j]) <= self.unit_weapon[i]["Range"]:
+                        # hit rolls
+                        idOfE = j
+                        rolls = self.dice(num=self.unit_data[i]["#OfModels"])
+                        hits = 0
+                        if type(rolls) != type(1):
+                            for k in range(len(rolls)):
+                                if rolls[k] <= self.unit_weapon[i]["BS"]:
+                                    hits+=1
+                        else:
+                            if rolls <= self.unit_weapon[i]["BS"]:
+                                hits+=1
+                    # wound rolls
+                        dmg = np.array([])
+                        for k in range(hits):
+                            if self.unit_weapon[i]["S"] >= self.enemy_data[idOfE]["T"]*2:
+                                if self.dice() <= 2:
+                                    dmg = np.append(dmg, self.unit_weapon[i]["Damage"])
+                            elif self.unit_weapon[i]["S"] > self.enemy_data[idOfE]["T"]:
+                                if self.dice() <= 3:
+                                    dmg = np.append(dmg, self.unit_weapon[i]["Damage"])
+                            elif self.unit_weapon[i]["S"] == self.enemy_data[idOfE]["T"]:
+                                if self.dice() <= 4:
+                                    dmg = np.append(dmg, self.unit_weapon[i]["Damage"])
+                            elif self.unit_weapon[i]["S"]/2 <= self.enemy_data[idOfE]["T"]:
+                                if self.dice() <= 5:
+                                    dmg = np.append(dmg, self.unit_weapon[i]["Damage"])
+                            elif self.unit_weapon[i]["S"] < self.enemy_data[idOfE]["T"]:
+                                if self.dice() == 6:
+                                    dmg = np.append(dmg, self.unit_weapon[i]["Damage"])
+                        # saving throws
+                        for k in range(len(dmg)):
+                            if self.dice()-self.unit_weapon[i]["AP"] > self.enemy_data[idOfE]["Sv"]:
+                                dmg[k] = 0
+                        # allocating damage
+                        for k in dmg:
+                            self.enemy_health[idOfE] -= k
+                            if self.enemy_health[idOfE] < 0:
+                                self.enemy_health[idOfE] = 0
+                        print("Model Unit",i,"shoots Enemy Unit",idOfE,sum(dmg),"times")
+
+                # Charge (if applicable)
+
                 if action["attack"] == 1:
                     for j in range(len(self.enemy_health)):
-                        if self.distance(self.enemy_coords[j], self.unit_coords[i]) <= self.unit_weapon[i]["Range"] and self.enemyInAttack[j][0] == 0:
-                            print("Model unit", i,"started attack with Enemy unit", j)
-                            self.enemy_health[j] -= self.unit_weapon[i]["Damage"]
-                            self.unitInAttack[i][0] = 1
-                            self.unitInAttack[i][1] = j
+                        if self.distance(self.enemy_coords[j], self.unit_coords[i]) <= 12 and self.enemyInAttack[j][0] == 0:
+                            if self.distance(self.enemy_coords[j], self.unit_coords[i]) - sum(self.dice(num=2)) <= 5:
+                                print("Model unit", i,"started attack with Enemy unit", j)
+                                self.enemy_health[j] -= self.unit_weapon[i]["Damage"]
+                                self.unitInAttack[i][0] = 1
+                                self.unitInAttack[i][1] = j
 
-                            self.enemyInAttack[j][0] = 1
-                            self.enemyInAttack[j][1] = i
+                                self.unit_coords[i][0] = self.enemy_coords[j][0] + 1
+                                self.unit_coords[i][1] = self.enemy_coords[j][1] + 1
+                                self.unit_coords[i] = self.bounds(self.unit_coords[i])
 
-                            reward = 0.5
+                                self.enemyInAttack[j][0] = 1
+                                self.enemyInAttack[j][1] = i
+
+                                reward = 0.5
                             break
                         else:
                             reward = -0.5
@@ -273,7 +372,7 @@ class Warhammer40kEnv(gym.Env):
                         if self.dice()-self.unit_weapon[i]["AP"] > self.enemy_data[idOfE]["Sv"]:
                             dmg[k] = 0
                     # allocating damage
-                    print("model unit",i,dmg)
+                    #print("model unit",i,dmg)
                     for k in dmg:
                         self.enemy_health[idOfE] -= k
                         if self.enemy_health[idOfE] < 0:
