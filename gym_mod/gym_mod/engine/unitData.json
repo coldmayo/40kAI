@@ -22,19 +22,31 @@
     "WeaponData": [
         {
             "Name":"Bolt Pistol",
+            "Type": "Ranged",
             "BS":3,
             "S":4,
             "AP":0,
-            "Range": 6,
+            "Range": 12,
             "Damage": 1
         },
         {
             "Name": "Absolver Bolt Pistol",
+            "Type": "Ranged",
             "BS": 3,
             "S": 5,
             "AP":-1,
             "Range": 18,
             "Damage": 2
+        },
+        {
+            "Name": "Close combat weapon",
+            "Type": "Melee",
+            "WS": 3,
+            "S": 4,
+            "AP": 0,
+            "Range": 2,
+            "Damage": 1
+
         }
     ]
 }

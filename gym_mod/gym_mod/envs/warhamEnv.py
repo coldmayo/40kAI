@@ -336,6 +336,8 @@ class Warhammer40kEnv(gym.Env):
         y1 = np.zeros(10)
         x2 = np.zeros(10)
         y2 = np.linspace(0, self.b_hei,10)
+        plt.xlim(-5,86)
+        plt.ylim(-3,48)
         plt.plot(x1,y1,color="black")
         plt.plot(x2,y2,color="black")
         plt.plot(x1,y1+self.b_hei,color="black")
@@ -350,7 +352,7 @@ class Warhammer40kEnv(gym.Env):
                 plt.plot(self.enemy_coords[i][0],self.enemy_coords[i][1], 'ro', label="Enemy Unit")
             else:
                 plt.plot(self.enemy_coords[i][0],self.enemy_coords[i][1], 'ro')
-        plt.legend()
+        plt.legend(loc = "right")
         fileName = "display/"+str(self.restarts)+"_"+str(self.iter)+".png"
         plt.savefig(fileName)
         plt.cla()

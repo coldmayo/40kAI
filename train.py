@@ -13,12 +13,27 @@ model1 = Unit(unitData("Space Marine", "Eliminator Squad"), weaponData("Bolt Pis
 enemy2 = Unit(unitData("Space Marine", "Apothecary"), weaponData("Absolver Bolt Pistol"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
 model2 = Unit(unitData("Space Marine", "Apothecary"), weaponData("Absolver Bolt Pistol"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
 
-env = gym.make("40kAI-v0", enemy = [enemy1, enemy2], model = [model1, model2], b_len = b_len, b_hei = b_hei)
+enemy = [enemy1, enemy2]
+model = [model1, model2]
+
+env = gym.make("40kAI-v0", enemy = enemy, model = model, b_len = b_len, b_hei = b_hei)
 
 observation = env.reset()
 
+inText = []
+
 end = False
+totLifeT = 10
 numLifeT = 0
+
+inText.append("Model units:")
+for i in model:
+    inText.append("Name: {}, Army Type: {}".format(i.showUnitData()["Name"], i.showUnitData()["Army"]))
+inText.append("Enemy units:")
+for i in enemy:
+    inText.append("Name: {}, Army Type: {}".format(i.showUnitData()["Name"], i.showUnitData()["Army"]))
+inText.append("Number of Lifetimes ran: {}\n".format(totLifeT))
+
 i = 0
 
 while end == False:
@@ -36,8 +51,9 @@ while end == False:
         print("The units are fighting")
 
     board = env.render()
-
-    print("Iteration {} ended with reward {}, enemy health {}, model health {}".format(i, reward, enemy_health, unit_health))
+    message = "Iteration {} ended with reward {}, enemy health {}, model health {}".format(i, reward, enemy_health, unit_health)
+    print(message)
+    inText.append(message)
     if done == True:
         if reward > 0:
             print("model won!")
@@ -46,9 +62,15 @@ while end == False:
         print("Restarting...")
         numLifeT+=1
         env.reset()
-    if numLifeT == 10:
+    if numLifeT == totLifeT:
         end = True
     i+=1
 
 env.close()
+
+with open('trainRes.txt', 'w') as f:
+    for i in range(len(inText)):
+        f.write(inText[i])
+        f.write('\n')
+
 genDisplay.makeGif()
