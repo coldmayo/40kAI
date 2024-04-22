@@ -5,11 +5,11 @@
 using namespace Glib;
 using namespace Gtk;
 
+const char *imgpth = "img/model_train.gif";
+
 class Form : public Window {
 public:
   Form() {
-
-    const char *imgpth = "img/model_train.gif";
 
     add(scrolledWindow);
     scrolledWindow.add(fixed);
@@ -69,6 +69,7 @@ public:
     button1.set_label("Train");
     button1.signal_button_release_event().connect([&](GdkEventButton*) {
       system("cd ../../ ; ./train.sh");
+      update_picture();
       return true;
     });
     fixedTabPage2.add(button1);
@@ -81,7 +82,7 @@ public:
     
     fixedTabPage3.add(pictureBox1);
     pictureBox1.set_size_request(280, 280);
-    pictureBox1.set(imgpth);
+    update_picture();
 
     set_title("GUI");
     resize(390, 270);
@@ -89,6 +90,9 @@ public:
   }
   
 private:
+  void update_picture() {
+    pictureBox1.set(imgpth);
+  }
   Image pictureBox1;
   Fixed fixed;
   ScrolledWindow scrolledWindow;
