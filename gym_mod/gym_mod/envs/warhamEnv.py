@@ -138,7 +138,10 @@ class Warhammer40kEnv(gym.Env):
             self.restarts += 1
         elif Type == "big":
             self.restarts = 0
-            
+            savePath = "display/"
+            for fil in os.listdir(savePath):
+                os.remove(os.path.join(savePath, fil))
+
         self.board = np.zeros((self.b_len,self.b_hei))
         self.enemy_coords = []
         self.unit_coords = []

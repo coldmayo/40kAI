@@ -16,12 +16,12 @@ files.sort(key=lambda x: os.path.getmtime(x))
 with open(files[-1], 'rb') as f:
     env = pickle.load(f)
 
-done = False
+isdone = False
 i = 0
 
 env.reset(Type="big")
 
-while done == False:
+while isdone == False:
     action = env.action_space.sample()
     print(env.get_info())
 
@@ -44,7 +44,7 @@ while done == False:
         else:
             print("enemy won!")
         print("Restarting...")
-        done = True
+        isdone = True
     i+=1
 
 env.close()
