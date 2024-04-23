@@ -1,6 +1,8 @@
 import sys
 import numpy as np
 import gym
+import pickle
+import datetime
 from gym_mod.envs.warhamEnv import *
 from gym_mod.engine import genDisplay, Unit, unitData, weaponData
 
@@ -74,3 +76,8 @@ with open('trainRes.txt', 'w') as f:
         f.write('\n')
 
 genDisplay.makeGif()
+
+current_time = datetime.datetime.now()
+date = str(current_time.year)+"-"+str(current_time.month)+"-"+str(current_time.day)+"-"+str(current_time.hour)+"-"+str(current_time.minute)+"-"+str(current_time.second)+"-"+str(current_time.microsecond)
+with open("models/model-{}.pickle".format(date), "wb") as file:
+    pickle.dump(env, file)

@@ -85,7 +85,7 @@ public:
     update_picture();
 
     set_title("GUI");
-    resize(390, 270);
+    resize(700, 600);
     show_all();
   }
   

@@ -129,9 +129,16 @@ class Warhammer40kEnv(gym.Env):
                 attackeeHealth = 0
         return dmg, attackeeHealth
 
-    def reset(self):
+    # small reset = used in training
+    # big reset reset env completely for testing/validation
+
+    def reset(self, Type = "small"):
         self.iter = 0
-        self.restarts += 1
+        if Type == "small":
+            self.restarts += 1
+        elif Type == "big":
+            self.restarts = 0
+            
         self.board = np.zeros((self.b_len,self.b_hei))
         self.enemy_coords = []
         self.unit_coords = []
@@ -354,8 +361,8 @@ class Warhammer40kEnv(gym.Env):
         y1 = np.zeros(10)
         x2 = np.zeros(10)
         y2 = np.linspace(0, self.b_hei,10)
-        plt.xlim(-5,86)
-        plt.ylim(-3,48)
+        plt.xlim(-5,self.b_len + 26)
+        plt.ylim(-3,self.b_hei + 4)
         plt.plot(x1,y1,color="black")
         plt.plot(x2,y2,color="black")
         plt.plot(x1,y1+self.b_hei,color="black")

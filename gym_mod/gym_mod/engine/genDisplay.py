@@ -2,7 +2,7 @@ import imageio
 import os
 from tqdm import tqdm
 
-def makeGif():
+def makeGif(Type="train"):
     print("Starting...")
     images = []
 
@@ -14,10 +14,13 @@ def makeGif():
 
     for fil in tqdm(files):
         images.append(imageio.imread(fil))
-    imageio.mimsave('model_train.gif', images)
-    imageio.mimsave('gui/img/model_train.gif', images)
-    imageio.mimsave('gui/build/img/model_train.gif', images)
-    imageio.mimsave('gui/build/Debug/img/model_train.gif', images)
+    if Type == "train":
+        imageio.mimsave('model_train.gif', images)
+        imageio.mimsave('gui/img/model_train.gif', images)
+        imageio.mimsave('gui/build/img/model_train.gif', images)
+        imageio.mimsave('gui/build/Debug/img/model_train.gif', images)
+    elif Type == "val":
+        imageio.mimsave('model_val.gif', images)
     print("Done")
 
 if __name__ == "__main__":
