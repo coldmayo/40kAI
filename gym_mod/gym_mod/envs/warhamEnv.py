@@ -332,16 +332,127 @@ class Warhammer40kEnv(gym.Env):
         info = self.get_info()
         return self._get_observation(), reward, self.game_over, 0, info
 
+    # for a real person playing
+
+    def player(self):
+        for i in range(len(self.enemy_health)):
+            print("For unit", i)
+            if self.enemyInAttack[i][0] == 0 and self.enemy_health[i] > 0:
+                movement = self.dice()+self.unit_data[i]["Movement"]
+                self.updateBoard()
+                self.showBoard()
+                print("Take a look at board.txt to view the current board")
+                dire = input("Enter the direction of movement (up, down, left, right)")
+                if dire == "down":
+                    self.enemy_coords[i][0] += movement
+                elif dire == "up":
+                    self.enemy_coords[i][0] -= movement
+                elif dire == "left":
+                    self.enemy_coords[i][1] -= movement
+                elif dire == "right":
+                    self.enemy_coords[i][1] += movement
+
+            # staying in bounds
+
+                self.enemy_coords[i] = self.bounds(self.enemy_coords[i])
+                for j in range(len(self.enemy_health)):
+                    if self.enemy_coords[i] == self.unit_coords[j]:
+                        self.enemy_coords[i][0] -= 1
+
+                self.updateBoard()
+                self.showBoard()
+                print("Take a look at board.txt to view the updated board")
+                # shooting phase (if eligible)
+                print("Beginning shooting phase!")
+                shootAble = []
+                for j in range(len(self.unit_health)):
+                    if self.distance(self.enemy_coords[i], self.unit_coords[j]) <= self.enemy_weapon[i]["Range"]:
+                        # save index of available units to shoot
+                        shootAble.append(j)
+
+                if len(shootAble) > 0:
+                    shoot = input("Select which enemy unit you would like to shoot ({})".format(shootAble))
+                    idOfE = int(shoot)
+                    dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_weapon[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE])
+                    self.unit_health[idOfE] = modHealth
+                    print("Player Unit",i,"shoots Model Unit",idOfE,sum(dmg),"times")
+                else:
+                    print("No available units to attack")
+
+
+                # Charge (if applicable)
+                print("Beginning Charge phase!")
+                charg = []
+                for j in range(len(self.unit_health)):
+                    if self.distance(self.unit_coords[j], self.enemy_coords[i]) <= 12 and self.unitInAttack[j][0] == 0:
+                        charg.append(j)
+
+                if len(charg) > 0:
+                    attack = input("Select while enemy you would like to charge ({})".format(charg))
+                    j = int(attack)
+                    if self.distance(self.enemy_coords[i], self.unit_coords[j]) - sum(self.dice(num=2)) <= 5:
+                        print("Player Unit", i, "Successfully charged Model Unit", j)
+                        self.enemyInAttack[i][0] = 1
+                        self.enemyInAttack[i][1] = j
+
+                        self.enemy_coords[i][0] = self.unit_coords[j][0] + 1
+                        self.enemy_coords[i][1] = self.unit_coords[j][1] + 1
+                        self.enemy_coords[i] = self.bounds(self.enemy_coords[i])
+
+                        idOfE = j
+                        dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE], rangeOfComb="Melee")
+                        self.unit_health[idOfE] = modHealth
+
+                        self.unitInAttack[j][0] = 1
+                        self.unitInAttack[j][1] = i
+                        print("")
+                    else:
+                        print("Player Unit", i, "Failed to charge Model Unit", j)
+                else:
+                    print("No available units to attack")                
+            
+            elif self.enemyInAttack[i][0] == 1 and self.enemy_health[i] > 0:
+                idOfE = self.enemyInAttack[i][1]
+                fallB = input("Would you like to fallback? (y/n)")
+                if fallB == "n":
+                    print("Player Unit", i, "Is attacking Model Unit", idOfE)
+                    dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE], rangeOfComb="Melee")
+                    self.unit_health[idOfE] = modHealth
+                elif fallB == "y":
+                    print("Player Unit", i,"fell back from Enemy unit", idOfE)
+                    self.enemy_coords[i][0] += self.unit_weapon[idOfE]["Range"]+6
+                    self.enemyInAttack[i][0] = 0
+                    self.enemyInAttack[i][1] = 0
+
+                    self.unitInAttack[idOfE][0] = 0
+                    self.unitInAttack[idOfE][1] = 0
+
+        for i in self.enemy_health:
+            if i < 0:
+                i = 0
+        
+        for i in self.enemy_health:
+            if i < 0:
+                i = 0
+
+        self.iter += 1
+
+        info = self.get_info()
+        return info
+
     def updateBoard(self):
         self.board = np.zeros((self.b_len,self.b_hei))
 
         for i in range(len(self.unit_health)):
             self.unit_coords[i] = self.bounds(self.unit_coords[i])
-            self.board[self.unit_coords[i][0]][self.unit_coords[i][1]] = 1
+            self.board[self.unit_coords[i][0]][self.unit_coords[i][1]] = 20+i+1
 
         for i in range(len(self.enemy_health)):
             self.enemy_coords[i] = self.bounds(self.enemy_coords[i])
-            self.board[self.enemy_coords[i][0]][self.enemy_coords[i][1]] = 2
+            self.board[self.enemy_coords[i][0]][self.enemy_coords[i][1]] = 10+i+1
+
+    def returnBoard(self):
+        return self.board
 
     def render(self, mode='human'):
         self.updateBoard()
@@ -386,6 +497,10 @@ class Warhammer40kEnv(gym.Env):
         plt.cla()
 
         return self.board
+
+    def showBoard(self):
+        board = self.returnBoard()
+        np.savetxt("board.txt", board.astype(int), fmt="%i", delimiter=",")
 
     def close(self):
         pass
