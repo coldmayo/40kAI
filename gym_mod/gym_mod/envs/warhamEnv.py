@@ -230,7 +230,7 @@ class Warhammer40kEnv(gym.Env):
                 idOfM = self.enemyInAttack[i][1]
                 if decide == 5:
                     print("Enemy unit", i,"pulled out of fight with Model unit", idOfM)
-                    self.enemy_coords[i][0] -= 7
+                    self.enemy_coords[i][0] -= self.enemy_data[i]["Movement"]
                     self.enemy_coords[i] = self.bounds(self.enemy_coords[i])
                     self.unitInAttack[idOfM][0] = 0
                     self.unitInAttack[idOfM][1] = 0
@@ -246,14 +246,14 @@ class Warhammer40kEnv(gym.Env):
         for i in range(len(self.unit_health)):
             if self.unitInAttack[i][0] == 0 and self.unit_health[i] > 0:
                 movement = self.dice()+self.unit_data[i]["Movement"]
-                if action["move"] == 0:
-                    self.unit_coords[i][1] -= movement
-                elif action["move"] == 1:
-                    self.unit_coords[i][1] += movement
-                elif action["move"] == 2:
-                    self.unit_coords[i][0] -= movement
-                elif action["move"] == 3:
+                if action["move"] == 0:   # down
                     self.unit_coords[i][0] += movement
+                elif action["move"] == 1:   # up
+                    self.unit_coords[i][0] -= movement
+                elif action["move"] == 2:   # left
+                    self.unit_coords[i][1] -= movement
+                elif action["move"] == 3:   # right
+                    self.unit_coords[i][1] += movement
 
             # staying in bounds
 
@@ -270,6 +270,7 @@ class Warhammer40kEnv(gym.Env):
                         idOfE = j
                         dmg, modHealth = self.attack(self.unit_health[i], self.unit_weapon[i], self.unit_data[i], self.enemy_health[idOfE], self.enemy_data[idOfE])
                         self.enemy_health[idOfE] = modHealth
+                        reward += 0.2
                         print("Model Unit",i,"shoots Enemy Unit",idOfE,sum(dmg),"times")
 
                 # Charge (if applicable)
@@ -293,20 +294,33 @@ class Warhammer40kEnv(gym.Env):
                                 self.enemyInAttack[j][0] = 1
                                 self.enemyInAttack[j][1] = i
 
-                                reward = 0.5
+                                reward += 0.5
                             break
                         else:
-                            reward = -0.5
+                            reward -= 0.5
             
             elif self.unitInAttack[i][0] == 1 and self.unit_health[i] > 0:
-                reward = 0.1
+                reward = 0
                 idOfE = self.unitInAttack[i][1]
                 if action["attack"] == 1:
                     dmg, modHealth = self.attack(self.unit_health[i], self.unit_melee[i], self.unit_data[i], self.enemy_health[idOfE], self.enemy_data[idOfE], rangeOfComb="Melee")
                     self.enemy_health[idOfE] = modHealth
+                    reward += 0.2
+                    if self.enemy_health[idOfE] <= 0:
+                        reward += 0.3
+                        self.unitInAttack[i][0] = 0
+                        self.unitInAttack[i][1] = 0
+
+                        self.enemyInAttack[idOfE][0] = 0
+                        self.enemyInAttack[idOfE][1] = 0
+
+                    reward += 0.5
+
                 elif action["attack"] == 0:
+                    if self.unit_health[i] >= self.enemy_health[idOfE]:
+                        reward -= 0.5
                     print("Model unit", i,"pulled out of fight with Enemy unit", idOfE)
-                    self.unit_coords[i][0] += self.unit_weapon[i]["Range"]+6
+                    self.unit_coords[i][0] += self.unit_data[i]["Movement"]
                     self.unitInAttack[i][0] = 0
                     self.unitInAttack[i][1] = 0
 
@@ -366,7 +380,7 @@ class Warhammer40kEnv(gym.Env):
                 print("Beginning shooting phase!")
                 shootAble = []
                 for j in range(len(self.unit_health)):
-                    if self.distance(self.enemy_coords[i], self.unit_coords[j]) <= self.enemy_weapon[i]["Range"]:
+                    if self.distance(self.enemy_coords[i], self.unit_coords[j]) <= self.enemy_weapon[i]["Range"] and self.unit_health[j] > 0:
                         # save index of available units to shoot
                         shootAble.append(j)
 
@@ -384,7 +398,7 @@ class Warhammer40kEnv(gym.Env):
                 print("Beginning Charge phase!")
                 charg = []
                 for j in range(len(self.unit_health)):
-                    if self.distance(self.unit_coords[j], self.enemy_coords[i]) <= 12 and self.unitInAttack[j][0] == 0:
+                    if self.distance(self.unit_coords[j], self.enemy_coords[i]) <= 12 and self.unitInAttack[j][0] == 0 and self.unit_health[j] > 0:
                         charg.append(j)
 
                 if len(charg) > 0:
@@ -418,9 +432,16 @@ class Warhammer40kEnv(gym.Env):
                     print("Player Unit", i, "Is attacking Model Unit", idOfE)
                     dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE], rangeOfComb="Melee")
                     self.unit_health[idOfE] = modHealth
+                    if self.unit_health[idOfE] <= 0:
+                        print("Model Unit", idOfE, "has been killed")
+                        self.enemyInAttack[i][0] = 0
+                        self.enemyInAttack[i][1] = 0
+
+                        self.unitInAttack[idOfE][0] = 0
+                        self.unitInAttack[idOfE][1] = 0
                 elif fallB == "y":
                     print("Player Unit", i,"fell back from Enemy unit", idOfE)
-                    self.enemy_coords[i][0] += self.unit_weapon[idOfE]["Range"]+6
+                    self.enemy_coords[i][0] += self.enemy_data[i]["Movement"]
                     self.enemyInAttack[i][0] = 0
                     self.enemyInAttack[i][1] = 0
 

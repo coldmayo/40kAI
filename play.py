@@ -39,7 +39,6 @@ while isdone == False:
         if reward > 0:
             print("model won!")
         else:
-            print("enemy won!")
-        print("Restarting...")
+            print("you won!")
         isdone = True
     i+=1
