@@ -11,7 +11,7 @@ const char *imgpth = "img/icon.png";
 class Form : public Window {
 public:
   Form() {
-    set_icon_from_file(imgpth);
+
     add(scrolledWindow);
     scrolledWindow.add(fixed);
     
@@ -80,15 +80,6 @@ public:
       update_picture();
       return true;
     });
-
-    button3.set_label("Clear Model Cache");
-    button3.signal_button_release_event().connect([&](GdkEventButton*) {
-      system("cd .. ; rm models/*");
-      return true;
-    });
-
-    fixedTabPage2.add(textbox1);
-    fixedTabPage2.move(textbox1, 10, 10);
     fixedTabPage2.add(button1);
     fixedTabPage2.move(button1, 10, 70);
     fixedTabPage2.add(button3);
@@ -103,19 +94,6 @@ public:
     fixedTabPage3.add(pictureBox1);
     pictureBox1.set_size_request(280, 280);
     update_picture();
-
-    // Play tab
-    tabPage4.add(fixedTabPage4);
-    button2.set_label("Play");
-    textbox2.set_text("Play Against Model in Terminal:");
-    button2.signal_button_release_event().connect([&](GdkEventButton*) {
-      system("cd .. ; ./play.sh");
-      return true;
-    });
-    fixedTabPage4.add(textbox2);
-    fixedTabPage4.add(button2);
-    fixedTabPage4.move(textbox2, 10, 10);
-    fixedTabPage4.move(button2, 10, 40);
 
     set_title("GUI");
     resize(700, 600);
