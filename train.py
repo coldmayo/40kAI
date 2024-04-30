@@ -25,7 +25,7 @@ observation = env.reset()
 inText = []
 
 end = False
-totLifeT = 10
+totLifeT = 100
 numLifeT = 0
 
 inText.append("Model units:")
@@ -75,7 +75,7 @@ with open('trainRes.txt', 'w') as f:
         f.write(inText[i])
         f.write('\n')
 
-genDisplay.makeGif()
+genDisplay.makeGif(numOfLife=totLifeT, trunc = True)
 
 current_time = datetime.datetime.now()
 date = str(current_time.year)+"-"+str(current_time.month)+"-"+str(current_time.day)+"-"+str(current_time.hour)+"-"+str(current_time.minute)+"-"+str(current_time.second)+"-"+str(current_time.microsecond)
