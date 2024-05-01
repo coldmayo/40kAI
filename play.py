@@ -19,22 +19,24 @@ i = 0
 
 env.reset(Type="big")
 
+reward = 0
+
 while isdone == False:
     action = env.action_space.sample()
     print(env.get_info())
-    info_p = env.player()
-    next_observation, reward, done, _, info = env.step(action)
+    done, info = env.player()
+    if done != True:
+        next_observation, reward, done, _, info = env.step(action)
+        unit_health = info["unit health"]
+        enemy_health = info["enemy health"]
+        inAttack = info["in attack"]
 
-    unit_health = info["unit health"]
-    enemy_health = info["enemy health"]
-    inAttack = info["in attack"]
+        if inAttack == 1:
+            print("The units are fighting")
 
-    if inAttack == 1:
-        print("The units are fighting")
-
-    board = env.render()
-    message = "Iteration {} ended with reward {}, Player health {}, Model health {}".format(i, reward, enemy_health, unit_health)
-    print(message)
+        board = env.render()
+        message = "Iteration {} ended with reward {}, Player health {}, Model health {}".format(i, reward, enemy_health, unit_health)
+        print(message)
     if done == True:
         if reward > 0:
             print("model won!")

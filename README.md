@@ -46,19 +46,20 @@ $ pip install .
 
 ### Using the GUI (for Linux)
 
-Make sure you have gtkmm installed
+Make sure you have the following software installed before proceeding:
+- gcc
+- cmake
+- gtk
+- gtkmm
 
-```bash 
-# cd into gui directory
-$ cd gui/build
+Proceed <a href="https://github.com/coldmayo/40kAI/blob/main/gui/README.md">here</a> for instructions.
 
-# run the executable
-$ ./Application
-```
 
 ### Using the Shell Script
 
 ```bash
 # run train.sh
 $ ./train.sh
+# run play.sh
+$ ./play.sh
 ```

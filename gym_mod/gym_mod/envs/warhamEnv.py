@@ -265,7 +265,7 @@ class Warhammer40kEnv(gym.Env):
                 # shooting phase (if eligible)
 
                 for j in range(len(self.enemy_health)):
-                    if self.distance(self.unit_coords[i], self.enemy_coords[j]) <= self.unit_weapon[i]["Range"]:
+                    if self.distance(self.unit_coords[i], self.enemy_coords[j]) <= self.unit_weapon[i]["Range"] and self.enemy_health[j] > 0:
                         # hit rolls
                         idOfE = j
                         dmg, modHealth = self.attack(self.unit_health[i], self.unit_weapon[i], self.unit_data[i], self.enemy_health[idOfE], self.enemy_data[idOfE])
@@ -277,7 +277,7 @@ class Warhammer40kEnv(gym.Env):
 
                 if action["attack"] == 1:
                     for j in range(len(self.enemy_health)):
-                        if self.distance(self.enemy_coords[j], self.unit_coords[i]) <= 12 and self.enemyInAttack[j][0] == 0:
+                        if self.distance(self.enemy_coords[j], self.unit_coords[i]) <= 12 and self.enemyInAttack[j][0] == 0 and self.enemy_health[j] > 0:
                             if self.distance(self.enemy_coords[j], self.unit_coords[i]) - sum(self.dice(num=2)) <= 5:
                                 print("Model unit", i,"started attack with Enemy unit", j)
                                 self.unitInAttack[i][0] = 1
@@ -317,7 +317,7 @@ class Warhammer40kEnv(gym.Env):
                     reward += 0.5
 
                 elif action["attack"] == 0:
-                    if self.unit_health[i] >= self.enemy_health[idOfE]:
+                    if self.unit_health[i]*2 >= self.enemy_health[idOfE]:
                         reward -= 0.5
                     print("Model unit", i,"pulled out of fight with Enemy unit", idOfE)
                     self.unit_coords[i][0] += self.unit_data[i]["Movement"]
@@ -352,19 +352,42 @@ class Warhammer40kEnv(gym.Env):
         for i in range(len(self.enemy_health)):
             print("For unit", i)
             if self.enemyInAttack[i][0] == 0 and self.enemy_health[i] > 0:
-                movement = self.dice()+self.unit_data[i]["Movement"]
                 self.updateBoard()
                 self.showBoard()
                 print("Take a look at board.txt to view the current board")
-                dire = input("Enter the direction of movement (up, down, left, right)")
-                if dire == "down":
-                    self.enemy_coords[i][0] += movement
-                elif dire == "up":
-                    self.enemy_coords[i][0] -= movement
-                elif dire == "left":
-                    self.enemy_coords[i][1] -= movement
-                elif dire == "right":
-                    self.enemy_coords[i][1] += movement
+                print("If you would like to end the game type 'quit' into the prompt")
+                dire = input("Enter the direction of movement (up, down, left, right): ")
+                
+                if dire == "quit":
+                    self.game_over = True
+                    info = self.get_info()
+                    return self.game_over, info
+                
+                print("Rolling 1 D6...")
+                roll = self.dice()
+                print("You rolled a", roll)
+                movement = roll+self.unit_data[i]["Movement"]
+                response = False
+                while response == False:
+                    if dire == "down":
+                        self.enemy_coords[i][0] += movement
+                        response = True
+                    elif dire == "up":
+                        self.enemy_coords[i][0] -= movement
+                        response = True
+                    elif dire == "left":
+                        self.enemy_coords[i][1] -= movement
+                        response = True
+                    elif dire == "right":
+                        self.enemy_coords[i][1] += movement
+                        response = True
+                    elif dire == "quit":
+                        self.game_over = True
+                        info = self.get_info()
+                        return self.game_over, info
+                    else:
+                        dire = input("Not a valid response (up, down, left, right):")
+                        response = False
 
             # staying in bounds
 
@@ -404,7 +427,10 @@ class Warhammer40kEnv(gym.Env):
                 if len(charg) > 0:
                     attack = input("Select while enemy you would like to charge ({})".format(charg))
                     j = int(attack)
-                    if self.distance(self.enemy_coords[i], self.unit_coords[j]) - sum(self.dice(num=2)) <= 5:
+                    print("Rolling 2 D6...")
+                    roll = self.dice(num=2)
+                    print("You rolled a", roll[0], "and", roll[1])
+                    if self.distance(self.enemy_coords[i], self.unit_coords[j]) - sum(roll) <= 5:
                         print("Player Unit", i, "Successfully charged Model Unit", j)
                         self.enemyInAttack[i][0] = 1
                         self.enemyInAttack[i][1] = j
@@ -419,7 +445,6 @@ class Warhammer40kEnv(gym.Env):
 
                         self.unitInAttack[j][0] = 1
                         self.unitInAttack[j][1] = i
-                        print("")
                     else:
                         print("Player Unit", i, "Failed to charge Model Unit", j)
                 else:
@@ -459,7 +484,7 @@ class Warhammer40kEnv(gym.Env):
         self.iter += 1
 
         info = self.get_info()
-        return info
+        return self.game_over, info
 
     def updateBoard(self):
         self.board = np.zeros((self.b_len,self.b_hei))

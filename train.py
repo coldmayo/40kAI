@@ -25,7 +25,7 @@ observation = env.reset()
 inText = []
 
 end = False
-totLifeT = 100
+totLifeT = 600
 numLifeT = 0
 
 inText.append("Model units:")
