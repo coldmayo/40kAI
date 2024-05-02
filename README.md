@@ -49,6 +49,7 @@ $ pip install .
 Make sure you have the following software installed before proceeding:
 - gcc
 - cmake
+- make
 - gtk
 - gtkmm
 

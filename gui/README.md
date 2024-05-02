@@ -8,12 +8,17 @@ $ cmake ..
 $ cmake --build . --config Debug
 ```
 
-To test: 
+To run the application: 
 
-Open the GUI.desktop file in a text editor
-
-Set Path equal to the absolute directory of the gui folder. For example:
 ```bash
-$ Path = /home/usr/40kAI/gui/
+# cd into installation directory
+$ cd installation
+# compile install script
+$ make
+# run script
+$ make run
+# when in the installation prompt, use the 'install' command to download the app
+$ install
+# to exit the prompt use the 'quit' command 
+$ quit
 ```
-Then run the GUI.desktop file as an executable

@@ -12,6 +12,8 @@ class Form : public Window {
 public:
   Form() {
 
+    set_icon_from_file(imgpth);
+
     add(scrolledWindow);
     scrolledWindow.add(fixed);
     
@@ -73,17 +75,31 @@ public:
     tabPage2.add(fixedTabPage2);
 
     textbox1.set_text("Train Model:");
+    status.set_text("Press the Train button to train a model");
     
     button1.set_label("Train");
     button1.signal_button_release_event().connect([&](GdkEventButton*) {
+      status.set_text("Training...");
       system("cd .. ; ./train.sh");
+      status.set_text("Completed!");
       update_picture();
       return true;
     });
+
+    button3.set_label("Clear Model Cache");
+    button3.signal_button_release_event().connect([&](GdkEventButton*) {
+      system("cd .. ; rm models/*");
+      return true;
+    });
+
+    fixedTabPage2.add(textbox1);
+    fixedTabPage2.move(textbox1, 10, 10);
     fixedTabPage2.add(button1);
     fixedTabPage2.move(button1, 10, 70);
     fixedTabPage2.add(button3);
     fixedTabPage2.move(button3, 10, 40);
+    fixedTabPage2.add(status);
+    fixedTabPage2.move(status, 10, 110);
 
     // show trained model tab
 
@@ -94,6 +110,19 @@ public:
     fixedTabPage3.add(pictureBox1);
     pictureBox1.set_size_request(280, 280);
     update_picture();
+
+     // Play tab
+    tabPage4.add(fixedTabPage4);
+    button2.set_label("Play");
+    textbox2.set_text("Play Against Model in Terminal:");
+    button2.signal_button_release_event().connect([&](GdkEventButton*) {
+      system("cd .. ; ./play.sh");
+      return true;
+    });
+    fixedTabPage4.add(textbox2);
+    fixedTabPage4.add(button2);
+    fixedTabPage4.move(textbox2, 10, 10);
+    fixedTabPage4.move(button2, 10, 40);
 
     set_title("GUI");
     resize(700, 600);
@@ -134,11 +163,12 @@ private:
   Label textbox;
   Label textbox2;
   Label textbox1;
+  Label status;
   int button1Clicked = 0;
 };
 
 int main(int argc, char* argv[]) {
-  RefPtr<Application> application = Application::create("org.kde.app");
+  RefPtr<Application> application = Application::create(argc, argv);
   Form form;
   return application->run(form);
 }

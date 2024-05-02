@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=40kAI
-StartupNotify=true
-Terminal=true
-Path = 
-Icon = img/icon.png
-Exec = build/Application
