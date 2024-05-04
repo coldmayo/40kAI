@@ -56,7 +56,7 @@ Make sure you have the following software installed before proceeding:
 Proceed <a href="https://github.com/coldmayo/40kAI/blob/main/gui/README.md">here</a> for instructions.
 
 
-### Using the Shell Script
+### Using the Shell Scripts
 
 ```bash
 # run train.sh

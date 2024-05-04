@@ -1,6 +1,8 @@
 #include <iostream>
 #include <gtkmm.h>
 #include <cstdlib>
+#include <stdlib.h>
+#include <string>
 
 using namespace Glib;
 using namespace Gtk;
@@ -86,6 +88,14 @@ public:
       return true;
     });
 
+    setIters.set_text("# of Lifetimes to be trained for");
+    button4.set_image_from_icon_name("document-open-recent");
+    button4.signal_button_release_event().connect([&](GdkEventButton*) {
+      updateInits();
+      
+      return true;
+    });
+
     button3.set_label("Clear Model Cache");
     button3.signal_button_release_event().connect([&](GdkEventButton*) {
       system("cd .. ; rm models/*");
@@ -95,11 +105,15 @@ public:
     fixedTabPage2.add(textbox1);
     fixedTabPage2.move(textbox1, 10, 10);
     fixedTabPage2.add(button1);
-    fixedTabPage2.move(button1, 10, 70);
+    fixedTabPage2.move(button1, 10, 120);
+    fixedTabPage2.add(button4);
+    fixedTabPage2.move(button4, 10, 80);
+    fixedTabPage2.add(setIters);
+    fixedTabPage2.move(setIters, 50, 80);
     fixedTabPage2.add(button3);
     fixedTabPage2.move(button3, 10, 40);
     fixedTabPage2.add(status);
-    fixedTabPage2.move(status, 10, 110);
+    fixedTabPage2.move(status, 10, 150);
 
     // show trained model tab
 
@@ -134,6 +148,12 @@ private:
   void update_picture() {
     pictureBox1.set(gifpth);
   }
+  void updateInits() {
+    std::string command = "cd .. ; ./data.sh ";
+    command.append(setIters.get_text().data());
+    system(command.data());
+    printf("%s", command.data());
+  }
   Image pictureBox1;
   Fixed fixed;
   ScrolledWindow scrolledWindow;
@@ -160,10 +180,12 @@ private:
   Button button1;
   Button button2;
   Button button3;
+  Button button4;
   Label textbox;
   Label textbox2;
   Label textbox1;
   Label status;
+  Entry setIters;
   int button1Clicked = 0;
 };
 

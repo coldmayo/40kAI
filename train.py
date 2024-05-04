@@ -1,10 +1,11 @@
 import sys
+import os
 import numpy as np
 import gym
 import pickle
 import datetime
 from gym_mod.envs.warhamEnv import *
-from gym_mod.engine import genDisplay, Unit, unitData, weaponData
+from gym_mod.engine import genDisplay, Unit, unitData, weaponData, initFile
 
 b_len = 60
 b_hei = 44
@@ -26,6 +27,8 @@ inText = []
 
 end = False
 totLifeT = 600
+if os.path.isfile("data.json"):
+    totLifeT = initFile.getNumLife()
 numLifeT = 0
 
 inText.append("Model units:")
@@ -75,9 +78,15 @@ with open('trainRes.txt', 'w') as f:
         f.write(inText[i])
         f.write('\n')
 
-genDisplay.makeGif(numOfLife=totLifeT, trunc = True)
+if totLifeT > 20:
+    genDisplay.makeGif(numOfLife=totLifeT, trunc = True)
+else:
+    genDisplay.makeGif(numOfLife=totLifeT)
 
 current_time = datetime.datetime.now()
 date = str(current_time.year)+"-"+str(current_time.month)+"-"+str(current_time.day)+"-"+str(current_time.hour)+"-"+str(current_time.minute)+"-"+str(current_time.second)+"-"+str(current_time.microsecond)
 with open("models/model-{}.pickle".format(date), "wb") as file:
     pickle.dump(env, file)
+
+if os.path.isfile("data.json"):
+    initFile.delFile()
