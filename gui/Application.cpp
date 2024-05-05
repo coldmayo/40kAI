@@ -11,8 +11,11 @@ const char *gifpth = "img/model_train.gif";
 const char *imgpth = "img/icon.png";
 
 class Form : public Window {
-public:
-  Form() {
+
+public : Form() {
+
+    modelClass = " Space_Marine";
+    enemyClass = " Space_Marine";
 
     set_icon_from_file(imgpth);
 
@@ -81,18 +84,20 @@ public:
     
     button1.set_label("Train");
     button1.signal_button_release_event().connect([&](GdkEventButton*) {
-      status.set_text("Training...");
-      system("cd .. ; ./train.sh");
-      status.set_text("Completed!");
-      update_picture();
+      if (exists_test("data.json")) {
+        status.set_text("Training...");
+        system("cd .. ; ./train.sh");
+        status.set_text("Completed!");
+        update_picture();
+      }
       return true;
     });
 
-    setIters.set_text("# of Lifetimes to be trained for");
+    setIters.set_text("# of Lifetimes");
     button4.set_image_from_icon_name("document-open-recent");
     button4.signal_button_release_event().connect([&](GdkEventButton*) {
-      updateInits();
-      
+      updateInits(modelClass, enemyClass);
+      setIters.set_text("");
       return true;
     });
 
@@ -102,18 +107,57 @@ public:
       return true;
     });
 
+    spmModel.set_label("Space Marine");
+    spmModel.set_group(factionModel);
+    spmModel.signal_toggled().connect([this]() {
+      modelClass = " Space_Marine";
+    });
+
+    orksModel.set_label("Orks");
+    orksModel.set_group(factionModel);
+    orksModel.signal_toggled().connect([this]() {
+      modelClass = " Orks";
+    });
+
+    spmEnemy.set_label("Space Marine");
+    spmEnemy.set_group(factionEnemy);
+    spmEnemy.signal_toggled().connect([this]() {
+      enemyClass = " Space_Marine";
+    });
+
+    orksEnemy.set_label("Orks");
+    orksEnemy.set_group(factionEnemy);
+    orksEnemy.signal_toggled().connect([this]() {
+      enemyClass = " Orks";
+    });
+
+    enemyFact.set_text("Enemy Faction: ");
+    modelFact.set_text("Model Faction: ");
+
+    fixedTabPage2.add(enemyFact);
+    fixedTabPage2.move(enemyFact, 10, 200);
+    fixedTabPage2.add(modelFact);
+    fixedTabPage2.move(modelFact, 10, 160);
+    fixedTabPage2.add(orksModel);
+    fixedTabPage2.move(orksModel, 100, 160);
+    fixedTabPage2.add(spmModel);
+    fixedTabPage2.move(spmModel, 160, 160);
+    fixedTabPage2.add(orksEnemy);
+    fixedTabPage2.move(orksEnemy, 100, 200);
+    fixedTabPage2.add(spmEnemy);
+    fixedTabPage2.move(spmEnemy, 160, 200);
     fixedTabPage2.add(textbox1);
     fixedTabPage2.move(textbox1, 10, 10);
     fixedTabPage2.add(button1);
-    fixedTabPage2.move(button1, 10, 120);
+    fixedTabPage2.move(button1, 150, 80);
     fixedTabPage2.add(button4);
-    fixedTabPage2.move(button4, 10, 80);
+    fixedTabPage2.move(button4, 10, 40);
     fixedTabPage2.add(setIters);
-    fixedTabPage2.move(setIters, 50, 80);
+    fixedTabPage2.move(setIters, 50, 40);
     fixedTabPage2.add(button3);
-    fixedTabPage2.move(button3, 10, 40);
+    fixedTabPage2.move(button3, 10, 80);
     fixedTabPage2.add(status);
-    fixedTabPage2.move(status, 10, 150);
+    fixedTabPage2.move(status, 10, 120);
 
     // show trained model tab
 
@@ -126,6 +170,7 @@ public:
     update_picture();
 
      // Play tab
+    
     tabPage4.add(fixedTabPage4);
     button2.set_label("Play");
     textbox2.set_text("Play Against Model in Terminal:");
@@ -143,16 +188,23 @@ public:
     show_all();
 
   }
-  
+
 private:
   void update_picture() {
     pictureBox1.set(gifpth);
   }
-  void updateInits() {
+  void updateInits(std::string model, std::string enemy) {
     std::string command = "cd .. ; ./data.sh ";
+    printf("%s\n", model.data());
     command.append(setIters.get_text().data());
+    command.append(model);
+    command.append(enemy);
     system(command.data());
-    printf("%s", command.data());
+    printf("%s\n", command.data());
+  }
+  inline bool exists_test (const std::string& name) {
+    struct stat buffer;   
+    return (stat (name.c_str(), &buffer) == 0); 
   }
   Image pictureBox1;
   Fixed fixed;
@@ -184,8 +236,18 @@ private:
   Label textbox;
   Label textbox2;
   Label textbox1;
+  Label enemyFact;
+  Label modelFact;
   Label status;
   Entry setIters;
+  RadioButtonGroup factionModel;
+  RadioButton orksModel;
+  RadioButton spmModel;
+  RadioButtonGroup factionEnemy;
+  RadioButton orksEnemy;
+  RadioButton spmEnemy;
+  std::string enemyClass;
+  std::string modelClass;
   int button1Clicked = 0;
 };
 

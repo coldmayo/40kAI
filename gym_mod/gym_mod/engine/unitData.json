@@ -17,9 +17,45 @@
             "T": 4,
             "Sv": 3,
             "W": 4
+        },
+        {
+            "Army": "Orks",
+            "Name": "Beastboss",
+            "Movement": 6,
+            "#OfModels": 1,
+            "T": 5,
+            "Sv": 4,
+            "W": 5
+        },
+        {
+            "Army": "Orks",
+            "Name": "Snagga Boyz",
+            "Movement": 6,
+            "#OfModels": 10,
+            "T": 5,
+            "Sv": 5,
+            "W": 1
         }
     ],
     "WeaponData": [
+        {
+            "Name": "Shoota",
+            "Type": "Ranged",
+            "BS": 4,
+            "S": 4,
+            "AP": 0,
+            "Range": 18,
+            "Damage": 1
+        },
+        {
+            "Name": "Beastchoppa",
+            "Type": "Melee",
+            "WS": 2,
+            "S": 6,
+            "AP": -1,
+            "Range": 2,
+            "Damage": 2
+        },
         {
             "Name":"Bolt Pistol",
             "Type": "Ranged",
@@ -47,6 +83,24 @@
             "Range": 2,
             "Damage": 1
 
+        },
+        {
+            "Name": "Slugga",
+            "Type": "Ranged",
+            "BS": 5,
+            "S": 4,
+            "AP": 0,
+            "Range": 12,
+            "Damage": 1
+        },
+        {
+            "Name": "Choppa",
+            "Type": "Melee",
+            "WS": 3,
+            "S": 5,
+            "AP": -1,
+            "Range": 2,
+            "Damage": 1
         }
     ]
 }
