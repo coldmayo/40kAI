@@ -58,7 +58,8 @@ class Warhammer40kEnv(gym.Env):
 
     def get_info(self):
         return {"unit health":self.unit_health, "enemy health": self.enemy_health, "in attack": self.unitInAttack}
-    
+    def is_num(self, maybeNum):
+        return maybeNum.isnumeric()
     def distance(self, p1, p2):
         return np.sqrt((p2[0]-p1[0])**2 + (p2[1]-p1[1])**2)
 
@@ -369,19 +370,19 @@ class Warhammer40kEnv(gym.Env):
                 movement = roll+self.unit_data[i]["Movement"]
                 response = False
                 while response == False:
-                    if dire == "down":
+                    if dire.lower() == "down":
                         self.enemy_coords[i][0] += movement
                         response = True
-                    elif dire == "up":
+                    elif dire.lower() == "up":
                         self.enemy_coords[i][0] -= movement
                         response = True
-                    elif dire == "left":
+                    elif dire.lower() == "left":
                         self.enemy_coords[i][1] -= movement
                         response = True
-                    elif dire == "right":
+                    elif dire.lower() == "right":
                         self.enemy_coords[i][1] += movement
                         response = True
-                    elif dire == "quit":
+                    elif dire.lower() == "quit":
                         self.game_over = True
                         info = self.get_info()
                         return self.game_over, info
@@ -399,6 +400,7 @@ class Warhammer40kEnv(gym.Env):
                 self.updateBoard()
                 self.showBoard()
                 print("Take a look at board.txt to view the updated board")
+                
                 # shooting phase (if eligible)
                 print("Beginning shooting phase!")
                 shootAble = []
@@ -408,11 +410,21 @@ class Warhammer40kEnv(gym.Env):
                         shootAble.append(j)
 
                 if len(shootAble) > 0:
-                    shoot = input("Select which enemy unit you would like to shoot ({})".format(shootAble))
-                    idOfE = int(shoot)
-                    dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_weapon[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE])
-                    self.unit_health[idOfE] = modHealth
-                    print("Player Unit",i,"shoots Model Unit",idOfE,sum(dmg),"times")
+                    response = False
+                    while response == False:
+                        shoot = input("Select which enemy unit you would like to shoot ({}): ".format(shootAble))
+                        if self.is_num(shoot) == True and int(shoot) in shootAble:
+                            idOfE = int(shoot)
+                            dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_weapon[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE])
+                            self.unit_health[idOfE] = modHealth
+                            print("Player Unit",i,"shoots Model Unit",idOfE,sum(dmg),"times")
+                            response = True
+                        elif shoot == "quit":
+                            self.game_over = True
+                            info = self.get_info()
+                            return self.game_over, info
+                        else:
+                            print("Not an available unit")
                 else:
                     print("No available units to attack")
 
@@ -425,53 +437,74 @@ class Warhammer40kEnv(gym.Env):
                         charg.append(j)
 
                 if len(charg) > 0:
-                    attack = input("Select while enemy you would like to charge ({})".format(charg))
-                    j = int(attack)
-                    print("Rolling 2 D6...")
-                    roll = self.dice(num=2)
-                    print("You rolled a", roll[0], "and", roll[1])
-                    if self.distance(self.enemy_coords[i], self.unit_coords[j]) - sum(roll) <= 5:
-                        print("Player Unit", i, "Successfully charged Model Unit", j)
-                        self.enemyInAttack[i][0] = 1
-                        self.enemyInAttack[i][1] = j
+                    response = False
+                    while response == False:
+                        attack = input("Select while enemy you would like to charge ({}): ".format(charg))
+                        if self.is_num(attack) == True and int(attack) in charg:
+                            response = True
+                            j = int(attack)
+                            print("Rolling 2 D6...")
+                            roll = self.dice(num=2)
+                            print("You rolled a", roll[0], "and", roll[1])
+                            if self.distance(self.enemy_coords[i], self.unit_coords[j]) - sum(roll) <= 5:
+                                print("Player Unit", i, "Successfully charged Model Unit", j)
+                                self.enemyInAttack[i][0] = 1
+                                self.enemyInAttack[i][1] = j
 
-                        self.enemy_coords[i][0] = self.unit_coords[j][0] + 1
-                        self.enemy_coords[i][1] = self.unit_coords[j][1] + 1
-                        self.enemy_coords[i] = self.bounds(self.enemy_coords[i])
+                                self.enemy_coords[i][0] = self.unit_coords[j][0] + 1
+                                self.enemy_coords[i][1] = self.unit_coords[j][1] + 1
+                                self.enemy_coords[i] = self.bounds(self.enemy_coords[i])
 
-                        idOfE = j
-                        dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE], rangeOfComb="Melee")
-                        self.unit_health[idOfE] = modHealth
+                                idOfE = j
+                                dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE], rangeOfComb="Melee")
+                                self.unit_health[idOfE] = modHealth
 
-                        self.unitInAttack[j][0] = 1
-                        self.unitInAttack[j][1] = i
-                    else:
-                        print("Player Unit", i, "Failed to charge Model Unit", j)
+                                self.unitInAttack[j][0] = 1
+                                self.unitInAttack[j][1] = i
+                            else:
+                                print("Player Unit", i, "Failed to charge Model Unit", j)
+                        
+                        elif attack == "quit":
+                            self.game_over = True
+                            info = self.get_info()
+                            return self.game_over, info
+                        else:
+                            print("Not an available unit")
                 else:
                     print("No available units to attack")                
             
             elif self.enemyInAttack[i][0] == 1 and self.enemy_health[i] > 0:
                 idOfE = self.enemyInAttack[i][1]
-                fallB = input("Would you like to fallback? (y/n)")
-                if fallB == "n":
-                    print("Player Unit", i, "Is attacking Model Unit", idOfE)
-                    dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE], rangeOfComb="Melee")
-                    self.unit_health[idOfE] = modHealth
-                    if self.unit_health[idOfE] <= 0:
-                        print("Model Unit", idOfE, "has been killed")
+                response = False
+                while response == False:
+                    fallB = input("Would you like to fallback? (y/n): ")
+                    if fallB.lower() == "n" or fallB.lower() == "no":
+                        response = True
+                        print("Player Unit", i, "Is attacking Model Unit", idOfE)
+                        dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE], rangeOfComb="Melee")
+                        self.unit_health[idOfE] = modHealth
+                        if self.unit_health[idOfE] <= 0:
+                            print("Model Unit", idOfE, "has been killed")
+                            self.enemyInAttack[i][0] = 0
+                            self.enemyInAttack[i][1] = 0
+
+                            self.unitInAttack[idOfE][0] = 0
+                            self.unitInAttack[idOfE][1] = 0
+                    elif fallB.lower() == "y" or fallB.lower() == "yes":
+                        response = True
+                        print("Player Unit", i,"fell back from Enemy unit", idOfE)
+                        self.enemy_coords[i][0] += self.enemy_data[i]["Movement"]
                         self.enemyInAttack[i][0] = 0
                         self.enemyInAttack[i][1] = 0
 
                         self.unitInAttack[idOfE][0] = 0
                         self.unitInAttack[idOfE][1] = 0
-                elif fallB == "y":
-                    print("Player Unit", i,"fell back from Enemy unit", idOfE)
-                    self.enemy_coords[i][0] += self.enemy_data[i]["Movement"]
-                    self.enemyInAttack[i][0] = 0
-                    self.enemyInAttack[i][1] = 0
-
-                    self.unitInAttack[idOfE][0] = 0
-                    self.unitInAttack[idOfE][1] = 0
+                    elif fallB.lower() == "quit":
+                        self.game_over = True
+                        info = self.get_info()
+                        return self.game_over, info
+                    else:
+                        print("It's a yes or no question dude")
 
         for i in self.enemy_health:
             if i < 0:

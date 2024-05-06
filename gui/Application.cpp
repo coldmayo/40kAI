@@ -76,7 +76,7 @@ public : Form() {
     // train tab
 
     labelPage2.set_label("Train");
-    tabControl2.set_tab_label(tabPage2, labelPage2);
+    tabControl1.set_tab_label(tabPage2, labelPage2);
     tabPage2.add(fixedTabPage2);
 
     textbox1.set_text("Train Model:");
@@ -135,34 +135,34 @@ public : Form() {
     modelFact.set_text("Model Faction: ");
 
     fixedTabPage2.add(enemyFact);
-    fixedTabPage2.move(enemyFact, 10, 200);
+    fixedTabPage2.move(enemyFact, 10, 100);
     fixedTabPage2.add(modelFact);
-    fixedTabPage2.move(modelFact, 10, 160);
+    fixedTabPage2.move(modelFact, 10, 80);
     fixedTabPage2.add(orksModel);
-    fixedTabPage2.move(orksModel, 100, 160);
+    fixedTabPage2.move(orksModel, 100, 80);
     fixedTabPage2.add(spmModel);
-    fixedTabPage2.move(spmModel, 160, 160);
+    fixedTabPage2.move(spmModel, 160, 80);
     fixedTabPage2.add(orksEnemy);
-    fixedTabPage2.move(orksEnemy, 100, 200);
+    fixedTabPage2.move(orksEnemy, 100, 100);
     fixedTabPage2.add(spmEnemy);
-    fixedTabPage2.move(spmEnemy, 160, 200);
+    fixedTabPage2.move(spmEnemy, 160, 100);
     fixedTabPage2.add(textbox1);
     fixedTabPage2.move(textbox1, 10, 10);
     fixedTabPage2.add(button1);
-    fixedTabPage2.move(button1, 150, 80);
+    fixedTabPage2.move(button1, 150, 130);
     fixedTabPage2.add(button4);
     fixedTabPage2.move(button4, 10, 40);
     fixedTabPage2.add(setIters);
     fixedTabPage2.move(setIters, 50, 40);
     fixedTabPage2.add(button3);
-    fixedTabPage2.move(button3, 10, 80);
+    fixedTabPage2.move(button3, 10, 130);
     fixedTabPage2.add(status);
-    fixedTabPage2.move(status, 10, 120);
+    fixedTabPage2.move(status, 10, 170);
 
     // show trained model tab
 
     labelPage3.set_label("Show Trained Model");
-    tabControl3.set_tab_label(tabPage3, labelPage3);
+    tabControl1.set_tab_label(tabPage3, labelPage3);
     tabPage3.add(fixedTabPage3);
     
     fixedTabPage3.add(pictureBox1);
@@ -170,7 +170,8 @@ public : Form() {
     update_picture();
 
      // Play tab
-    
+    labelPage4.set_label("Play");
+    tabControl1.set_tab_label(tabPage4, labelPage4);
     tabPage4.add(fixedTabPage4);
     button2.set_label("Play");
     textbox2.set_text("Play Against Model in Terminal:");
@@ -210,11 +211,10 @@ private:
   Fixed fixed;
   ScrolledWindow scrolledWindow;
   Notebook tabControl1;
-  Notebook tabControl2;
-  Notebook tabControl3;
   Label labelPage1;
   Label labelPage2;
   Label labelPage3;
+  Label labelPage4;
   Label label1;
   Frame tabPage1;
   Frame tabPage2;
