@@ -15,13 +15,15 @@ def makeGif(numOfLife, Type = "train", trunc = False):
 
     if trunc == True:
         its = np.arange(numOfLife)
-        itsChosen = np.random.choice(its, 10, replace=False)
+        itsChosen = np.random.choice(its-1, 10, replace=False)+1
         newFiles = []
         print(itsChosen)
 
         for i in files:
             for j in itsChosen:
-                if i[:9] == "display/{}".format(j) or i[:10] == "display/{}".format(j) or i[:11] == "display/{}".format(j):
+                digits = len(str(j))
+                print()
+                if i[:9+digits] == "display/{}_".format(j):
                     newFiles.append(i)
         files = newFiles
         print(files)

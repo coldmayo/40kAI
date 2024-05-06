@@ -16,6 +16,7 @@ public : Form() {
 
     modelClass = " Space_Marine";
     enemyClass = " Space_Marine";
+    path = " ";
 
     set_icon_from_file(imgpth);
 
@@ -176,13 +177,48 @@ public : Form() {
     button2.set_label("Play");
     textbox2.set_text("Play Against Model in Terminal:");
     button2.signal_button_release_event().connect([&](GdkEventButton*) {
-      system("cd .. ; ./play.sh");
+      playAgainstModel(path);
       return true;
     });
+    setModelFile.set_text(" ");
+    button5.set_label("Choose");
+    button5.signal_button_release_event().connect([&](GdkEventButton* event) {
+      FileChooserDialog folderBrowserDialog("", FILE_CHOOSER_ACTION_OPEN);
+      folderBrowserDialog.add_button("Cancel", RESPONSE_CANCEL);
+      folderBrowserDialog.add_button("Open", RESPONSE_OK);
+      folderBrowserDialog.set_current_folder(ustring::compose("%1/Home", ustring(getenv("HOME"))));
+      folderBrowserDialog.set_transient_for(*this);
+
+      auto filter_text = Gtk::FileFilter::create();
+      filter_text->set_name("Pickle Files");
+      filter_text->add_pattern("*.pickle");
+      folderBrowserDialog.add_filter(filter_text);
+
+      if (folderBrowserDialog.run() == RESPONSE_OK) {
+        path = folderBrowserDialog.get_file()->get_path();
+        std::cout << "File selected: " <<  path << std::endl;
+        setModelFile.set_text(path);
+      }
+      return true;
+    });
+    
+    button6.set_image_from_icon_name("document-open-symbolic");
+    button6.signal_button_release_event().connect([&](GdkEventButton* event) {
+      path = setModelFile.get_text();
+      setModelFile.set_text("");
+      return true;
+    });
+
     fixedTabPage4.add(textbox2);
     fixedTabPage4.add(button2);
+    fixedTabPage4.add(button5);
+    fixedTabPage4.add(setModelFile);
+    fixedTabPage4.add(button6);
     fixedTabPage4.move(textbox2, 10, 10);
-    fixedTabPage4.move(button2, 10, 40);
+    fixedTabPage4.move(button2, 10, 80);
+    fixedTabPage4.move(button5, 10, 40);
+    fixedTabPage4.move(setModelFile, 80, 40);
+    fixedTabPage4.move(button6, 255, 40);
 
     set_title("GUI");
     resize(700, 600);
@@ -201,7 +237,17 @@ private:
     command.append(model);
     command.append(enemy);
     system(command.data());
-    printf("%s\n", command.data());
+    //printf("%s\n", command.data());
+  }
+  void playAgainstModel(std::string path) {
+    std::string command = "cd .. ; ./play.sh ";
+    if (strlen(path.data()) < 2) {
+      command.append("None");
+    } else {
+      command.append(path);
+    }
+    //printf("%s\n", command.data());
+    system(command.data());
   }
   inline bool exists_test (const std::string& name) {
     struct stat buffer;   
@@ -233,6 +279,8 @@ private:
   Button button2;
   Button button3;
   Button button4;
+  Button button5;
+  Button button6;
   Label textbox;
   Label textbox2;
   Label textbox1;
@@ -240,6 +288,7 @@ private:
   Label modelFact;
   Label status;
   Entry setIters;
+  Entry setModelFile;
   RadioButtonGroup factionModel;
   RadioButton orksModel;
   RadioButton spmModel;
@@ -248,6 +297,7 @@ private:
   RadioButton spmEnemy;
   std::string enemyClass;
   std::string modelClass;
+  std::string path;
   int button1Clicked = 0;
 };
 
