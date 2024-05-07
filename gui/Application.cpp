@@ -85,6 +85,7 @@ public : Form() {
     
     button1.set_label("Train");
     button1.signal_button_release_event().connect([&](GdkEventButton*) {
+      updateInits(modelClass, enemyClass);
       if (exists_test("data.json")) {
         status.set_text("Training...");
         system("cd .. ; ./train.sh");
@@ -95,12 +96,6 @@ public : Form() {
     });
 
     setIters.set_text("# of Lifetimes");
-    button4.set_image_from_icon_name("document-open-recent");
-    button4.signal_button_release_event().connect([&](GdkEventButton*) {
-      updateInits(modelClass, enemyClass);
-      setIters.set_text("");
-      return true;
-    });
 
     button3.set_label("Clear Model Cache");
     button3.signal_button_release_event().connect([&](GdkEventButton*) {
@@ -151,10 +146,8 @@ public : Form() {
     fixedTabPage2.move(textbox1, 10, 10);
     fixedTabPage2.add(button1);
     fixedTabPage2.move(button1, 150, 130);
-    fixedTabPage2.add(button4);
-    fixedTabPage2.move(button4, 10, 40);
     fixedTabPage2.add(setIters);
-    fixedTabPage2.move(setIters, 50, 40);
+    fixedTabPage2.move(setIters, 10, 40);
     fixedTabPage2.add(button3);
     fixedTabPage2.move(button3, 10, 130);
     fixedTabPage2.add(status);
@@ -177,6 +170,7 @@ public : Form() {
     button2.set_label("Play");
     textbox2.set_text("Play Against Model in Terminal:");
     button2.signal_button_release_event().connect([&](GdkEventButton*) {
+      path = setModelFile.get_text();
       playAgainstModel(path);
       return true;
     });
@@ -201,24 +195,15 @@ public : Form() {
       }
       return true;
     });
-    
-    button6.set_image_from_icon_name("document-open-symbolic");
-    button6.signal_button_release_event().connect([&](GdkEventButton* event) {
-      path = setModelFile.get_text();
-      setModelFile.set_text("");
-      return true;
-    });
 
     fixedTabPage4.add(textbox2);
     fixedTabPage4.add(button2);
     fixedTabPage4.add(button5);
     fixedTabPage4.add(setModelFile);
-    fixedTabPage4.add(button6);
     fixedTabPage4.move(textbox2, 10, 10);
     fixedTabPage4.move(button2, 10, 80);
     fixedTabPage4.move(button5, 10, 40);
     fixedTabPage4.move(setModelFile, 80, 40);
-    fixedTabPage4.move(button6, 255, 40);
 
     set_title("GUI");
     resize(700, 600);
