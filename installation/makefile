@@ -9,4 +9,3 @@ run:
 
 clean:
 		@rm *.o
-		@rm install

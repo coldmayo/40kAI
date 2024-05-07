@@ -1,8 +1,9 @@
-//#include <iostream>
 #include <stdio.h> 
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <dirent.h>
+#include <errno.h>
 
 void showIcon() {
     FILE *fptr;
@@ -34,32 +35,36 @@ int parseInput(char *comm) {
     if (strcmp(comm, "install") == 0) {
         char buffer2[50];
         printf("\nStarting installation...\n");
+        printf("Installing Application...\n");
         const char *path = "Path=";
+        char path_actual[PATH_MAX + strlen(path) + 1]; 
         const char *iconPath = "img/icon.png";
         const char *execPath = "build/Application";
         const char *symlinkpath = "gui/";
         char user[50];
         char actualpath[PATH_MAX];
-        if (realpath("install.c", actualpath) != NULL) {
+        if (realpath("../../40kAI/", actualpath) != NULL) {
+            strcat(actualpath, "/");
+            strcpy(path_actual, path);
+            strcat(path_actual, actualpath);
+            strcat(path_actual, symlinkpath);
+            printf("%s\n", path_actual);
+            strcpy(buffer2, actualpath);
+
             int len = strlen(actualpath);
-            for (int i = 0; i < len; i++) {
+
+            // find the users username for application install path
+
+            for (int i = 0; i<len; i++) {
                 if (i > 4) {
                     slice_str(actualpath, buffer, i - 5, i);
                     if (strcmp(buffer, "/home/") == 0) {
-                        for (int j = i+1; j<len; j++) {
+                        for (int j = i+1; j < len; j++) {
                             if (actualpath[j] == '/') {
                                 slice_str(actualpath, user, i+1, j-1);
-                                //printf("%s\n",slice_str(actualpath, user, i+1, j-1));
                                 break;
                             }
                         }
-                    }
-
-                    if (strcmp(buffer, "40kAI/") == 0) {
-                        slice_str(actualpath, buffer, 0, i);
-                        strcat(buffer, symlinkpath);
-                        //printf("%s\n", buffer);
-                        break;
                     }
                 }
             }
@@ -73,41 +78,46 @@ int parseInput(char *comm) {
         strcpy(desktopFile, "/home/");
         strcat(desktopFile, user);
         strcat(desktopFile, "/.local/share/applications/org.kde.40kAI.desktop");
+        printf("%s\n", desktopFile);
         fptr = fopen(desktopFile, "w");
         if (fptr == NULL) {
             perror("fopen");
             return running;
         }
-        char path_actual[PATH_MAX + strlen(path) + 1]; 
-        strcpy(path_actual, path);
-        strcat(path_actual, buffer);
-        strcpy(buffer2, buffer);
 
         fprintf(fptr, "[Desktop Entry]\n");
         fprintf(fptr, "Type=Application\n");
         fprintf(fptr, "Name=40kAI\n");
         fprintf(fptr, "StartupNotify=true\n");
         fprintf(fptr, "Terminal=true\n");
-        fprintf(fptr, "%s\n", path_actual);
+        fprintf(fptr, "%s\n", path_actual);      
 
-        strcpy(path_actual, "Icon=");
-        strcat(path_actual, strcat(buffer, "img/icon.png"));        
+        fprintf(fptr, "Icon=%sgui/img/icon.png\n", actualpath);
 
-        fprintf(fptr, "%s\n", path_actual);
-
-        strcpy(path_actual, "Exec=");
-        strcat(path_actual, strcat(buffer2, "build/Application"));  
-
-        fprintf(fptr, "%s\n", path_actual);
+        fprintf(fptr, "Exec=%sgui/build/Application\n", actualpath);
         fclose(fptr);
 
+
+        printf("Application Installed!\n");
+        printf("Installing Python Packages...\n");
+        DIR* dir = opendir("../.venv/");
+        if (dir) {
+            printf("Virtual Environment found, no need to install\n");
+            closedir(dir);
+        } else if (ENOENT == errno) {
+            printf("No Virtual Environment found, Installing...\n");
+            system("cd .. ; python -m venv .venv");
+        }
+        system("cd .. ; source .venv/bin/activate ; cd gym_mod ; pip install .");
+        printf("Packages Installed!\n");
         printf("Installation Complete!\n");
+        
     } else if (strcmp(comm, "uninstall") == 0) {
         printf("Sad to see you go\n");
         printf("Starting uninstallation...");
         char actualpath[PATH_MAX];
         char user[50];
-        if (realpath("install.c", actualpath) != NULL) {
+        if (realpath("../../40kAI/", actualpath) != NULL) {
             int len = strlen(actualpath);
             for (int i = 0; i < len; i++) {
                 if (i > 4) {
@@ -132,8 +142,8 @@ int parseInput(char *comm) {
         strcpy(command, "rm ");
         strcat(command, desktopFile);
         system(command);
-
-        printf("\nInstallation Complete :(\n");
+        system("cd .. ; source .venv/bin/activate ; cd gym_mod ; pip uninstall Warhammer40kAI");
+        printf("\nUninstallation Complete :(\n");
 
     } else if (strcmp(comm, "help") == 0) {
 
