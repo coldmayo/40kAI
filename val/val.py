@@ -5,7 +5,7 @@ import os
 from gym_mod.envs.warhamEnv import *
 from gym_mod.engine import genDisplay
 
-savePath = "models"
+savePath = "../models"
 
 # find most recently made model
 

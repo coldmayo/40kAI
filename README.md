@@ -7,12 +7,14 @@
 
 <p align="center">
     <a href="#description">Description</a> •
-    <a href="#how-to-use">How to Use</a>
+    <a href="#gameplay">Gameplay</a> •
+    <a href="#installation">Installation</a> •
+    <a href="#contact-me">Contact</a>
 </p>
 
 ## Description
 
-I am new to Warhammer 40k and scared to play against others, so I decided to make a model that can play against me using Reinforcement Learning. To accomplish this, I am creating a custom 40k environment to be used with the Gym API. 
+I am new to Warhammer 40k and scared to play against others, so I decided to make a model that could play against me using Reinforcement Learning. To accomplish this, I am creating a custom 40k environment to be used with the Gym API. 
 
 ## Gameplay
 
@@ -29,38 +31,63 @@ Just like the tabletop game, it is played in turns, with each turn divided into 
 4. Fight Phase
     - Close combat between engaged units is resolved
 
-## How to Use
+The object of the game is to kill all of the units on the opposing team.
 
-Before training the gym environment must be installed. Follow the instructions below:
+## Installation
+
+### Application 
+
+Before proceeding make sure your device meets the below requirements:
+- Runs a Linux Distribution (Windows and Mac not supported)
+   - Confirmed to work on Arch Linux
+- Has the following installed:
+   - Python and pip
+   - gtk and gtkmm
+   - make
+   - cmake
+   - gcc
 
 ```bash
-# Clone this repository
+# clone repo
 $ git clone https://github.com/coldmayo/40kAI.git
 
-# cd into the gym_mod directory
-$ cd gym_mod
+# go into /40kAI/installation/ directory
+$ cd installation
 
-# create Python package
-$ pip install .
+# start the install script
+$ make run
+
+# while running the script, type "install" into the prompt
+> install
+
+# Once finished, exit the script with the "exit" command
+> exit
 ```
 
-### Using the GUI (for Linux)
+Once the above is completed, one should be able to find the .desktop file in the /home/your_username/.local/share/applications directory.
 
-Make sure you have the following software installed before proceeding:
-- gcc
-- cmake
-- make
-- gtk
-- gtkmm
+Go <a href="https://github.com/coldmayo/40kAI/blob/main/gui/README.md">here</a> to learn more about how to use the app.
 
-Proceed <a href="https://github.com/coldmayo/40kAI/blob/main/gui/README.md">here</a> for instructions.
+### Bash Scripts
 
-
-### Using the Shell Scripts
+If you don't use the install script you have to install all of the python packages manually. Luckily the list of requirements are a lot smaller (all you need is Python and pip). Instructions are as follows below:
 
 ```bash
-# run train.sh
-$ ./train.sh
-# run play.sh
-$ ./play.sh
+# create virtual environment
+$ python -m venv .venv
+
+# cd into gym_mod folder
+$ cd gym_mod
+
+# install packages
+$ pip install .
+
+# train model (chmod +x train.sh if permission error)
+./train.sh
+
+# play against model (chmod +x train.sh if permission error)
+./play.sh
 ```
+## Contact Me
+
+This project is still being worked on, if you have any suggestions or found bugs you can either open an issue or email me <a href="mailto:coldmayo@proton.me">here</a>. 
