@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <dirent.h>
 #include <errno.h>
+#include <unistd.h>
 
 void showIcon() {
     FILE *fptr;
@@ -97,6 +98,40 @@ int parseInput(char *comm) {
         fprintf(fptr, "Exec=%sgui/build/Application\n", actualpath);
         fclose(fptr);
 
+        int resp = 0;
+        char ans[20];
+        while (resp == 0) {
+            printf("Install to Desktop? (y/n): ");
+            scanf("%s", ans);
+            if (strcmp(ans, "y")==0 || strcmp(ans, "yes")==0) {
+                FILE *fptr;
+                char desktopDir[PATH_MAX] = "/home/";
+                strcat(desktopDir, user);
+                strcat(desktopDir, "/Desktop/org.kde.40kAI.desktop");
+                printf("%s\n", desktopDir);
+                fptr = fopen(desktopDir, "w");
+
+                fprintf(fptr, "[Desktop Entry]\n");
+                fprintf(fptr, "Type=Application\n");
+                fprintf(fptr, "Name=40kAI\n");
+                fprintf(fptr, "StartupNotify=true\n");
+                fprintf(fptr, "Terminal=true\n");
+                fprintf(fptr, "%s\n", path_actual);      
+
+                fprintf(fptr, "Icon=%sgui/img/icon.png\n", actualpath);
+
+                fprintf(fptr, "Exec=%sgui/build/Application\n", actualpath);
+
+                fclose(fptr);
+
+                resp = 1;
+            } else if (strcmp(ans, "n")==0 || strcmp(ans, "no")==0) {
+                resp = 1;
+            } else {
+                printf("Its a yes or no question, do you want to ");
+            }
+
+        }
 
         printf("Application Installed!\n");
         printf("Installing Python Packages...\n");
@@ -142,6 +177,18 @@ int parseInput(char *comm) {
         strcpy(command, "rm ");
         strcat(command, desktopFile);
         system(command);
+
+        char desktopDir[PATH_MAX] = "/home/";
+        strcat(desktopDir, user);
+        strcat(desktopDir, "/Desktop/org.kde.40kAI.desktop");
+
+        if (access(desktopDir, F_OK) == 0) {
+            char command[50];
+            strcpy(command, "rm ");
+            strcat(command, desktopDir);
+            system(command);
+        }
+
         system("cd .. ; source .venv/bin/activate ; cd gym_mod ; pip uninstall Warhammer40kAI");
         printf("\nUninstallation Complete :(\n");
 
