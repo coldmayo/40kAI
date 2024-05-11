@@ -3,6 +3,10 @@
 #include <cstdlib>
 #include <stdlib.h>
 #include <string>
+#include <fstream>
+#include <thread>
+#include <mutex>
+#include <chrono>
 
 using namespace Glib;
 using namespace Gtk;
@@ -10,10 +14,94 @@ using namespace Gtk;
 const char *gifpth = "img/model_train.gif";
 const char *imgpth = "img/icon.png";
 
+class PopUp : public Gtk::Window {
+  public : 
+    PopUp();
+    std::string openFile(std::string);
+    bool isNum(char num);
+    void update();
+  private:
+    Label contents;
+    Fixed fixed;
+    ScrolledWindow scrolledWindow;
+    Button refresh;
+};
+
+bool PopUp :: isNum(char num) {
+  std::string nums= "0123456789";
+  for (char n : nums) {
+    if (n == num) {
+      return true;
+    }
+  }
+  return false;
+}
+
+std::string PopUp :: openFile(std::string board) {
+  std::fstream file;
+  file.open(board, std::ios::in);
+  std::string fullFile;
+  char last; 
+  if (!file) {
+    std::cout << "File does not exist";
+    fullFile.append(":(");
+  } else {
+    char ch;
+    while (1) {
+      file >> ch;
+      if (file.eof()) {
+        break;
+      }
+      if (last == '0' && ch != ',') {
+        fullFile += '\n';
+      } else if (ch == '0' && isNum(last) == true) {
+        fullFile += '\n';
+      }
+      fullFile += ch;
+      last = ch;
+    }
+    //std::cout << fullFile;
+  }
+  file.close();
+  return fullFile;
+}
+
+void PopUp :: update() {
+  std::string boardpth = "../board.txt";
+  std::string board;
+  board = openFile(boardpth);
+  contents.set_text(board);
+}
+
+PopUp :: PopUp() {
+  add(scrolledWindow);
+  scrolledWindow.add(fixed);
+  
+  set_title("board.txt");
+  std::string boardpth = "../board.txt";
+  std::string board;
+  board = openFile(boardpth);
+  contents.set_text(board);
+
+  refresh.set_label("Update...");
+  refresh.signal_button_release_event().connect([&](GdkEventButton*) {
+    update();
+    return true;
+  });
+  
+  fixed.add(contents);
+  fixed.move(contents, 0, 30);
+  fixed.add(refresh);
+  fixed.move(refresh, 0, 0);
+
+  resize(600,500);
+  show_all();
+}
+
+
 class Form : public Window {
 
 public : Form() {
-
     modelClass = " Space_Marine";
     enemyClass = " Space_Marine";
     path = " ";
@@ -22,8 +110,7 @@ public : Form() {
 
     add(scrolledWindow);
     scrolledWindow.add(fixed);
-    
-    tabControl1.set_size_request(370, 250);
+
     fixed.add(tabControl1);
     fixed.move(tabControl1, 10, 10);
 
@@ -88,7 +175,7 @@ public : Form() {
       updateInits(modelClass, enemyClass);
       if (exists_test("data.json")) {
         status.set_text("Training...");
-        system("cd .. ; ./train.sh");
+        startTrainInBackground();
         status.set_text("Completed!");
         update_picture();
       }
@@ -170,8 +257,7 @@ public : Form() {
     button2.set_label("Play");
     textbox2.set_text("Play Against Model in Terminal:");
     button2.signal_button_release_event().connect([&](GdkEventButton*) {
-      path = setModelFile.get_text();
-      playAgainstModel(path);
+      runPlayAgainstModelInBackground();
       return true;
     });
     setModelFile.set_text(" ");
@@ -205,6 +291,8 @@ public : Form() {
     fixedTabPage4.move(button5, 10, 40);
     fixedTabPage4.move(setModelFile, 80, 40);
 
+    openPopUp();
+
     set_title("GUI");
     resize(700, 600);
     show_all();
@@ -212,6 +300,11 @@ public : Form() {
   }
 
 private:
+  int openPopUp() {
+    aboutw_ = new PopUp;
+    aboutw_->show();
+    return 0;
+  }
   void update_picture() {
     pictureBox1.set(gifpth);
   }
@@ -222,22 +315,34 @@ private:
     command.append(model);
     command.append(enemy);
     system(command.data());
-    //printf("%s\n", command.data());
   }
-  void playAgainstModel(std::string path) {
+  void startTrainInBackground() {
+    std::thread t(&Form::startTrain, this);
+    t.detach();
+  }
+  void startTrain() {
+    system("cd .. ; ./train.sh");
+  }
+  void runPlayAgainstModelInBackground() {
+    std::thread t(&Form::playAgainstModel, this);
+    t.detach();
+  }
+  void playAgainstModel() {
+    path = setModelFile.get_text();
     std::string command = "cd .. ; ./play.sh ";
     if (strlen(path.data()) < 2) {
       command.append("None");
     } else {
       command.append(path);
     }
-    //printf("%s\n", command.data());
     system(command.data());
   }
+
   inline bool exists_test (const std::string& name) {
     struct stat buffer;   
     return (stat (name.c_str(), &buffer) == 0); 
   }
+  Window* aboutw_;
   Image pictureBox1;
   Fixed fixed;
   ScrolledWindow scrolledWindow;
