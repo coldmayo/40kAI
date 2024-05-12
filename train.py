@@ -10,11 +10,11 @@ from gym_mod.engine import genDisplay, Unit, unitData, weaponData, initFile
 b_len = 60
 b_hei = 44
 
-enemy1 = Unit(unitData("Space Marine", "Eliminator Squad"), weaponData("Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
-model1 = Unit(unitData("Space Marine", "Eliminator Squad"), weaponData("Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
+enemy1 = Unit(unitData("Space_Marine", "Eliminator Squad"), weaponData("Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
+model1 = Unit(unitData("Space_Marine", "Eliminator Squad"), weaponData("Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
 
-enemy2 = Unit(unitData("Space Marine", "Apothecary"), weaponData("Absolver Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
-model2 = Unit(unitData("Space Marine", "Apothecary"), weaponData("Absolver Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
+enemy2 = Unit(unitData("Space_Marine", "Apothecary"), weaponData("Absolver Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
+model2 = Unit(unitData("Space_Marine", "Apothecary"), weaponData("Absolver Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
 
 enemy = [enemy1, enemy2]
 model = [model1, model2]
@@ -23,15 +23,17 @@ end = False
 totLifeT = 600
 if os.path.isfile("gui/data.json"):
     totLifeT = initFile.getNumLife()
+    b_len = initFile.getBoardX()
+    b_hei = initFile.getBoardY()
     if initFile.getModelFaction() == "Space_Marine":
-        model1 = Unit(unitData("Space Marine", "Eliminator Squad"), weaponData("Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
-        model2 = Unit(unitData("Space Marine", "Apothecary"), weaponData("Absolver Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
+        model1 = Unit(unitData("Space_Marine", "Eliminator Squad"), weaponData("Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
+        model2 = Unit(unitData("Space_Marine", "Apothecary"), weaponData("Absolver Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
     elif initFile.getModelFaction() == "Orks":
         model1 = Unit(unitData("Orks", "Snagga Boyz"), weaponData("Slugga"), weaponData("Choppa"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
         model2 = Unit(unitData("Orks", "Beastboss"), weaponData("Shoota"), weaponData("Beastchoppa"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
     if initFile.getEnemyFaction() == "Space_Marine":
-        enemy1 = Unit(unitData("Space Marine", "Eliminator Squad"), weaponData("Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
-        enemy2 = Unit(unitData("Space Marine", "Apothecary"), weaponData("Absolver Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
+        enemy1 = Unit(unitData("Space_Marine", "Eliminator Squad"), weaponData("Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
+        enemy2 = Unit(unitData("Space_Marine", "Apothecary"), weaponData("Absolver Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
     elif initFile.getEnemyFaction() == "Orks":
         enemy1 = Unit(unitData("Orks", "Snagga Boyz"), weaponData("Slugga"), weaponData("Choppa"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
         enemy2 = Unit(unitData("Orks", "Beastboss"), weaponData("Shoota"), weaponData("Beastchoppa"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
@@ -98,8 +100,10 @@ else:
     genDisplay.makeGif(numOfLife=totLifeT)
 
 current_time = datetime.datetime.now()
-date = str(current_time.year)+"-"+str(current_time.month)+"-"+str(current_time.day)+"-"+str(current_time.hour)+"-"+str(current_time.minute)+"-"+str(current_time.second)+"-"+str(current_time.microsecond)
-with open("models/model-{}.pickle".format(date), "wb") as file:
+date = str(current_time.second)+"-"+str(current_time.microsecond)
+name = "M:"+model[0].showUnitData()["Army"]+"_vs_"+"P:"+enemy[0].showUnitData()["Army"]
+os.system("mkdir models/{}".format(name))
+with open("models/{}/model-{}.pickle".format(name, date), "wb") as file:
     pickle.dump(env, file)
 
 if os.path.isfile("gui/data.json"):
