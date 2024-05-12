@@ -267,7 +267,11 @@ public : Form() {
       FileChooserDialog folderBrowserDialog("", FILE_CHOOSER_ACTION_OPEN);
       folderBrowserDialog.add_button("Cancel", RESPONSE_CANCEL);
       folderBrowserDialog.add_button("Open", RESPONSE_OK);
-      folderBrowserDialog.set_current_folder(ustring::compose("%1/Home", ustring(getenv("HOME"))));
+      char resolved_path[PATH_MAX];
+      realpath("../../40kAI", resolved_path);
+      strcat(resolved_path, "/models");
+      printf("%s\n", resolved_path);
+      folderBrowserDialog.set_current_folder(resolved_path);
       folderBrowserDialog.set_transient_for(*this);
 
       auto filter_text = Gtk::FileFilter::create();
@@ -395,6 +399,7 @@ private:
   std::string enemyClass;
   std::string modelClass;
   std::string path;
+  std::string foldPath;
   int button1Clicked = 0;
   bool open;
 };

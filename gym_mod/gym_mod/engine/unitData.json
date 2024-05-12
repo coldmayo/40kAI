@@ -1,7 +1,7 @@
 {
     "UnitData": [
         {
-            "Army": "Space Marine",
+            "Army": "Space_Marine",
             "Name": "Eliminator Squad",
             "Movement": 6,
             "#OfModels": 4,
@@ -10,7 +10,7 @@
             "W": 2
         },
         {
-            "Army": "Space Marine",
+            "Army": "Space_Marine",
             "Name": "Apothecary",
             "Movement": 6,
             "#OfModels": 1,

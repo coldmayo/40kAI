@@ -2,7 +2,7 @@ import json
 import os
 import sys
 
-def makeFile(numIters, modelFaction, enemyFaction):
+def makeFile(numIters, modelFaction, enemyFaction, boardx = 60, boardy = 44):
 
     data = {
         "Army1":modelFaction,
