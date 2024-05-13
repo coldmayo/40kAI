@@ -216,7 +216,7 @@ Form :: Form() {
 
   button3.set_label("Clear Model Cache");
   button3.signal_button_release_event().connect([&](GdkEventButton*) {
-    system("cd .. ; rm models/*");
+    system("cd .. ; rm -r models/*");
     return true;
   });
 
