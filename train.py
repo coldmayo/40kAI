@@ -102,7 +102,9 @@ else:
 current_time = datetime.datetime.now()
 date = str(current_time.second)+"-"+str(current_time.microsecond)
 name = "M:"+model[0].showUnitData()["Army"]+"_vs_"+"P:"+enemy[0].showUnitData()["Army"]
-os.system("mkdir models/{}".format(name))
+if (os.path.exists("models/{}".format(name)) == False):
+    os.system("mkdir models/{}".format(name))
+
 with open("models/{}/model-{}.pickle".format(name, date), "wb") as file:
     pickle.dump(env, file)
 

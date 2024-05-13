@@ -6,10 +6,13 @@
 #include <fstream>
 #include <thread>
 #include <chrono>
+#include <fstream>
+#include <nlohmann/json.hpp>
 #include "popup.h"
 
 using namespace Glib;
 using namespace Gtk;
+using json = nlohmann::json;using json = nlohmann::json;
 
 const char *gifpth = "img/model_train.gif";
 const char *imgpth = "img/icon.png";
@@ -26,9 +29,10 @@ public :
   void runPlayAgainstModelInBackground();
   void playAgainstModel();
   inline bool exists_test (const std::string& name);
+  void on_dropdown_changed();
 
 private:
-  Window* aboutw_;
+  Window* boardShow;
   Image pictureBox1;
   Fixed fixed;
   ScrolledWindow scrolledWindow;
@@ -356,8 +360,8 @@ Form :: Form() {
 }
 
 int Form :: openPopUp() {
-  aboutw_ = new PopUp;
-  aboutw_->show();
+  boardShow = new PopUp;
+  boardShow->show();
   return 0;
 }
 

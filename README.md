@@ -85,7 +85,7 @@ $ pip install .
 # train model (chmod +x train.sh if permission error)
 ./train.sh
 
-# play against model (chmod +x train.sh if permission error)
+# play against model (chmod +x play.sh if permission error)
 ./play.sh
 ```
 ## Contact Me

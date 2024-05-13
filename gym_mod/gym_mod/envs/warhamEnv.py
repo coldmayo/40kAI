@@ -14,6 +14,8 @@ class Warhammer40kEnv(gym.Env):
         self.action_space = spaces.Dict({
             'move': spaces.Discrete(4),  # Four directions: Up, Down, Left, Right
             'attack': spaces.Discrete(2),  # Two attack options: Engage Attack, Leave Attack/move
+            'shoot': spaces.Discrete(len(enemy)),   # choose which model to attack in the shooting phase
+            'charge': spaces.Discrete(len(enemy))   # choose which model to attack in the charge phase
         })
 
         # Initialize game state + board
@@ -199,32 +201,42 @@ class Warhammer40kEnv(gym.Env):
                         self.enemy_coords[i][0] -= 1
 
                 # Shooting phase (if applicable)
+                shootAbleUnits = []
                 for j in range(len(self.unit_health)):
-                    if self.distance(self.enemy_coords[i], self.unit_coords[j]) <= self.enemy_weapon[i]["Range"]:
-                        idOfM = j
-                        dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_weapon[i], self.enemy_data[i], self.unit_health[idOfM], self.unit_data[idOfM])
-                        self.unit_health[idOfM] = modHealth
-                        print("Enemy Unit",i,"shoots Model Unit",idOfM,sum(dmg),"times")
+                    if self.distance(self.enemy_coords[i], self.unit_coords[j]) <= self.enemy_weapon[i]["Range"] and self.unit_health[j] > 0:
+                        shootAbleUnits.append(j)
+                if (len(shootAbleUnits) > 0) :
+                    idOfM = np.random.choice(shootAbleUnits)
+                    dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_weapon[i], self.enemy_data[i], self.unit_health[idOfM], self.unit_data[idOfM])
+                    self.unit_health[idOfM] = modHealth
+                    print("Enemy Unit",i,"shoots Model Unit",idOfM,sum(dmg),"times")
+                
                 # Charging (if applicable)
+                
+                chargeAble = []
+                diceRoll = sum(self.dice(num=2))
+
                 for j in range(len(self.unit_health)):
                     if self.distance(self.enemy_coords[i], self.unit_coords[j]) <= 12 and self.unitInAttack[j][0] == 0:
-                        if self.distance(self.enemy_coords[j], self.unit_coords[i]) - sum(self.dice(num=2)) <= 5:
-                            print("Enemy unit", i,"started attack with Model unit", j)
+                        if self.distance(self.enemy_coords[j], self.unit_coords[i]) - diceRoll <= 5:
+                            chargeAble.append(j)
 
-                            self.enemy_coords[i][0] = self.unit_coords[j][0] + 1
-                            self.enemy_coords[i][1] = self.unit_coords[j][1] + 1
-                            self.enemy_coords[i] = self.bounds(self.enemy_coords[i])
+                if (len(chargeAble) > 0):            
+                    print("Enemy unit", i,"started attack with Model unit", j)
 
-                            idOfM = j
-                            dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfM], self.unit_data[idOfM], rangeOfComb="Melee")
-                            self.unit_health[idOfM] = modHealth
+                    self.enemy_coords[i][0] = self.unit_coords[j][0] + 1
+                    self.enemy_coords[i][1] = self.unit_coords[j][1] + 1
+                    self.enemy_coords[i] = self.bounds(self.enemy_coords[i])
 
-                            self.unitInAttack[j][0] = 1
-                            self.unitInAttack[j][1] = i
+                    idOfM = np.random.choice(chargeAble)
+                    dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfM], self.unit_data[idOfM], rangeOfComb="Melee")
+                    self.unit_health[idOfM] = modHealth
 
-                            self.enemyInAttack[i][0] = 1
-                            self.enemyInAttack[i][1] = j
-                        break
+                    self.unitInAttack[j][0] = 1
+                    self.unitInAttack[j][1] = i
+
+                    self.enemyInAttack[i][0] = 1
+                    self.enemyInAttack[i][1] = idOfM
 
             elif self.enemyInAttack[i][0] == 1 and self.enemy_health[i] > 0:
                 decide = np.random.randint(0,10)
@@ -264,41 +276,53 @@ class Warhammer40kEnv(gym.Env):
                         self.unit_coords[i][0] -= 1
 
                 # shooting phase (if eligible)
-
+                shootAbleUnits = []
                 for j in range(len(self.enemy_health)):
                     if self.distance(self.unit_coords[i], self.enemy_coords[j]) <= self.unit_weapon[i]["Range"] and self.enemy_health[j] > 0:
                         # hit rolls
-                        idOfE = j
+                        shootAbleUnits.append(j)
+                
+                if (len(shootAbleUnits) > 0):        
+                    idOfE = action["shoot"]
+                    if (idOfE in shootAbleUnits): 
                         dmg, modHealth = self.attack(self.unit_health[i], self.unit_weapon[i], self.unit_data[i], self.enemy_health[idOfE], self.enemy_data[idOfE])
                         self.enemy_health[idOfE] = modHealth
                         reward += 0.2
                         print("Model Unit",i,"shoots Enemy Unit",idOfE,sum(dmg),"times")
+                    else:
+                        reward -= 0.5
+                        print("Model Unit", i, "fails to shoot an Enemy Unit")
 
                 # Charge (if applicable)
+                chargeAble = []
+                diceRoll = sum(self.dice(num=2))
 
                 if action["attack"] == 1:
                     for j in range(len(self.enemy_health)):
                         if self.distance(self.enemy_coords[j], self.unit_coords[i]) <= 12 and self.enemyInAttack[j][0] == 0 and self.enemy_health[j] > 0:
-                            if self.distance(self.enemy_coords[j], self.unit_coords[i]) - sum(self.dice(num=2)) <= 5:
-                                print("Model unit", i,"started attack with Enemy unit", j)
-                                self.unitInAttack[i][0] = 1
-                                self.unitInAttack[i][1] = j
+                            if self.distance(self.enemy_coords[j], self.unit_coords[i]) - diceRoll <= 5:
+                                chargeAble.append(j)
+                if (len(chargeAble) > 0):
+                    idOfE = action["charge"]
+                    if idOfE in chargeAble:
+                        print("Model unit", i,"started attack with Enemy unit", j)
+                        self.unitInAttack[i][0] = 1
+                        self.unitInAttack[i][1] = j
 
-                                self.unit_coords[i][0] = self.enemy_coords[j][0] + 1
-                                self.unit_coords[i][1] = self.enemy_coords[j][1] + 1
-                                self.unit_coords[i] = self.bounds(self.unit_coords[i])
+                        self.unit_coords[i][0] = self.enemy_coords[j][0] + 1
+                        self.unit_coords[i][1] = self.enemy_coords[j][1] + 1
+                        self.unit_coords[i] = self.bounds(self.unit_coords[i])
 
-                                idOfE = j
-                                dmg, modHealth = self.attack(self.unit_health[i], self.unit_melee[i], self.unit_data[i], self.enemy_health[idOfE], self.enemy_data[idOfE], rangeOfComb="Melee")
-                                self.enemy_health[idOfE] = modHealth
+                        dmg, modHealth = self.attack(self.unit_health[i], self.unit_melee[i], self.unit_data[i], self.enemy_health[idOfE], self.enemy_data[idOfE], rangeOfComb="Melee")
+                        self.enemy_health[idOfE] = modHealth
 
-                                self.enemyInAttack[j][0] = 1
-                                self.enemyInAttack[j][1] = i
+                        self.enemyInAttack[j][0] = 1
+                        self.enemyInAttack[j][1] = i
 
-                                reward += 0.5
-                            break
-                        else:
-                            reward -= 0.5
+                        reward += 0.5
+                    else:
+                        print("Model unit", i, "failed to attack Enemy")
+                        reward -= 0.5
             
             elif self.unitInAttack[i][0] == 1 and self.unit_health[i] > 0:
                 reward = 0
@@ -549,17 +573,19 @@ class Warhammer40kEnv(gym.Env):
                 message += "Unit model "+str(i)+" is Moving "
             elif self.unitInAttack[i][0] == 1:
                 message += "Unit model "+str(i)+" is in Combat "
+        
         plt.xlabel(message)
         x1 = np.linspace(0,self.b_len,10)
         y1 = np.zeros(10)
         x2 = np.zeros(10)
         y2 = np.linspace(0, self.b_hei,10)
-        plt.xlim(-5,self.b_len + 26)
+        plt.xlim(-5,self.b_len*1.43333)
         plt.ylim(-3,self.b_hei + 4)
         plt.plot(x1,y1,color="black")
         plt.plot(x2,y2,color="black")
         plt.plot(x1,y1+self.b_hei,color="black")
         plt.plot(x2+self.b_len,y2,color="black")
+
         for i in range(len(self.unit_health)):
             if i == 0:
                 plt.plot(self.unit_coords[i][0],self.unit_coords[i][1], 'bo', label="Model Unit")
