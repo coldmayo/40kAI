@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string>
 #include <fstream>
+#include <thread>
+#include <chrono>
 
 using namespace Glib;
 using namespace Gtk;
@@ -14,11 +16,12 @@ class PopUp : public Gtk::Window {
     std::string openFile(std::string);
     bool isNum(char num);
     void update();
+    void keepUpdating();
+    void backgroudUpdate();
   private:
     Label contents;
     Fixed fixed;
     ScrolledWindow scrolledWindow;
-    Button refresh;
 };
 
 bool PopUp :: isNum(char num) {
@@ -67,6 +70,18 @@ void PopUp :: update() {
   contents.set_text(board);
 }
 
+void PopUp :: keepUpdating() {
+  while (true) {
+    update();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
+}
+
+void PopUp :: backgroudUpdate() {
+  std::thread t(&PopUp::keepUpdating, this);
+  t.detach();
+}
+
 PopUp :: PopUp() {
   add(scrolledWindow);
   scrolledWindow.add(fixed);
@@ -77,16 +92,10 @@ PopUp :: PopUp() {
   board = openFile(boardpth);
   contents.set_text(board);
 
-  refresh.set_label("Update...");
-  refresh.signal_button_release_event().connect([&](GdkEventButton*) {
-    update();
-    return true;
-  });
+  backgroudUpdate();
   
   fixed.add(contents);
-  fixed.move(contents, 0, 30);
-  fixed.add(refresh);
-  fixed.move(refresh, 0, 0);
+  fixed.move(contents, 0, 0);
 
   resize(600,500);
   show_all();

@@ -375,11 +375,11 @@ class Warhammer40kEnv(gym.Env):
 
     def player(self):
         for i in range(len(self.enemy_health)):
-            print("For unit", i)
+            print("For unit", i+11)
             if self.enemyInAttack[i][0] == 0 and self.enemy_health[i] > 0:
                 self.updateBoard()
                 self.showBoard()
-                print("Take a look at board.txt to view the current board")
+                print("Take a look at board.txt or click the Show Board button to view the current board")
                 print("If you would like to end the game type 'quit' into the prompt")
                 dire = input("Enter the direction of movement (up, down, left, right): ")
                 

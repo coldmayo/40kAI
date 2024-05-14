@@ -40,6 +40,12 @@ foreach(CONFIG_FILE ${CONFIG_FILES})
     configure_file(${CONFIG_FILE} "${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_FILE_NAME}" COPYONLY)
 endforeach()
 
+# Set the G_DEBUG environment variable to fatal-criticals
+set(G_SLICE "always-malloc")
+
+# Add compiler definition for G_DEBUG
+add_definitions(-DG_SLICE="${G_SLICE}")
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_executable(Application WIN32 main.cpp Application.cpp popup.cpp)

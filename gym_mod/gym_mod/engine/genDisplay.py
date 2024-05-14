@@ -3,7 +3,7 @@ import os
 from tqdm import tqdm
 import numpy as np
 
-def makeGif(numOfLife, Type = "train", trunc = False):
+def makeGif(numOfLife, name="", Type = "train", trunc = False):
     print("Starting...")
     images = []
 
@@ -32,10 +32,10 @@ def makeGif(numOfLife, Type = "train", trunc = False):
     for fil in tqdm(files):
         images.append(imageio.imread(fil))
     if Type == "train":
-        imageio.mimsave('model_train.gif', images)
-        imageio.mimsave('gui/img/model_train.gif', images)
-        imageio.mimsave('gui/build/img/model_train.gif', images)
-        imageio.mimsave('gui/build/Debug/img/model_train.gif', images)
+        imageio.mimsave('model_train{}.gif'.format(name), images)
+        imageio.mimsave('gui/img/model_train{}.gif'.format(name), images)
+        imageio.mimsave('gui/build/img/model_train{}.gif'.format(name), images)
+        imageio.mimsave('gui/build/Debug/img/model_train{}.gif'.format(name), images)
     elif Type == "val":
         imageio.mimsave('val/model_val.gif', images)
     print("Done")

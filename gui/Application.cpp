@@ -90,13 +90,13 @@ private:
   Button downX;
   Button upY;
   Button downY;
-  int button1Clicked = 0;
   int x;
   int y;
   bool open;
 };
 
 Form :: Form() {
+
   modelClass = " Space_Marine";
   enemyClass = " Space_Marine";
   path = " ";
