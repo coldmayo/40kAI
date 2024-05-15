@@ -4,6 +4,7 @@ import numpy as np
 import gym
 import pickle
 import datetime
+from tqdm import tqdm
 from gym_mod.envs.warhamEnv import *
 from gym_mod.engine import genDisplay, Unit, unitData, weaponData, initFile
 
@@ -20,6 +21,7 @@ enemy = [enemy1, enemy2]
 model = [model1, model2]
 
 end = False
+trunc = True
 totLifeT = 600
 if os.path.isfile("gui/data.json"):
     totLifeT = initFile.getNumLife()
@@ -57,34 +59,44 @@ inText.append("Number of Lifetimes ran: {}\n".format(totLifeT))
 
 i = 0
 
+pbar = tqdm(total=totLifeT)
+
 while end == False:
     action = env.action_space.sample()
-    print(env.get_info())
+    if trunc == False:
+        print(env.get_info())
 
-    env.enemyTurn()
+    env.enemyTurn(trunc=trunc)
     next_observation, reward, done, _, info = env.step(action)
 
-    unit_health = info["unit health"]
-    enemy_health = info["enemy health"]
+    unit_health = info["model health"]
+    enemy_health = info["player health"]
     inAttack = info["in attack"]
 
     if inAttack == 1:
-        print("The units are fighting")
+        if trunc == False:
+            print("The units are fighting")
 
     board = env.render()
     message = "Iteration {} ended with reward {}, enemy health {}, model health {}".format(i, reward, enemy_health, unit_health)
-    print(message)
+    if trunc == False:
+        print(message)
     inText.append(message)
     if done == True:
+        pbar.update(1)
         if reward > 0:
-            print("model won!")
+            if trunc == False:
+                print("model won!")
         else:
-            print("enemy won!")
-        print("Restarting...")
+            if trunc == False:
+                print("enemy won!")
+        if trunc == False:
+            print("Restarting...")
         numLifeT+=1
         env.reset()
     if numLifeT == totLifeT:
         end = True
+        pbar.close()
     i+=1
 
 env.close()

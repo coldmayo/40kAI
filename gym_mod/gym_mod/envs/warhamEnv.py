@@ -37,6 +37,7 @@ class Warhammer40kEnv(gym.Env):
         self.game_over = False
         self.unitInAttack = []
         self.enemyInAttack = []
+        self.trunc = False
 
         for i in range(len(enemy)):
             self.enemy_weapon.append(enemy[i].showWeapon())
@@ -59,7 +60,7 @@ class Warhammer40kEnv(gym.Env):
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(obsSpace,), dtype=np.float32)  # 7-dimensional observation space
 
     def get_info(self):
-        return {"unit health":self.unit_health, "enemy health": self.enemy_health, "in attack": self.unitInAttack}
+        return {"model health":self.unit_health, "player health": self.enemy_health, "in attack": self.unitInAttack}
     def is_num(self, maybeNum):
         return maybeNum.isnumeric()
     def distance(self, p1, p2):
@@ -84,6 +85,15 @@ class Warhammer40kEnv(gym.Env):
         if coords[1] >= self.b_hei:
             coords[1] = self.b_hei-1
         return coords
+
+    def isBelowHalfStr(self, data, health):
+        startStr = data["#OfModels"]
+        
+        if health < (data["W"]*startStr)/2:
+            return True
+        
+        return False
+
 
     def attack(self, attackerHealth, attackerWeapon, attackerData, attackeeHealth, attackeeData, rangeOfComb="Ranged"):
         rolls = self.dice(num=attackerData["#OfModels"])
@@ -137,6 +147,7 @@ class Warhammer40kEnv(gym.Env):
 
     def reset(self, Type = "small"):
         self.iter = 0
+        self.trunc = False
         if Type == "small":
             self.restarts += 1
         elif Type == "big":
@@ -167,9 +178,26 @@ class Warhammer40kEnv(gym.Env):
         info = self.get_info()
         return self._get_observation(), info
 
-    def enemyTurn(self):
+    def enemyTurn(self, trunc=False):
+        if trunc == True:
+            self.trunc = True
         for i in range(len(self.enemy_health)):
-            #print(i)
+            enemyName = i+21
+            battleSh = False
+            if self.isBelowHalfStr(self.unit_data[i],self.unit_health[i]) == True:
+                if trunc == False:
+                    print("This unit is Battle-shocked, starting test...")
+                    print("Rolling 2D6...")
+                diceRoll = self.dice(num=2)
+                if trunc == False:
+                    print("Model rolled", diceRoll[0], diceRoll[1])
+                if sum(diceRoll) >= self.enemy_data[i]["Ld"]:
+                    if trunc == False:
+                        print("Battle-shock test passed!")
+                else:
+                    battleSh = True
+                    if trunc == False:
+                        print("Battle-shock test failed")
             if self.enemyInAttack[i][0] == 0 and self.enemy_health[i] > 0:
 
                 # the enemy used for training will try to get as close to the model units as possible
@@ -203,13 +231,14 @@ class Warhammer40kEnv(gym.Env):
                 # Shooting phase (if applicable)
                 shootAbleUnits = []
                 for j in range(len(self.unit_health)):
-                    if self.distance(self.enemy_coords[i], self.unit_coords[j]) <= self.enemy_weapon[i]["Range"] and self.unit_health[j] > 0:
+                    if self.distance(self.enemy_coords[i], self.unit_coords[j]) <= self.enemy_weapon[i]["Range"] and self.unit_health[j] > 0 and self.unitInAttack[j][0] == 0:
                         shootAbleUnits.append(j)
                 if (len(shootAbleUnits) > 0) :
                     idOfM = np.random.choice(shootAbleUnits)
                     dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_weapon[i], self.enemy_data[i], self.unit_health[idOfM], self.unit_data[idOfM])
                     self.unit_health[idOfM] = modHealth
-                    print("Enemy Unit",i,"shoots Model Unit",idOfM,sum(dmg),"times")
+                    if trunc == False:
+                        print("Enemy Unit",enemyName,"shoots Model Unit",idOfM+11,sum(dmg),"times")
                 
                 # Charging (if applicable)
                 
@@ -221,8 +250,9 @@ class Warhammer40kEnv(gym.Env):
                         if self.distance(self.enemy_coords[j], self.unit_coords[i]) - diceRoll <= 5:
                             chargeAble.append(j)
 
-                if (len(chargeAble) > 0):            
-                    print("Enemy unit", i,"started attack with Model unit", j)
+                if (len(chargeAble) > 0):  
+                    if trunc == False:          
+                        print("Enemy unit", enemyName,"started attack with Model unit", j+11)
 
                     self.enemy_coords[i][0] = self.unit_coords[j][0] + 1
                     self.enemy_coords[i][1] = self.unit_coords[j][1] + 1
@@ -242,7 +272,14 @@ class Warhammer40kEnv(gym.Env):
                 decide = np.random.randint(0,10)
                 idOfM = self.enemyInAttack[i][1]
                 if decide == 5:
-                    print("Enemy unit", i,"pulled out of fight with Model unit", idOfM)
+                    if trunc == False:
+                        print("Enemy unit", enemyName,"pulled out of fight with Model unit", idOfM+11)
+                    
+                    if battleSh == True:
+                            diceRoll = self.dice()
+                            if diceRoll < 3:
+                                self.enemy_health[i] -= self.enemy_data[i]["W"]
+                    
                     self.enemy_coords[i][0] -= self.enemy_data[i]["Movement"]
                     self.enemy_coords[i] = self.bounds(self.enemy_coords[i])
                     self.unitInAttack[idOfM][0] = 0
@@ -257,6 +294,22 @@ class Warhammer40kEnv(gym.Env):
     def step(self, action):
         reward = 0
         for i in range(len(self.unit_health)):
+            modelName = i+21
+            battleSh = False
+            if self.isBelowHalfStr(self.unit_data[i],self.unit_health[i]) == True:
+                if self.trunc == False:
+                    print("This unit is Battle-shocked, starting test...")
+                    print("Rolling 2D6...")
+                diceRoll = self.dice(num=2)
+                if self.trunc == False:
+                    print("Model rolled", diceRoll[0], diceRoll[1])
+                if sum(diceRoll) >= self.enemy_data[i]["Ld"]:
+                    if self.trunc == False:
+                        print("Battle-shock test passed!")
+                else:
+                    battleSh = True
+                    if self.trunc == False:
+                        print("Battle-shock test failed")
             if self.unitInAttack[i][0] == 0 and self.unit_health[i] > 0:
                 movement = self.dice()+self.unit_data[i]["Movement"]
                 if action["move"] == 0:   # down
@@ -278,7 +331,7 @@ class Warhammer40kEnv(gym.Env):
                 # shooting phase (if eligible)
                 shootAbleUnits = []
                 for j in range(len(self.enemy_health)):
-                    if self.distance(self.unit_coords[i], self.enemy_coords[j]) <= self.unit_weapon[i]["Range"] and self.enemy_health[j] > 0:
+                    if self.distance(self.unit_coords[i], self.enemy_coords[j]) <= self.unit_weapon[i]["Range"] and self.enemy_health[j] > 0 and self.enemyInAttack[j][0] == 0:
                         # hit rolls
                         shootAbleUnits.append(j)
                 
@@ -288,10 +341,12 @@ class Warhammer40kEnv(gym.Env):
                         dmg, modHealth = self.attack(self.unit_health[i], self.unit_weapon[i], self.unit_data[i], self.enemy_health[idOfE], self.enemy_data[idOfE])
                         self.enemy_health[idOfE] = modHealth
                         reward += 0.2
-                        print("Model Unit",i,"shoots Enemy Unit",idOfE,sum(dmg),"times")
+                        if self.trunc == False:
+                            print("Model Unit",modelName,"shoots Enemy Unit",idOfE+11,sum(dmg),"times")
                     else:
                         reward -= 0.5
-                        print("Model Unit", i, "fails to shoot an Enemy Unit")
+                        if self.trunc == False:
+                            print("Model Unit", modelName, "fails to shoot an Enemy Unit")
 
                 # Charge (if applicable)
                 chargeAble = []
@@ -305,7 +360,8 @@ class Warhammer40kEnv(gym.Env):
                 if (len(chargeAble) > 0):
                     idOfE = action["charge"]
                     if idOfE in chargeAble:
-                        print("Model unit", i,"started attack with Enemy unit", j)
+                        if self.trunc == False:
+                            print("Model unit", modelName,"started attack with Enemy unit", j+11)
                         self.unitInAttack[i][0] = 1
                         self.unitInAttack[i][1] = j
 
@@ -321,7 +377,8 @@ class Warhammer40kEnv(gym.Env):
 
                         reward += 0.5
                     else:
-                        print("Model unit", i, "failed to attack Enemy")
+                        if self.trunc == False:
+                            print("Model unit", modelName, "failed to attack Enemy")
                         reward -= 0.5
             
             elif self.unitInAttack[i][0] == 1 and self.unit_health[i] > 0:
@@ -344,13 +401,24 @@ class Warhammer40kEnv(gym.Env):
                 elif action["attack"] == 0:
                     if self.unit_health[i]*2 >= self.enemy_health[idOfE]:
                         reward -= 0.5
-                    print("Model unit", i,"pulled out of fight with Enemy unit", idOfE)
+                    if self.trunc == False:
+                        print("Model unit", modelName,"pulled out of fight with Enemy unit", idOfE+11)
+                    
+                    if battleSh == True:
+                            diceRoll = self.dice()
+                            if diceRoll < 3:
+                                self.unit_health[i] -= self.unit_data[i]["W"]
+
                     self.unit_coords[i][0] += self.unit_data[i]["Movement"]
                     self.unitInAttack[i][0] = 0
                     self.unitInAttack[i][1] = 0
 
                     self.enemyInAttack[idOfE][0] = 0
                     self.enemyInAttack[idOfE][1] = 0
+            
+            elif self.unit_health[i] == 0:
+                if self.trunc == False:
+                    print("Model unit", modelName ,"is destroyed")
 
         for i in self.unit_health:
             if i < 0:
@@ -372,10 +440,22 @@ class Warhammer40kEnv(gym.Env):
         return self._get_observation(), reward, self.game_over, 0, info
 
     # for a real person playing
-
     def player(self):
         for i in range(len(self.enemy_health)):
-            print("For unit", i+11)
+            playerName = i+11
+            print("For unit", playerName)
+            battleSh = False
+            if self.isBelowHalfStr(self.enemy_data[i],self.enemy_health[i]) == True:
+                print("This unit is Battle-shocked, starting test...")
+                print("Rolling 2D6...")
+                diceRoll = self.dice(num=2)
+                print("You rolled", diceRoll[0], diceRoll[1])
+                if sum(diceRoll) >= self.enemy_data[i]["Ld"]:
+                    print("Battle-shock test passed!")
+                else:
+                    battleSh = True
+                    print("Battle-shock test failed")
+
             if self.enemyInAttack[i][0] == 0 and self.enemy_health[i] > 0:
                 self.updateBoard()
                 self.showBoard()
@@ -427,21 +507,21 @@ class Warhammer40kEnv(gym.Env):
                 
                 # shooting phase (if eligible)
                 print("Beginning shooting phase!")
-                shootAble = []
+                shootAble = np.array([])
                 for j in range(len(self.unit_health)):
-                    if self.distance(self.enemy_coords[i], self.unit_coords[j]) <= self.enemy_weapon[i]["Range"] and self.unit_health[j] > 0:
+                    if self.distance(self.enemy_coords[i], self.unit_coords[j]) <= self.enemy_weapon[i]["Range"] and self.unit_health[j] > 0 and self.unitInAttack[j][0] == 0:
                         # save index of available units to shoot
-                        shootAble.append(j)
+                        shootAble = np.append(shootAble, j)
 
                 if len(shootAble) > 0:
                     response = False
                     while response == False:
-                        shoot = input("Select which enemy unit you would like to shoot ({}): ".format(shootAble))
-                        if self.is_num(shoot) == True and int(shoot) in shootAble:
-                            idOfE = int(shoot)
+                        shoot = input("Select which enemy unit you would like to shoot ({}): ".format(shootAble+21))
+                        if self.is_num(shoot) == True and int(shoot)-21 in shootAble:
+                            idOfE = int(shoot)-21
                             dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_weapon[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE])
                             self.unit_health[idOfE] = modHealth
-                            print("Player Unit",i,"shoots Model Unit",idOfE,sum(dmg),"times")
+                            print("Player Unit",playerName,"shoots Model Unit",idOfE+21,sum(dmg),"times")
                             response = True
                         elif shoot == "quit":
                             self.game_over = True
@@ -455,23 +535,23 @@ class Warhammer40kEnv(gym.Env):
 
                 # Charge (if applicable)
                 print("Beginning Charge phase!")
-                charg = []
+                charg = np.array([])
                 for j in range(len(self.unit_health)):
                     if self.distance(self.unit_coords[j], self.enemy_coords[i]) <= 12 and self.unitInAttack[j][0] == 0 and self.unit_health[j] > 0:
-                        charg.append(j)
+                        charg = np.append(charg, j)
 
                 if len(charg) > 0:
                     response = False
                     while response == False:
-                        attack = input("Select while enemy you would like to charge ({}): ".format(charg))
-                        if self.is_num(attack) == True and int(attack) in charg:
+                        attack = input("Select while enemy you would like to charge ({}): ".format(charg+21))
+                        if self.is_num(attack) == True and int(attack)-21 in charg:
                             response = True
-                            j = int(attack)
+                            j = int(attack)-21
                             print("Rolling 2 D6...")
                             roll = self.dice(num=2)
                             print("You rolled a", roll[0], "and", roll[1])
                             if self.distance(self.enemy_coords[i], self.unit_coords[j]) - sum(roll) <= 5:
-                                print("Player Unit", i, "Successfully charged Model Unit", j)
+                                print("Player Unit", playerName, "Successfully charged Model Unit", j+21)
                                 self.enemyInAttack[i][0] = 1
                                 self.enemyInAttack[i][1] = j
 
@@ -486,7 +566,7 @@ class Warhammer40kEnv(gym.Env):
                                 self.unitInAttack[j][0] = 1
                                 self.unitInAttack[j][1] = i
                             else:
-                                print("Player Unit", i, "Failed to charge Model Unit", j)
+                                print("Player Unit", playerName, "Failed to charge Model Unit", j+21)
                         
                         elif attack == "quit":
                             self.game_over = True
@@ -504,11 +584,11 @@ class Warhammer40kEnv(gym.Env):
                     fallB = input("Would you like to fallback? (y/n): ")
                     if fallB.lower() == "n" or fallB.lower() == "no":
                         response = True
-                        print("Player Unit", i, "Is attacking Model Unit", idOfE)
+                        print("Player Unit", playerName, "Is attacking Model Unit", idOfE+21)
                         dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE], rangeOfComb="Melee")
                         self.unit_health[idOfE] = modHealth
                         if self.unit_health[idOfE] <= 0:
-                            print("Model Unit", idOfE, "has been killed")
+                            print("Model Unit", idOfE+21, "has been killed")
                             self.enemyInAttack[i][0] = 0
                             self.enemyInAttack[i][1] = 0
 
@@ -516,7 +596,13 @@ class Warhammer40kEnv(gym.Env):
                             self.unitInAttack[idOfE][1] = 0
                     elif fallB.lower() == "y" or fallB.lower() == "yes":
                         response = True
-                        print("Player Unit", i,"fell back from Enemy unit", idOfE)
+                        print("Player Unit", playerName,"fell back from Enemy unit", idOfE+21)
+                        
+                        if battleSh == True:
+                            diceRoll = self.dice()
+                            if diceRoll < 3:
+                                self.enemy_health[i] -= self.enemy_data[i]["W"]
+
                         self.enemy_coords[i][0] += self.enemy_data[i]["Movement"]
                         self.enemyInAttack[i][0] = 0
                         self.enemyInAttack[i][1] = 0
@@ -529,6 +615,9 @@ class Warhammer40kEnv(gym.Env):
                         return self.game_over, info
                     else:
                         print("It's a yes or no question dude")
+            
+            elif self.enemy_health[i] == 0:
+                print("Unit", playerName, "is dead")
 
         for i in self.enemy_health:
             if i < 0:

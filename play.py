@@ -48,8 +48,8 @@ while isdone == False:
     done, info = env.player()
     if done != True:
         next_observation, reward, done, _, info = env.step(action)
-        unit_health = info["unit health"]
-        enemy_health = info["enemy health"]
+        unit_health = info["model health"]
+        enemy_health = info["player health"]
         inAttack = info["in attack"]
 
         if inAttack == 1:

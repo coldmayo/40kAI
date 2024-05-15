@@ -7,7 +7,9 @@
             "#OfModels": 4,
             "T": 4,
             "Sv": 3,
-            "W": 2
+            "W": 2,
+            "Ld": 6,
+            "OC": 1
         },
         {
             "Army": "Space_Marine",
@@ -16,7 +18,9 @@
             "#OfModels": 1,
             "T": 4,
             "Sv": 3,
-            "W": 4
+            "W": 4,
+            "Ld": 6,
+            "OC": 1
         },
         {
             "Army": "Orks",
@@ -25,7 +29,9 @@
             "#OfModels": 1,
             "T": 5,
             "Sv": 4,
-            "W": 5
+            "W": 5,
+            "Ld": 6,
+            "OC":1
         },
         {
             "Army": "Orks",
@@ -34,7 +40,9 @@
             "#OfModels": 10,
             "T": 5,
             "Sv": 5,
-            "W": 1
+            "W": 1,
+            "Ld":7,
+            "OC":2
         }
     ],
     "WeaponData": [
