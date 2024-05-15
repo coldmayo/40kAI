@@ -7,12 +7,10 @@
 #include <thread>
 #include <chrono>
 #include <fstream>
-#include <nlohmann/json.hpp>
 #include "popup.h"
 
 using namespace Glib;
 using namespace Gtk;
-using json = nlohmann::json;using json = nlohmann::json;
 
 const char *gifpth = "img/model_train.gif";
 const char *imgpth = "img/icon.png";
@@ -93,6 +91,8 @@ private:
   int x;
   int y;
   bool open;
+  bool training;
+  bool playing;
 };
 
 Form :: Form() {
@@ -103,6 +103,8 @@ Form :: Form() {
   open = false;
   x = 60;
   y = 40;
+  training = false;
+  playing = false;
 
   set_icon_from_file(imgpth);
 
@@ -171,10 +173,9 @@ Form :: Form() {
   button1.set_label("Train");
   button1.signal_button_release_event().connect([&](GdkEventButton*) {
     updateInits(modelClass, enemyClass);
-    if (exists_test("data.json")) {
+    if (exists_test("data.json") && training == false) {
       status.set_text("Training...");
       startTrainInBackground();
-      update_picture();
     }
     return true;
   });
@@ -309,7 +310,9 @@ Form :: Form() {
   button2.set_label("Play");
   textbox2.set_text("Play Against Model in Terminal:");
   button2.signal_button_release_event().connect([&](GdkEventButton*) {
-    runPlayAgainstModelInBackground();
+    if (playing == false) {
+      runPlayAgainstModelInBackground();
+    }
     return true;
   });
   setModelFile.set_text(" ");
@@ -388,8 +391,11 @@ void Form :: startTrainInBackground() {
 }
 
 void Form :: startTrain() {
+  training = true;
   system("cd .. ; ./train.sh");
   status.set_text("Completed!");
+  training = false;
+  update_picture();
 }
 
 void Form :: runPlayAgainstModelInBackground() {
@@ -405,7 +411,9 @@ void Form :: playAgainstModel() {
   } else {
     command.append(path);
   }
+  playing = true;
   system(command.data());
+  playing = false;
 }
 
 inline bool Form :: exists_test (const std::string& name) {
