@@ -39,6 +39,3 @@ def makeGif(numOfLife, name="", Type = "train", trunc = False):
     elif Type == "val":
         imageio.mimsave('val/model_val.gif', images)
     print("Done")
-
-if __name__ == "__main__":
-    makeGif()

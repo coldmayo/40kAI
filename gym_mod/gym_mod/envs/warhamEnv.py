@@ -3,6 +3,7 @@ from gym import spaces
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from gym_mod.engine.utils import *
 
 class Warhammer40kEnv(gym.Env):
     def __init__(self, enemy, model, b_len, b_hei):
@@ -61,86 +62,6 @@ class Warhammer40kEnv(gym.Env):
 
     def get_info(self):
         return {"model health":self.unit_health, "player health": self.enemy_health, "in attack": self.unitInAttack}
-    def is_num(self, maybeNum):
-        return maybeNum.isnumeric()
-    def distance(self, p1, p2):
-        return np.sqrt((p2[0]-p1[0])**2 + (p2[1]-p1[1])**2)
-
-    def dice(self, min = 1, max = 6, num=1):
-        rolls = np.array([])
-        if num == 1:
-            return np.random.randint(min, max)
-        else:
-            for i in range(num):
-                rolls = np.append(rolls,np.random.randint(min, max))
-            return rolls
-
-    def bounds(self, coords):
-        if coords[0] <= 0:
-            coords[0] = 0
-        if coords[1] <= 0:
-            coords[1] = 0
-        if coords[0] >= self.b_len:
-            coords[0] = self.b_len-1
-        if coords[1] >= self.b_hei:
-            coords[1] = self.b_hei-1
-        return coords
-
-    def isBelowHalfStr(self, data, health):
-        startStr = data["#OfModels"]
-        
-        if health < (data["W"]*startStr)/2:
-            return True
-        
-        return False
-
-
-    def attack(self, attackerHealth, attackerWeapon, attackerData, attackeeHealth, attackeeData, rangeOfComb="Ranged"):
-        rolls = self.dice(num=attackerData["#OfModels"])
-        hits = 0
-        if type(rolls) != type(1):
-            for k in range(len(rolls)):
-                if rangeOfComb == "Ranged":
-                    if rolls[k] <= attackerWeapon["BS"]:
-                        hits+=1
-                elif rangeOfComb == "Melee":
-                    if rolls[k] <= attackerWeapon["WS"]:
-                        hits+=1
-        else:
-            if rangeOfComb == "Ranged":
-                if rolls <= attackerWeapon["BS"]:
-                    hits+=1
-            elif rangeOfComb == "Melee":
-                if rolls <= attackerWeapon["WS"]:
-                    hits+=1
-        # wound rolls
-        dmg = np.array([])
-        for k in range(hits):
-            if attackerWeapon["S"] >= attackeeData["T"]*2:
-                if self.dice() <= 2:
-                    dmg = np.append(dmg, attackerWeapon["Damage"])
-            elif attackerWeapon["S"] > attackeeData["T"]:
-                if self.dice() <= 3:
-                    dmg = np.append(dmg, attackerWeapon["Damage"])
-            elif attackerWeapon["S"] == attackeeData["T"]:
-                if self.dice() <= 4:
-                    dmg = np.append(dmg, attackerWeapon["Damage"])
-            elif attackerWeapon["S"]/2 <= attackeeData["T"]:
-                if self.dice() <= 5:
-                    dmg = np.append(dmg, attackerWeapon["Damage"])
-            elif attackerWeapon["S"] < attackeeData["T"]:
-                if self.dice() == 6:
-                    dmg = np.append(dmg, attackerWeapon["Damage"])
-        # saving throws
-        for k in range(len(dmg)):
-            if self.dice()-attackerWeapon["AP"] > attackeeData["Sv"]:
-                dmg[k] = 0
-        # allocating damage
-        for k in dmg:
-            attackeeHealth -= k
-            if attackeeHealth < 0:
-                attackeeHealth = 0
-        return dmg, attackeeHealth
 
     # small reset = used in training
     # big reset reset env completely for testing/validation
@@ -184,11 +105,11 @@ class Warhammer40kEnv(gym.Env):
         for i in range(len(self.enemy_health)):
             enemyName = i+21
             battleSh = False
-            if self.isBelowHalfStr(self.unit_data[i],self.unit_health[i]) == True:
+            if isBelowHalfStr(self.unit_data[i],self.unit_health[i]) == True:
                 if trunc == False:
                     print("This unit is Battle-shocked, starting test...")
                     print("Rolling 2D6...")
-                diceRoll = self.dice(num=2)
+                diceRoll = dice(num=2)
                 if trunc == False:
                     print("Model rolled", diceRoll[0], diceRoll[1])
                 if sum(diceRoll) >= self.enemy_data[i]["Ld"]:
@@ -211,19 +132,19 @@ class Warhammer40kEnv(gym.Env):
                     break
                 idOfM = np.random.choice(aliveUnits)
 
-                movement = self.dice()+self.enemy_data[i]["Movement"]
-                if self.distance(self.unit_coords[idOfM], [self.enemy_coords[i][0], self.enemy_coords[i][1] - movement]) < self.distance(self.unit_coords[idOfM], self.enemy_coords[i]):
+                movement = dice()+self.enemy_data[i]["Movement"]
+                if distance(self.unit_coords[idOfM], [self.enemy_coords[i][0], self.enemy_coords[i][1] - movement]) < distance(self.unit_coords[idOfM], self.enemy_coords[i]):
                     self.enemy_coords[i][1] -= movement
-                elif self.distance(self.unit_coords[idOfM], [self.enemy_coords[i][0], self.enemy_coords[i][1] + movement]) < self.distance(self.unit_coords[idOfM], self.enemy_coords[i]):
+                elif distance(self.unit_coords[idOfM], [self.enemy_coords[i][0], self.enemy_coords[i][1] + movement]) < distance(self.unit_coords[idOfM], self.enemy_coords[i]):
                     self.enemy_coords[i][1] += movement
-                elif self.distance(self.unit_coords[idOfM], [self.enemy_coords[i][0] - movement, self.enemy_coords[i][1]]) < self.distance(self.unit_coords[idOfM], self.enemy_coords[i]):
+                elif distance(self.unit_coords[idOfM], [self.enemy_coords[i][0] - movement, self.enemy_coords[i][1]]) < distance(self.unit_coords[idOfM], self.enemy_coords[i]):
                     self.enemy_coords[i][0] -= movement
-                elif self.distance(self.unit_coords[idOfM], [self.enemy_coords[i][0] + movement, self.enemy_coords[i][1]]) < self.distance(self.unit_coords[idOfM], self.enemy_coords[i]):
+                elif distance(self.unit_coords[idOfM], [self.enemy_coords[i][0] + movement, self.enemy_coords[i][1]]) < distance(self.unit_coords[idOfM], self.enemy_coords[i]):
                     self.enemy_coords[i][0] += movement
 
                 # staying in bounds
 
-                self.enemy_coords[i] = self.bounds(self.enemy_coords[i])
+                self.enemy_coords[i] = bounds(self.enemy_coords[i], self.b_len, self.b_hei)
                 for j in range(len(self.unit_health)):
                     if self.enemy_coords[i] == self.unit_coords[j]:
                         self.enemy_coords[i][0] -= 1
@@ -231,11 +152,11 @@ class Warhammer40kEnv(gym.Env):
                 # Shooting phase (if applicable)
                 shootAbleUnits = []
                 for j in range(len(self.unit_health)):
-                    if self.distance(self.enemy_coords[i], self.unit_coords[j]) <= self.enemy_weapon[i]["Range"] and self.unit_health[j] > 0 and self.unitInAttack[j][0] == 0:
+                    if distance(self.enemy_coords[i], self.unit_coords[j]) <= self.enemy_weapon[i]["Range"] and self.unit_health[j] > 0 and self.unitInAttack[j][0] == 0:
                         shootAbleUnits.append(j)
                 if (len(shootAbleUnits) > 0) :
                     idOfM = np.random.choice(shootAbleUnits)
-                    dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_weapon[i], self.enemy_data[i], self.unit_health[idOfM], self.unit_data[idOfM])
+                    dmg, modHealth = attack(self.enemy_health[i], self.enemy_weapon[i], self.enemy_data[i], self.unit_health[idOfM], self.unit_data[idOfM])
                     self.unit_health[idOfM] = modHealth
                     if trunc == False:
                         print("Enemy Unit",enemyName,"shoots Model Unit",idOfM+11,sum(dmg),"times")
@@ -243,11 +164,11 @@ class Warhammer40kEnv(gym.Env):
                 # Charging (if applicable)
                 
                 chargeAble = []
-                diceRoll = sum(self.dice(num=2))
+                diceRoll = sum(dice(num=2))
 
                 for j in range(len(self.unit_health)):
-                    if self.distance(self.enemy_coords[i], self.unit_coords[j]) <= 12 and self.unitInAttack[j][0] == 0:
-                        if self.distance(self.enemy_coords[j], self.unit_coords[i]) - diceRoll <= 5:
+                    if distance(self.enemy_coords[i], self.unit_coords[j]) <= 12 and self.unitInAttack[j][0] == 0:
+                        if distance(self.enemy_coords[j], self.unit_coords[i]) - diceRoll <= 5:
                             chargeAble.append(j)
 
                 if (len(chargeAble) > 0):  
@@ -256,10 +177,10 @@ class Warhammer40kEnv(gym.Env):
 
                     self.enemy_coords[i][0] = self.unit_coords[j][0] + 1
                     self.enemy_coords[i][1] = self.unit_coords[j][1] + 1
-                    self.enemy_coords[i] = self.bounds(self.enemy_coords[i])
+                    self.enemy_coords[i] = bounds(self.enemy_coords[i], self.b_len, self.b_hei)
 
                     idOfM = np.random.choice(chargeAble)
-                    dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfM], self.unit_data[idOfM], rangeOfComb="Melee")
+                    dmg, modHealth = attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfM], self.unit_data[idOfM], rangeOfComb="Melee")
                     self.unit_health[idOfM] = modHealth
 
                     self.unitInAttack[j][0] = 1
@@ -276,19 +197,19 @@ class Warhammer40kEnv(gym.Env):
                         print("Enemy unit", enemyName,"pulled out of fight with Model unit", idOfM+11)
                     
                     if battleSh == True:
-                            diceRoll = self.dice()
+                            diceRoll = dice()
                             if diceRoll < 3:
                                 self.enemy_health[i] -= self.enemy_data[i]["W"]
                     
                     self.enemy_coords[i][0] -= self.enemy_data[i]["Movement"]
-                    self.enemy_coords[i] = self.bounds(self.enemy_coords[i])
+                    self.enemy_coords[i] = bounds(self.enemy_coords[i], self.b_len, self.b_hei)
                     self.unitInAttack[idOfM][0] = 0
                     self.unitInAttack[idOfM][1] = 0
 
                     self.enemyInAttack[i][0] = 0
                     self.enemyInAttack[i][1] = 0
                 else:
-                    dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfM], self.unit_data[idOfM], rangeOfComb="Melee")
+                    dmg, modHealth = attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfM], self.unit_data[idOfM], rangeOfComb="Melee")
                     self.unit_health[idOfM] = modHealth
     
     def step(self, action):
@@ -296,11 +217,11 @@ class Warhammer40kEnv(gym.Env):
         for i in range(len(self.unit_health)):
             modelName = i+21
             battleSh = False
-            if self.isBelowHalfStr(self.unit_data[i],self.unit_health[i]) == True:
+            if isBelowHalfStr(self.unit_data[i],self.unit_health[i]) == True:
                 if self.trunc == False:
                     print("This unit is Battle-shocked, starting test...")
                     print("Rolling 2D6...")
-                diceRoll = self.dice(num=2)
+                diceRoll = dice(num=2)
                 if self.trunc == False:
                     print("Model rolled", diceRoll[0], diceRoll[1])
                 if sum(diceRoll) >= self.enemy_data[i]["Ld"]:
@@ -311,7 +232,7 @@ class Warhammer40kEnv(gym.Env):
                     if self.trunc == False:
                         print("Battle-shock test failed")
             if self.unitInAttack[i][0] == 0 and self.unit_health[i] > 0:
-                movement = self.dice()+self.unit_data[i]["Movement"]
+                movement = dice()+self.unit_data[i]["Movement"]
                 if action["move"] == 0:   # down
                     self.unit_coords[i][0] += movement
                 elif action["move"] == 1:   # up
@@ -323,7 +244,7 @@ class Warhammer40kEnv(gym.Env):
 
             # staying in bounds
 
-                self.unit_coords[i] = self.bounds(self.unit_coords[i])
+                self.unit_coords[i] = bounds(self.unit_coords[i], self.b_len, self.b_hei)
                 for j in range(len(self.enemy_health)):
                     if self.unit_coords[i] == self.enemy_coords[j]:
                         self.unit_coords[i][0] -= 1
@@ -331,14 +252,14 @@ class Warhammer40kEnv(gym.Env):
                 # shooting phase (if eligible)
                 shootAbleUnits = []
                 for j in range(len(self.enemy_health)):
-                    if self.distance(self.unit_coords[i], self.enemy_coords[j]) <= self.unit_weapon[i]["Range"] and self.enemy_health[j] > 0 and self.enemyInAttack[j][0] == 0:
+                    if distance(self.unit_coords[i], self.enemy_coords[j]) <= self.unit_weapon[i]["Range"] and self.enemy_health[j] > 0 and self.enemyInAttack[j][0] == 0:
                         # hit rolls
                         shootAbleUnits.append(j)
                 
                 if (len(shootAbleUnits) > 0):        
                     idOfE = action["shoot"]
                     if (idOfE in shootAbleUnits): 
-                        dmg, modHealth = self.attack(self.unit_health[i], self.unit_weapon[i], self.unit_data[i], self.enemy_health[idOfE], self.enemy_data[idOfE])
+                        dmg, modHealth = attack(self.unit_health[i], self.unit_weapon[i], self.unit_data[i], self.enemy_health[idOfE], self.enemy_data[idOfE])
                         self.enemy_health[idOfE] = modHealth
                         reward += 0.2
                         if self.trunc == False:
@@ -350,12 +271,12 @@ class Warhammer40kEnv(gym.Env):
 
                 # Charge (if applicable)
                 chargeAble = []
-                diceRoll = sum(self.dice(num=2))
+                diceRoll = sum(dice(num=2))
 
                 if action["attack"] == 1:
                     for j in range(len(self.enemy_health)):
-                        if self.distance(self.enemy_coords[j], self.unit_coords[i]) <= 12 and self.enemyInAttack[j][0] == 0 and self.enemy_health[j] > 0:
-                            if self.distance(self.enemy_coords[j], self.unit_coords[i]) - diceRoll <= 5:
+                        if distance(self.enemy_coords[j], self.unit_coords[i]) <= 12 and self.enemyInAttack[j][0] == 0 and self.enemy_health[j] > 0:
+                            if distance(self.enemy_coords[j], self.unit_coords[i]) - diceRoll <= 5:
                                 chargeAble.append(j)
                 if (len(chargeAble) > 0):
                     idOfE = action["charge"]
@@ -367,9 +288,9 @@ class Warhammer40kEnv(gym.Env):
 
                         self.unit_coords[i][0] = self.enemy_coords[j][0] + 1
                         self.unit_coords[i][1] = self.enemy_coords[j][1] + 1
-                        self.unit_coords[i] = self.bounds(self.unit_coords[i])
+                        self.unit_coords[i] = bounds(self.unit_coords[i], self.b_len, self.b_hei)
 
-                        dmg, modHealth = self.attack(self.unit_health[i], self.unit_melee[i], self.unit_data[i], self.enemy_health[idOfE], self.enemy_data[idOfE], rangeOfComb="Melee")
+                        dmg, modHealth = attack(self.unit_health[i], self.unit_melee[i], self.unit_data[i], self.enemy_health[idOfE], self.enemy_data[idOfE], rangeOfComb="Melee")
                         self.enemy_health[idOfE] = modHealth
 
                         self.enemyInAttack[j][0] = 1
@@ -385,7 +306,7 @@ class Warhammer40kEnv(gym.Env):
                 reward = 0
                 idOfE = self.unitInAttack[i][1]
                 if action["attack"] == 1:
-                    dmg, modHealth = self.attack(self.unit_health[i], self.unit_melee[i], self.unit_data[i], self.enemy_health[idOfE], self.enemy_data[idOfE], rangeOfComb="Melee")
+                    dmg, modHealth = attack(self.unit_health[i], self.unit_melee[i], self.unit_data[i], self.enemy_health[idOfE], self.enemy_data[idOfE], rangeOfComb="Melee")
                     self.enemy_health[idOfE] = modHealth
                     reward += 0.2
                     if self.enemy_health[idOfE] <= 0:
@@ -405,7 +326,7 @@ class Warhammer40kEnv(gym.Env):
                         print("Model unit", modelName,"pulled out of fight with Enemy unit", idOfE+11)
                     
                     if battleSh == True:
-                            diceRoll = self.dice()
+                            diceRoll = dice()
                             if diceRoll < 3:
                                 self.unit_health[i] -= self.unit_data[i]["W"]
 
@@ -445,10 +366,10 @@ class Warhammer40kEnv(gym.Env):
             playerName = i+11
             print("For unit", playerName)
             battleSh = False
-            if self.isBelowHalfStr(self.enemy_data[i],self.enemy_health[i]) == True:
+            if isBelowHalfStr(self.enemy_data[i],self.enemy_health[i]) == True:
                 print("This unit is Battle-shocked, starting test...")
                 print("Rolling 2D6...")
-                diceRoll = self.dice(num=2)
+                diceRoll = dice(num=2)
                 print("You rolled", diceRoll[0], diceRoll[1])
                 if sum(diceRoll) >= self.enemy_data[i]["Ld"]:
                     print("Battle-shock test passed!")
@@ -469,7 +390,7 @@ class Warhammer40kEnv(gym.Env):
                     return self.game_over, info
                 
                 print("Rolling 1 D6...")
-                roll = self.dice()
+                roll = dice()
                 print("You rolled a", roll)
                 movement = roll+self.unit_data[i]["Movement"]
                 response = False
@@ -496,7 +417,7 @@ class Warhammer40kEnv(gym.Env):
 
             # staying in bounds
 
-                self.enemy_coords[i] = self.bounds(self.enemy_coords[i])
+                self.enemy_coords[i] = bounds(self.enemy_coords[i], self.b_len, self.b_hei)
                 for j in range(len(self.enemy_health)):
                     if self.enemy_coords[i] == self.unit_coords[j]:
                         self.enemy_coords[i][0] -= 1
@@ -509,7 +430,7 @@ class Warhammer40kEnv(gym.Env):
                 print("Beginning shooting phase!")
                 shootAble = np.array([])
                 for j in range(len(self.unit_health)):
-                    if self.distance(self.enemy_coords[i], self.unit_coords[j]) <= self.enemy_weapon[i]["Range"] and self.unit_health[j] > 0 and self.unitInAttack[j][0] == 0:
+                    if distance(self.enemy_coords[i], self.unit_coords[j]) <= self.enemy_weapon[i]["Range"] and self.unit_health[j] > 0 and self.unitInAttack[j][0] == 0:
                         # save index of available units to shoot
                         shootAble = np.append(shootAble, j)
 
@@ -517,9 +438,9 @@ class Warhammer40kEnv(gym.Env):
                     response = False
                     while response == False:
                         shoot = input("Select which enemy unit you would like to shoot ({}): ".format(shootAble+21))
-                        if self.is_num(shoot) == True and int(shoot)-21 in shootAble:
+                        if is_num(shoot) == True and int(shoot)-21 in shootAble:
                             idOfE = int(shoot)-21
-                            dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_weapon[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE])
+                            dmg, modHealth = attack(self.enemy_health[i], self.enemy_weapon[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE])
                             self.unit_health[idOfE] = modHealth
                             print("Player Unit",playerName,"shoots Model Unit",idOfE+21,sum(dmg),"times")
                             response = True
@@ -537,30 +458,30 @@ class Warhammer40kEnv(gym.Env):
                 print("Beginning Charge phase!")
                 charg = np.array([])
                 for j in range(len(self.unit_health)):
-                    if self.distance(self.unit_coords[j], self.enemy_coords[i]) <= 12 and self.unitInAttack[j][0] == 0 and self.unit_health[j] > 0:
+                    if distance(self.unit_coords[j], self.enemy_coords[i]) <= 12 and self.unitInAttack[j][0] == 0 and self.unit_health[j] > 0:
                         charg = np.append(charg, j)
 
                 if len(charg) > 0:
                     response = False
                     while response == False:
-                        attack = input("Select while enemy you would like to charge ({}): ".format(charg+21))
-                        if self.is_num(attack) == True and int(attack)-21 in charg:
+                        attk = input("Select while enemy you would like to charge ({}): ".format(charg+21))
+                        if is_num(attk) == True and int(attk)-21 in charg:
                             response = True
-                            j = int(attack)-21
+                            j = int(attk)-21
                             print("Rolling 2 D6...")
-                            roll = self.dice(num=2)
+                            roll = dice(num=2)
                             print("You rolled a", roll[0], "and", roll[1])
-                            if self.distance(self.enemy_coords[i], self.unit_coords[j]) - sum(roll) <= 5:
+                            if distance(self.enemy_coords[i], self.unit_coords[j]) - sum(roll) <= 5:
                                 print("Player Unit", playerName, "Successfully charged Model Unit", j+21)
                                 self.enemyInAttack[i][0] = 1
                                 self.enemyInAttack[i][1] = j
 
                                 self.enemy_coords[i][0] = self.unit_coords[j][0] + 1
                                 self.enemy_coords[i][1] = self.unit_coords[j][1] + 1
-                                self.enemy_coords[i] = self.bounds(self.enemy_coords[i])
+                                self.enemy_coords[i] = bounds(self.enemy_coords[i], self.b_len, self.b_hei)
 
                                 idOfE = j
-                                dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE], rangeOfComb="Melee")
+                                dmg, modHealth = attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE], rangeOfComb="Melee")
                                 self.unit_health[idOfE] = modHealth
 
                                 self.unitInAttack[j][0] = 1
@@ -585,7 +506,7 @@ class Warhammer40kEnv(gym.Env):
                     if fallB.lower() == "n" or fallB.lower() == "no":
                         response = True
                         print("Player Unit", playerName, "Is attacking Model Unit", idOfE+21)
-                        dmg, modHealth = self.attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE], rangeOfComb="Melee")
+                        dmg, modHealth = attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE], rangeOfComb="Melee")
                         self.unit_health[idOfE] = modHealth
                         if self.unit_health[idOfE] <= 0:
                             print("Model Unit", idOfE+21, "has been killed")
@@ -599,7 +520,7 @@ class Warhammer40kEnv(gym.Env):
                         print("Player Unit", playerName,"fell back from Enemy unit", idOfE+21)
                         
                         if battleSh == True:
-                            diceRoll = self.dice()
+                            diceRoll = dice()
                             if diceRoll < 3:
                                 self.enemy_health[i] -= self.enemy_data[i]["W"]
 
@@ -636,11 +557,11 @@ class Warhammer40kEnv(gym.Env):
         self.board = np.zeros((self.b_len,self.b_hei))
 
         for i in range(len(self.unit_health)):
-            self.unit_coords[i] = self.bounds(self.unit_coords[i])
+            self.unit_coords[i] = bounds(self.unit_coords[i], self.b_len, self.b_hei)
             self.board[self.unit_coords[i][0]][self.unit_coords[i][1]] = 20+i+1
 
         for i in range(len(self.enemy_health)):
-            self.enemy_coords[i] = self.bounds(self.enemy_coords[i])
+            self.enemy_coords[i] = bounds(self.enemy_coords[i], self.b_len, self.b_hei)
             self.board[self.enemy_coords[i][0]][self.enemy_coords[i][1]] = 10+i+1
 
     def returnBoard(self):
