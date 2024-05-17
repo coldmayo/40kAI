@@ -11,6 +11,8 @@ from gym_mod.engine import genDisplay, Unit, unitData, weaponData, initFile
 b_len = 60
 b_hei = 44
 
+print("\nTraining...\n")
+
 enemy1 = Unit(unitData("Space_Marine", "Eliminator Squad"), weaponData("Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
 model1 = Unit(unitData("Space_Marine", "Eliminator Squad"), weaponData("Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
 
@@ -28,22 +30,22 @@ if os.path.isfile("gui/data.json"):
     b_len = initFile.getBoardX()
     b_hei = initFile.getBoardY()
     if initFile.getModelFaction() == "Space_Marine":
-        model1 = Unit(unitData("Space_Marine", "Eliminator Squad"), weaponData("Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
-        model2 = Unit(unitData("Space_Marine", "Apothecary"), weaponData("Absolver Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
+        model1 = Unit(unitData("Space_Marine", "Eliminator Squad"), weaponData("Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len/2), np.random.randint(0,b_hei))
+        model2 = Unit(unitData("Space_Marine", "Apothecary"), weaponData("Absolver Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len/2), np.random.randint(0,b_hei))
     elif initFile.getModelFaction() == "Orks":
-        model1 = Unit(unitData("Orks", "Snagga Boyz"), weaponData("Slugga"), weaponData("Choppa"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
-        model2 = Unit(unitData("Orks", "Beastboss"), weaponData("Shoota"), weaponData("Beastchoppa"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
+        model1 = Unit(unitData("Orks", "Snagga Boyz"), weaponData("Slugga"), weaponData("Choppa"), np.random.randint(0,b_len/2), np.random.randint(0,b_hei))
+        model2 = Unit(unitData("Orks", "Beastboss"), weaponData("Shoota"), weaponData("Beastchoppa"), np.random.randint(0,b_len/2), np.random.randint(0,b_hei))
     if initFile.getEnemyFaction() == "Space_Marine":
-        enemy1 = Unit(unitData("Space_Marine", "Eliminator Squad"), weaponData("Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
-        enemy2 = Unit(unitData("Space_Marine", "Apothecary"), weaponData("Absolver Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
+        enemy1 = Unit(unitData("Space_Marine", "Eliminator Squad"), weaponData("Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len - b_len/2), np.random.randint(0,b_hei))
+        enemy2 = Unit(unitData("Space_Marine", "Apothecary"), weaponData("Absolver Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len - b_len/2), np.random.randint(0,b_hei))
     elif initFile.getEnemyFaction() == "Orks":
-        enemy1 = Unit(unitData("Orks", "Snagga Boyz"), weaponData("Slugga"), weaponData("Choppa"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
-        enemy2 = Unit(unitData("Orks", "Beastboss"), weaponData("Shoota"), weaponData("Beastchoppa"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
+        enemy1 = Unit(unitData("Orks", "Snagga Boyz"), weaponData("Slugga"), weaponData("Choppa"), np.random.randint(0,b_len - b_len/2), np.random.randint(0,b_hei))
+        enemy2 = Unit(unitData("Orks", "Beastboss"), weaponData("Shoota"), weaponData("Beastchoppa"), np.random.randint(0,b_len - b_len/2), np.random.randint(0,b_hei))
     enemy = [enemy1, enemy2]
     model = [model1, model2]
 numLifeT = 0
 
-env = gym.make("40kAI-v0", enemy = enemy, model = model, b_len = b_len, b_hei = b_hei)
+env = gym.make("40kAI-v0", disable_env_checker=True, enemy = enemy, model = model, b_len = b_len, b_hei = b_hei)
 
 observation = env.reset()
 

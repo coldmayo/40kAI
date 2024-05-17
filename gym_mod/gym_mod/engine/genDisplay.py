@@ -4,7 +4,7 @@ from tqdm import tqdm
 import numpy as np
 
 def makeGif(numOfLife, name="", Type = "train", trunc = False):
-    print("Starting...")
+    print("\nForging model_train.gif...\n")
     images = []
 
     savePath = "display/"

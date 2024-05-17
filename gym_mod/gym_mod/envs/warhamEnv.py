@@ -570,10 +570,15 @@ class Warhammer40kEnv(gym.Env):
     def render(self, mode='human'):
         self.updateBoard()
         
-        title = "Iteration "+str(self.iter)+" Lifetime "+str(self.restarts)
-        plt.title(title)
-        
+        fig = plt.figure()
+        ax = fig.add_subplot()
+        fig.subplots_adjust(top=0.85)
 
+        title = "Iteration "+str(self.iter)+" Lifetime "+str(self.restarts)
+        fig.suptitle(title)
+
+        health = "Model Units health: {}; Enemy Units health: {}".format(self.unit_health, self.enemy_health)
+        ax.set_title(health)
         message = ""
 
         for i in range(len(self.unit_health)):
@@ -584,32 +589,33 @@ class Warhammer40kEnv(gym.Env):
             elif self.unitInAttack[i][0] == 1:
                 message += "Unit model "+str(i)+" is in Combat "
         
-        plt.xlabel(message)
+        ax.set_xlabel(message)
         x1 = np.linspace(0,self.b_len,10)
         y1 = np.zeros(10)
         x2 = np.zeros(10)
         y2 = np.linspace(0, self.b_hei,10)
-        plt.xlim(-5,self.b_len*1.43333)
-        plt.ylim(-3,self.b_hei + 4)
-        plt.plot(x1,y1,color="black")
-        plt.plot(x2,y2,color="black")
-        plt.plot(x1,y1+self.b_hei,color="black")
-        plt.plot(x2+self.b_len,y2,color="black")
+        ax.set_xlim(-5,self.b_len*1.43333)
+        ax.set_ylim(-3,self.b_hei + 4)
+        ax.plot(x1,y1,color="black")
+        ax.plot(x2,y2,color="black")
+        ax.plot(x1,y1+self.b_hei,color="black")
+        ax.plot(x2+self.b_len,y2,color="black")
 
         for i in range(len(self.unit_health)):
             if i == 0:
-                plt.plot(self.unit_coords[i][0],self.unit_coords[i][1], 'bo', label="Model Unit")
+                ax.plot(self.unit_coords[i][0],self.unit_coords[i][1], 'bo', label="Model Unit")
             else:
-                plt.plot(self.unit_coords[i][0],self.unit_coords[i][1], 'bo')
+                ax.plot(self.unit_coords[i][0],self.unit_coords[i][1], 'bo')
         for i in range(len(self.enemy_health)):
             if i == 0:
-                plt.plot(self.enemy_coords[i][0],self.enemy_coords[i][1], 'ro', label="Enemy Unit")
+                ax.plot(self.enemy_coords[i][0],self.enemy_coords[i][1], 'ro', label="Enemy Unit")
             else:
-                plt.plot(self.enemy_coords[i][0],self.enemy_coords[i][1], 'ro')
-        plt.legend(loc = "right")
+                ax.plot(self.enemy_coords[i][0],self.enemy_coords[i][1], 'ro')
+        ax.legend(loc = "right")
         fileName = "display/"+str(self.restarts)+"_"+str(self.iter)+".png"
-        plt.savefig(fileName)
-        plt.cla()
+        fig.savefig(fileName)
+        ax.cla()
+        plt.close()
 
         return self.board
 
