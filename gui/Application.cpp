@@ -7,10 +7,12 @@
 #include <thread>
 #include <chrono>
 #include <fstream>
+#include <nlohmann/json.hpp>
 #include "popup.h"
 
 using namespace Glib;
 using namespace Gtk;
+using json = nlohmann::json;
 
 const char *gifpth = "img/model_train.gif";
 const char *imgpth = "img/icon.png";
@@ -28,6 +30,8 @@ public :
   void playAgainstModel();
   inline bool exists_test (const std::string& name);
   void on_dropdown_changed();
+  void savetoTxt(std::vector<std::string> enemyUnits, std::vector<std::string> modelUnits);
+  bool isValidUnit(std::string name);
 
 private:
   Window* boardShow;
@@ -88,14 +92,24 @@ private:
   Button downX;
   Button upY;
   Button downY;
+  Button modelEnter;
+  Button enemyEnter;
+  Entry enterModelUnit;
+  Entry enterEnemyUnit;
   int x;
   int y;
   bool open;
   bool training;
   bool playing;
+  Label error;
+  Label modelUnitLabel;
+  Label enemyUnitLabel;
 };
 
 Form :: Form() {
+
+  static std::vector<std::string> modelUnits;
+  static std::vector<std::string> enemyUnits;
 
   modelClass = " Space_Marine";
   enemyClass = " Space_Marine";
@@ -183,6 +197,9 @@ Form :: Form() {
   numOfGames.set_text("# of Games in Training:");
   setIters.set_text("100");
 
+  modelUnitLabel.set_text("Enter Model Units:");
+  enemyUnitLabel.set_text("Enter Enemy Units:");
+
   dimens.set_text("Dimensions of Board: ");
 
   dimX.set_text("X : ");
@@ -247,26 +264,42 @@ Form :: Form() {
 
   enemyFact.set_text("Enemy Faction: ");
   modelFact.set_text("Model Faction: ");
+  enemyEnter.set_label("Add");
+  enemyEnter.signal_button_release_event().connect([&](GdkEventButton*) {
+    if (isValidUnit(enterEnemyUnit.get_text()) == true) {
+      enemyUnits.push_back(enterEnemyUnit.get_text());
+      savetoTxt(enemyUnits, modelUnits);
+    }
+    return true;
+  });
+  modelEnter.set_label("Add");
+  modelEnter.signal_button_release_event().connect([&](GdkEventButton*) {
+    if (isValidUnit(enterModelUnit.get_text()) == true) {
+      modelUnits.push_back(enterModelUnit.get_text());
+      savetoTxt(enemyUnits, modelUnits);
+    }
+    return true;
+  });
 
   fixedTabPage2.add(dimX);
-  fixedTabPage2.move(dimX, 10, 155);
+  fixedTabPage2.move(dimX, 10, 235);
   fixedTabPage2.add(dimens);
-  fixedTabPage2.move(dimens, 10, 130);
+  fixedTabPage2.move(dimens, 10, 210);
   fixedTabPage2.add(enterDimensX);
-  fixedTabPage2.move(enterDimensX, 30, 150);
+  fixedTabPage2.move(enterDimensX, 30, 230);
   fixedTabPage2.add(upX);
-  fixedTabPage2.move(upX, 200, 150);
+  fixedTabPage2.move(upX, 200, 230);
   fixedTabPage2.add(downX);
-  fixedTabPage2.move(downX, 220, 150);
+  fixedTabPage2.move(downX, 220, 230);
 
   fixedTabPage2.add(dimY);
-  fixedTabPage2.move(dimY, 260, 155);
+  fixedTabPage2.move(dimY, 260, 235);
   fixedTabPage2.add(enterDimensY);
-  fixedTabPage2.move(enterDimensY, 250+30, 150);
+  fixedTabPage2.move(enterDimensY, 250+30, 230);
   fixedTabPage2.add(upY);
-  fixedTabPage2.move(upY, 250+200, 150);
+  fixedTabPage2.move(upY, 250+200, 230);
   fixedTabPage2.add(downY);
-  fixedTabPage2.move(downY, 250+220, 150);
+  fixedTabPage2.move(downY, 250+220, 230);
 
   fixedTabPage2.add(numOfGames);
   fixedTabPage2.move(numOfGames, 10, 45);
@@ -282,16 +315,28 @@ Form :: Form() {
   fixedTabPage2.move(orksEnemy, 100, 100);
   fixedTabPage2.add(spmEnemy);
   fixedTabPage2.move(spmEnemy, 160, 100);
+  fixedTabPage2.add(modelUnitLabel);
+  fixedTabPage2.move(modelUnitLabel, 10, 133);
+  fixedTabPage2.add(enterModelUnit);
+  fixedTabPage2.move(enterModelUnit, 130, 130);
+  fixedTabPage2.add(modelEnter);
+  fixedTabPage2.move(modelEnter, 300, 130);
+  fixedTabPage2.add(enemyUnitLabel);
+  fixedTabPage2.move(enemyUnitLabel, 10, 173);
+  fixedTabPage2.add(enterEnemyUnit);
+  fixedTabPage2.move(enterEnemyUnit, 140, 170);
+  fixedTabPage2.add(enemyEnter);
+  fixedTabPage2.move(enemyEnter, 310, 170);
   fixedTabPage2.add(textbox1);
   fixedTabPage2.move(textbox1, 10, 10);
   fixedTabPage2.add(button1);
-  fixedTabPage2.move(button1, 150, 195);
+  fixedTabPage2.move(button1, 150, 270);
   fixedTabPage2.add(setIters);
   fixedTabPage2.move(setIters, 160, 40);
   fixedTabPage2.add(button3);
-  fixedTabPage2.move(button3, 10, 195);
+  fixedTabPage2.move(button3, 10, 270);
   fixedTabPage2.add(status);
-  fixedTabPage2.move(status, 10, 230);
+  fixedTabPage2.move(status, 10, 310);
 
     // show trained model tab
 
@@ -366,6 +411,33 @@ int Form :: openPopUp() {
   boardShow = new PopUp;
   boardShow->show();
   return 0;
+}
+
+bool Form :: isValidUnit(std::string name) {
+  std::ifstream infile("../gym_mod/gym_mod/engine/unitData.json");
+  json j;
+  infile >> j;
+
+  const auto& unitData = j.at("UnitData");
+  for (const auto& unit : unitData) {
+    if (strcmp(unit.at("Name").get<std::string>().data(), name.data()) == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void Form :: savetoTxt(std::vector<std::string> enemyUnits, std::vector<std::string> modelUnits) {
+
+  std::ofstream outfile("units.txt");
+  for (const auto& str : enemyUnits) {
+    outfile << str << std::endl;
+  }
+  outfile << " \n";
+  for (const auto& str : modelUnits) {
+    outfile << str << std::endl;
+  }
+  outfile.close();
 }
 
 void Form :: update_picture() {

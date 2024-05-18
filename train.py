@@ -25,24 +25,24 @@ model = [model1, model2]
 end = False
 trunc = True
 totLifeT = 600
+
 if os.path.isfile("gui/data.json"):
+
+    enemy = []
+    model = []
+
     totLifeT = initFile.getNumLife()
     b_len = initFile.getBoardX()
     b_hei = initFile.getBoardY()
-    if initFile.getModelFaction() == "Space_Marine":
-        model1 = Unit(unitData("Space_Marine", "Eliminator Squad"), weaponData("Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len/2), np.random.randint(0,b_hei))
-        model2 = Unit(unitData("Space_Marine", "Apothecary"), weaponData("Absolver Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len/2), np.random.randint(0,b_hei))
-    elif initFile.getModelFaction() == "Orks":
-        model1 = Unit(unitData("Orks", "Snagga Boyz"), weaponData("Slugga"), weaponData("Choppa"), np.random.randint(0,b_len/2), np.random.randint(0,b_hei))
-        model2 = Unit(unitData("Orks", "Beastboss"), weaponData("Shoota"), weaponData("Beastchoppa"), np.random.randint(0,b_len/2), np.random.randint(0,b_hei))
-    if initFile.getEnemyFaction() == "Space_Marine":
-        enemy1 = Unit(unitData("Space_Marine", "Eliminator Squad"), weaponData("Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len - b_len/2), np.random.randint(0,b_hei))
-        enemy2 = Unit(unitData("Space_Marine", "Apothecary"), weaponData("Absolver Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len - b_len/2), np.random.randint(0,b_hei))
-    elif initFile.getEnemyFaction() == "Orks":
-        enemy1 = Unit(unitData("Orks", "Snagga Boyz"), weaponData("Slugga"), weaponData("Choppa"), np.random.randint(0,b_len - b_len/2), np.random.randint(0,b_hei))
-        enemy2 = Unit(unitData("Orks", "Beastboss"), weaponData("Shoota"), weaponData("Beastchoppa"), np.random.randint(0,b_len - b_len/2), np.random.randint(0,b_hei))
-    enemy = [enemy1, enemy2]
-    model = [model1, model2]
+    
+    for i in range(len(initFile.getEnemyUnits())):
+        print(initFile.getEnemyUnits()[i])
+        enemy.append(Unit(unitData(initFile.getEnemyFaction(), initFile.getEnemyUnits()[i]), weaponData(initFile.getEnemyW()[i][0]), weaponData(initFile.getEnemyW()[i][1]), np.random.randint(0,b_len - b_len/2), np.random.randint(0,b_hei)))
+
+    for i in range(len(initFile.getModelUnits())):
+        print(initFile.getModelUnits()[i])
+        model.append(Unit(unitData(initFile.getModelFaction(), initFile.getModelUnits()[i]), weaponData(initFile.getModelW()[i][0]), weaponData(initFile.getModelW()[i][1]), np.random.randint(0,b_len/2), np.random.randint(0,b_hei)))
+
 numLifeT = 0
 
 env = gym.make("40kAI-v0", disable_env_checker=True, enemy = enemy, model = model, b_len = b_len, b_hei = b_hei)

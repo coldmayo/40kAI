@@ -23,9 +23,12 @@ public :
   void runPlayAgainstModelInBackground();
   void playAgainstModel();
   inline bool exists_test (const std::string& name);
+  void on_dropdown_changed();
+  void savetoTxt(std::vector<std::string> enemyUnits, std::vector<std::string> modelUnits);
+  bool isValidUnit(std::string name);
 
 private:
-  Window* aboutw_;
+  Window* boardShow;
   Image pictureBox1;
   Fixed fixed;
   ScrolledWindow scrolledWindow;
@@ -83,10 +86,18 @@ private:
   Button downX;
   Button upY;
   Button downY;
-  int button1Clicked = 0;
+  Button modelEnter;
+  Button enemyEnter;
+  Entry enterModelUnit;
+  Entry enterEnemyUnit;
   int x;
   int y;
   bool open;
+  bool training;
+  bool playing;
+  Label error;
+  Label modelUnitLabel;
+  Label enemyUnitLabel;
 };
 
 #endif
