@@ -28,20 +28,19 @@ totLifeT = 600
 
 if os.path.isfile("gui/data.json"):
 
-    enemy = []
-    model = []
-
     totLifeT = initFile.getNumLife()
     b_len = initFile.getBoardX()
     b_hei = initFile.getBoardY()
-    
-    for i in range(len(initFile.getEnemyUnits())):
-        print(initFile.getEnemyUnits()[i])
-        enemy.append(Unit(unitData(initFile.getEnemyFaction(), initFile.getEnemyUnits()[i]), weaponData(initFile.getEnemyW()[i][0]), weaponData(initFile.getEnemyW()[i][1]), np.random.randint(0,b_len - b_len/2), np.random.randint(0,b_hei)))
 
-    for i in range(len(initFile.getModelUnits())):
-        print(initFile.getModelUnits()[i])
-        model.append(Unit(unitData(initFile.getModelFaction(), initFile.getModelUnits()[i]), weaponData(initFile.getModelW()[i][0]), weaponData(initFile.getModelW()[i][1]), np.random.randint(0,b_len/2), np.random.randint(0,b_hei)))
+    if len(initFile.getEnemyUnits()) > 0:
+        enemy = []
+        for i in range(len(initFile.getEnemyUnits())):
+            enemy.append(Unit(unitData(initFile.getEnemyFaction(), initFile.getEnemyUnits()[i]), weaponData(initFile.getEnemyW()[i][0]), weaponData(initFile.getEnemyW()[i][1]), np.random.randint(0,b_len - b_len/2), np.random.randint(0,b_hei)))
+
+    if len(initFile.getModelUnits()) > 0:
+        model = []
+        for i in range(len(initFile.getModelUnits())):
+            model.append(Unit(unitData(initFile.getModelFaction(), initFile.getModelUnits()[i]), weaponData(initFile.getModelW()[i][0]), weaponData(initFile.getModelW()[i][1]), np.random.randint(0,b_len/2), np.random.randint(0,b_hei)))
 
 numLifeT = 0
 

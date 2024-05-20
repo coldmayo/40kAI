@@ -25,10 +25,12 @@ public :
   inline bool exists_test (const std::string& name);
   void on_dropdown_changed();
   void savetoTxt(std::vector<std::string> enemyUnits, std::vector<std::string> modelUnits);
-  bool isValidUnit(std::string name);
+  bool isValidUnit(int id, std::string name);
+  int openArmyView();
 
 private:
   Window* boardShow;
+  Window* armyView;
   Image pictureBox1;
   Fixed fixed;
   ScrolledWindow scrolledWindow;
@@ -88,8 +90,11 @@ private:
   Button downY;
   Button modelEnter;
   Button enemyEnter;
+  Button openArmyPopup;
   Entry enterModelUnit;
   Entry enterEnemyUnit;
+  Button clearAllModel;
+  Button clearAllEnemy;
   int x;
   int y;
   bool open;

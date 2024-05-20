@@ -10,6 +10,7 @@
             "W": 2,
             "Ld": 6,
             "OC": 1,
+            "IVSave": 0,
             "Weapons": ["Bolt Pistol", "Close combat weapon"]
         },
         {
@@ -22,7 +23,60 @@
             "W": 4,
             "Ld": 6,
             "OC": 1,
+            "IVSave": 0,
             "Weapons": ["Absolver Bolt Pistol", "Close combat weapon"]
+        },
+        {
+            "Army": "Space_Marine",
+            "Name": "Captain in Terminator Armour",
+            "Movement": 5,
+            "#OfModels": 1,
+            "T": 5,
+            "Sv": 2,
+            "W": 6,
+            "Ld": 6,
+            "OC": 1,
+            "IVSave": 4,
+            "Weapons": ["Storm bolter", "Relic Fist"]
+        },
+        {
+            "Army": "Space_Marine",
+            "Name": "Librarian in Terminator Armour",
+            "Movement": 5,
+            "#OfModels": 1,
+            "T": 5,
+            "Sv": 2,
+            "W": 5,
+            "Ld": 6,
+            "OC": 1,
+            "IVSave": 4,
+            "Weapons": ["Storm bolter", "Force Weapon"]
+        },
+        {
+            "Army": "Space_Marine",
+            "Name": "Infernus Squad",
+            "Movement": 6,
+            "#OfModels": 5,
+            "T": 4,
+            "Sv": 3,
+            "W": 2,
+            "Ld": 6,
+            "OC": 1,
+            "IVSave": 0,
+            "Weapons": ["Bolt Pistol", "Close combat weapon"]
+        },
+        {
+            "Army": "Space_Marine",
+            "Name": "Terminator Squad",
+            "Movement": 5,
+            "#OfModels": 5,
+            "T": 5, 
+            "Sv": 2,
+            "W": 3,
+            "Ld": 6,
+            "OC": 1,
+            "IVSave": 4,
+            "Weapons": ["Storm bolter", "Power Fist"]
         },
         {
             "Army": "Orks",
@@ -34,6 +88,7 @@
             "W": 5,
             "Ld": 6,
             "OC":1,
+            "IVSave": 5,
             "Weapons": ["Shoota", "Beastchoppa"]
         },
         {
@@ -46,9 +101,24 @@
             "W": 1,
             "Ld":7,
             "OC":2,
+            "IVSave": 0,
             "Weapons": ["Slugga", "Choppa"]
+        },
+        {
+            "Army": "Orks",
+            "Name": "Squighog Boyz",
+            "Movement": 10,
+            "#OfModels": 4,
+            "T": 7,
+            "Sv": 4,
+            "W": 3,
+            "Ld": 7,
+            "OC": 2,
+            "IVSave": 0,
+            "Weapons": ["Slugga", "Big Choppa"]
         }
     ],
+
     "WeaponData": [
         {
             "Name": "Shoota",
@@ -113,6 +183,42 @@
             "AP": -1,
             "Range": 2,
             "Damage": 1
+        },
+        {
+            "Name": "Storm bolter",
+            "Type": "Ranged",
+            "BS": 3,
+            "S": 4,
+            "AP": 0,
+            "Range":24,
+            "Damage": 1
+        },
+        {
+            "Name": "Relic Fist",
+            "Type": "Melee",
+            "WS": 2,
+            "S": 8,
+            "AP": -2,
+            "Range": 2,
+            "Damage": 2
+        },
+        {
+            "Name": "Force Weapon",
+            "Type": "Melee",
+            "WS": 3,
+            "S": 6,
+            "AP": -1, 
+            "Range": 2, 
+            "Damage": "D3"
+        },
+        {
+            "Name": "Power Fist",
+            "Type": "Melee",
+            "WS": 4,
+            "S": 8,
+            "AP": -2,
+            "Range": 2,
+            "Damage": 2
         }
     ]
 }

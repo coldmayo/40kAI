@@ -168,7 +168,7 @@ class Warhammer40kEnv(gym.Env):
 
                 for j in range(len(self.unit_health)):
                     if distance(self.enemy_coords[i], self.unit_coords[j]) <= 12 and self.unitInAttack[j][0] == 0:
-                        if distance(self.enemy_coords[j], self.unit_coords[i]) - diceRoll <= 5:
+                        if distance(self.enemy_coords[i], self.unit_coords[i]) - diceRoll <= 5:
                             chargeAble.append(j)
 
                 if (len(chargeAble) > 0):  
@@ -224,7 +224,7 @@ class Warhammer40kEnv(gym.Env):
                 diceRoll = dice(num=2)
                 if self.trunc == False:
                     print("Model rolled", diceRoll[0], diceRoll[1])
-                if sum(diceRoll) >= self.enemy_data[i]["Ld"]:
+                if sum(diceRoll) >= self.unit_data[i]["Ld"]:
                     if self.trunc == False:
                         print("Battle-shock test passed!")
                 else:

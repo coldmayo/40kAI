@@ -25,9 +25,9 @@ def addingUnits():
     file = open("gui/units.txt", "r")
     content = file.readlines()
     flip = 0
-    for i in content:
+    for i in content[1:len(content)]:
         name = i[0:len(i)-1]
-        if name == " ":
+        if name == "Model Units":
             flip = 1
         elif flip == 0:
             enemy.append(name)

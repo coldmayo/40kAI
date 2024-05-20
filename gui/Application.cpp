@@ -9,6 +9,7 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include "popup.h"
+#include "units.h"
 
 using namespace Glib;
 using namespace Gtk;
@@ -31,10 +32,12 @@ public :
   inline bool exists_test (const std::string& name);
   void on_dropdown_changed();
   void savetoTxt(std::vector<std::string> enemyUnits, std::vector<std::string> modelUnits);
-  bool isValidUnit(std::string name);
+  bool isValidUnit(int id, std::string name);
+  int openArmyView();
 
 private:
   Window* boardShow;
+  Window* armyView;
   Image pictureBox1;
   Fixed fixed;
   ScrolledWindow scrolledWindow;
@@ -94,8 +97,11 @@ private:
   Button downY;
   Button modelEnter;
   Button enemyEnter;
+  Button openArmyPopup;
   Entry enterModelUnit;
   Entry enterEnemyUnit;
+  Button clearAllModel;
+  Button clearAllEnemy;
   int x;
   int y;
   bool open;
@@ -177,6 +183,8 @@ Form :: Form() {
 
     // train tab
 
+  savetoTxt(enemyUnits, modelUnits);
+
   labelPage2.set_label("Train");
   tabControl1.set_tab_label(tabPage2, labelPage2);
   tabPage2.add(fixedTabPage2);
@@ -199,6 +207,11 @@ Form :: Form() {
 
   modelUnitLabel.set_text("Enter Model Units:");
   enemyUnitLabel.set_text("Enter Enemy Units:");
+  openArmyPopup.set_label("Army Viewer");
+  openArmyPopup.signal_button_release_event().connect([&](GdkEventButton*) {
+    openArmyView();
+    return true;
+  });
 
   dimens.set_text("Dimensions of Board: ");
 
@@ -241,32 +254,48 @@ Form :: Form() {
   spmModel.set_label("Space Marine");
   spmModel.set_group(factionModel);
   spmModel.signal_toggled().connect([this]() {
+    modelUnits.clear();
     modelClass = " Space_Marine";
   });
 
   orksModel.set_label("Orks");
   orksModel.set_group(factionModel);
   orksModel.signal_toggled().connect([this]() {
+    modelUnits.clear();
     modelClass = " Orks";
   });
 
   spmEnemy.set_label("Space Marine");
   spmEnemy.set_group(factionEnemy);
   spmEnemy.signal_toggled().connect([this]() {
+    enemyUnits.clear();
     enemyClass = " Space_Marine";
   });
 
   orksEnemy.set_label("Orks");
   orksEnemy.set_group(factionEnemy);
   orksEnemy.signal_toggled().connect([this]() {
+    enemyUnits.clear();
     enemyClass = " Orks";
   });
 
   enemyFact.set_text("Enemy Faction: ");
   modelFact.set_text("Model Faction: ");
+  clearAllModel.set_label("Clear");
+  clearAllModel.signal_button_release_event().connect([&](GdkEventButton*) {
+    modelUnits.clear();
+    savetoTxt(enemyUnits, modelUnits);
+    return true;
+  });
+  clearAllEnemy.set_label("Clear");
+  clearAllEnemy.signal_button_release_event().connect([&](GdkEventButton*) {
+    enemyUnits.clear();
+    savetoTxt(enemyUnits, modelUnits);
+    return true;
+  });
   enemyEnter.set_label("Add");
   enemyEnter.signal_button_release_event().connect([&](GdkEventButton*) {
-    if (isValidUnit(enterEnemyUnit.get_text()) == true) {
+    if (isValidUnit(1, enterEnemyUnit.get_text()) == true) {
       enemyUnits.push_back(enterEnemyUnit.get_text());
       savetoTxt(enemyUnits, modelUnits);
     }
@@ -274,7 +303,7 @@ Form :: Form() {
   });
   modelEnter.set_label("Add");
   modelEnter.signal_button_release_event().connect([&](GdkEventButton*) {
-    if (isValidUnit(enterModelUnit.get_text()) == true) {
+    if (isValidUnit(0, enterModelUnit.get_text()) == true) {
       modelUnits.push_back(enterModelUnit.get_text());
       savetoTxt(enemyUnits, modelUnits);
     }
@@ -327,6 +356,12 @@ Form :: Form() {
   fixedTabPage2.move(enterEnemyUnit, 140, 170);
   fixedTabPage2.add(enemyEnter);
   fixedTabPage2.move(enemyEnter, 310, 170);
+  fixedTabPage2.add(clearAllModel);
+  fixedTabPage2.move(clearAllModel, 340, 130);
+  fixedTabPage2.add(clearAllEnemy);
+  fixedTabPage2.move(clearAllEnemy, 350, 170);
+  fixedTabPage2.add(openArmyPopup);
+  fixedTabPage2.move(openArmyPopup, 410, (130+170)/2);
   fixedTabPage2.add(textbox1);
   fixedTabPage2.move(textbox1, 10, 10);
   fixedTabPage2.add(button1);
@@ -413,7 +448,16 @@ int Form :: openPopUp() {
   return 0;
 }
 
-bool Form :: isValidUnit(std::string name) {
+int Form :: openArmyView() {
+  armyView = new Units;
+  armyView->show();
+  return 0;
+}
+
+// model: id = 0
+// enemy: id = 1
+
+bool Form :: isValidUnit(int id, std::string name) {
   std::ifstream infile("../gym_mod/gym_mod/engine/unitData.json");
   json j;
   infile >> j;
@@ -421,7 +465,11 @@ bool Form :: isValidUnit(std::string name) {
   const auto& unitData = j.at("UnitData");
   for (const auto& unit : unitData) {
     if (strcmp(unit.at("Name").get<std::string>().data(), name.data()) == 0) {
-      return true;
+      if (id == 0 && strcmp(unit.at("Army").get<std::string>().data(), modelClass.substr(1, modelClass.length()).data()) == 0) {
+        return true;
+      } else if (id == 1 && strcmp(unit.at("Army").get<std::string>().data(), enemyClass.substr(1, enemyClass.length()).data()) == 0) {
+        return true;
+      }
     }
   }
   return false;
@@ -430,10 +478,11 @@ bool Form :: isValidUnit(std::string name) {
 void Form :: savetoTxt(std::vector<std::string> enemyUnits, std::vector<std::string> modelUnits) {
 
   std::ofstream outfile("units.txt");
+  outfile << "Player Units\n";
   for (const auto& str : enemyUnits) {
     outfile << str << std::endl;
   }
-  outfile << " \n";
+  outfile << "Model Units\n";
   for (const auto& str : modelUnits) {
     outfile << str << std::endl;
   }

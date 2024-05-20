@@ -57,19 +57,34 @@ def attack(attackerHealth, attackerWeapon, attackerData, attackeeHealth, attacke
     for k in range(hits):
         if attackerWeapon["S"] >= attackeeData["T"]*2:
             if dice() <= 2:
-                dmg = np.append(dmg, attackerWeapon["Damage"])
+                if type(attackerWeapon["Damage"]) == type(8008135):
+                    dmg = np.append(dmg, attackerWeapon["Damage"])
+                elif attackerWeapon["Damage"] == "D3":
+                    dmg = np.append(dmg, dice(min=1,max=3))
         elif attackerWeapon["S"] > attackeeData["T"]:
             if dice() <= 3:
-                dmg = np.append(dmg, attackerWeapon["Damage"])
+                if type(attackerWeapon["Damage"]) == type(8008135):
+                    dmg = np.append(dmg, attackerWeapon["Damage"])
+                elif attackerWeapon["Damage"] == "D3":
+                    dmg = np.append(dmg, dice(min=1,max=3))
         elif attackerWeapon["S"] == attackeeData["T"]:
             if dice() <= 4:
-                dmg = np.append(dmg, attackerWeapon["Damage"])
+                if type(attackerWeapon["Damage"]) == type(8008135):
+                    dmg = np.append(dmg, attackerWeapon["Damage"])
+                elif attackerWeapon["Damage"] == "D3":
+                    dmg = np.append(dmg, dice(min=1,max=3))
         elif attackerWeapon["S"]/2 <= attackeeData["T"]:
             if dice() <= 5:
-                dmg = np.append(dmg, attackerWeapon["Damage"])
+                if type(attackerWeapon["Damage"]) == type(8008135):
+                    dmg = np.append(dmg, attackerWeapon["Damage"])
+                elif attackerWeapon["Damage"] == "D3":
+                    dmg = np.append(dmg, dice(min=1,max=3))
         elif attackerWeapon["S"] < attackeeData["T"]:
             if dice() == 6:
-                dmg = np.append(dmg, attackerWeapon["Damage"])
+                if type(attackerWeapon["Damage"]) == type(8008135):
+                    dmg = np.append(dmg, attackerWeapon["Damage"])
+                elif attackerWeapon["Damage"] == "D3":
+                    dmg = np.append(dmg, dice(min=1,max=3))
         # saving throws
     for k in range(len(dmg)):
         if dice()-attackerWeapon["AP"] > attackeeData["Sv"]:

@@ -57,7 +57,6 @@ std::string PopUp :: openFile(std::string board) {
       fullFile += ch;
       last = ch;
     }
-    //std::cout << fullFile;
   }
   file.close();
   return fullFile;
@@ -87,10 +86,6 @@ PopUp :: PopUp() {
   scrolledWindow.add(fixed);
   
   set_title("board.txt");
-  std::string boardpth = "../board.txt";
-  std::string board;
-  board = openFile(boardpth);
-  contents.set_text(board);
 
   backgroudUpdate();
   
