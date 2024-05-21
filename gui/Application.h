@@ -27,6 +27,7 @@ public :
   void savetoTxt(std::vector<std::string> enemyUnits, std::vector<std::string> modelUnits);
   bool isValidUnit(int id, std::string name);
   int openArmyView();
+  std::string toLower(std::string data);
 
 private:
   Window* boardShow;
@@ -103,6 +104,8 @@ private:
   Label error;
   Label modelUnitLabel;
   Label enemyUnitLabel;
+  std::vector<std::string> modelUnits;
+  std::vector<std::string> enemyUnits;
 };
 
 #endif

@@ -196,7 +196,7 @@ int parseInput(char *comm) {
 
         printf("Commands:\ninstall: Installs the 40kAI app\nuninstall: Uninstalls the 40kAI app (why would you do this)\nexit: leave the installation prompt\n");
 
-    } else if (strcmp(comm, "exit") == 0) {
+    } else if (strcmp(comm, "exit") == 0 || strcmp(comm, "quit") == 0) {
         running = 1;
         return running;
     } else {

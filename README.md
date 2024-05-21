@@ -14,7 +14,7 @@
 
 ## Description
 
-I am new to Warhammer 40k and scared to play against others, so I decided to make a model that could play against me using Reinforcement Learning. To accomplish this, I am creating a custom 40k environment to be used with the Gym API. 
+I am new to Warhammer 40k and scared to play against others, so I decided to make a model that could play against me using Reinforcement Learning. To accomplish this, I am creating a custom 40k environment using Gymnasium and a DQN using Pytorch. 
 
 ## Gameplay
 
@@ -46,6 +46,7 @@ Before proceeding make sure your device meets the below requirements:
    - make
    - cmake
    - gcc
+   - nlohmann-json
 
 ```bash
 # clone repo

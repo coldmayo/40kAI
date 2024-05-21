@@ -34,6 +34,7 @@ public :
   void savetoTxt(std::vector<std::string> enemyUnits, std::vector<std::string> modelUnits);
   bool isValidUnit(int id, std::string name);
   int openArmyView();
+  std::string toLower(std::string data);
 
 private:
   Window* boardShow;
@@ -110,12 +111,11 @@ private:
   Label error;
   Label modelUnitLabel;
   Label enemyUnitLabel;
+  std::vector<std::string> modelUnits;
+  std::vector<std::string> enemyUnits;
 };
 
 Form :: Form() {
-
-  static std::vector<std::string> modelUnits;
-  static std::vector<std::string> enemyUnits;
 
   modelClass = " Space_Marine";
   enemyClass = " Space_Marine";
@@ -206,7 +206,7 @@ Form :: Form() {
   setIters.set_text("100");
 
   modelUnitLabel.set_text("Enter Model Units:");
-  enemyUnitLabel.set_text("Enter Enemy Units:");
+  enemyUnitLabel.set_text("Enter Player Units:");
   openArmyPopup.set_label("Army Viewer");
   openArmyPopup.signal_button_release_event().connect([&](GdkEventButton*) {
     openArmyView();
@@ -296,7 +296,6 @@ Form :: Form() {
   enemyEnter.set_label("Add");
   enemyEnter.signal_button_release_event().connect([&](GdkEventButton*) {
     if (isValidUnit(1, enterEnemyUnit.get_text()) == true) {
-      enemyUnits.push_back(enterEnemyUnit.get_text());
       savetoTxt(enemyUnits, modelUnits);
     }
     return true;
@@ -304,7 +303,6 @@ Form :: Form() {
   modelEnter.set_label("Add");
   modelEnter.signal_button_release_event().connect([&](GdkEventButton*) {
     if (isValidUnit(0, enterModelUnit.get_text()) == true) {
-      modelUnits.push_back(enterModelUnit.get_text());
       savetoTxt(enemyUnits, modelUnits);
     }
     return true;
@@ -353,15 +351,15 @@ Form :: Form() {
   fixedTabPage2.add(enemyUnitLabel);
   fixedTabPage2.move(enemyUnitLabel, 10, 173);
   fixedTabPage2.add(enterEnemyUnit);
-  fixedTabPage2.move(enterEnemyUnit, 140, 170);
+  fixedTabPage2.move(enterEnemyUnit, 130, 170);
   fixedTabPage2.add(enemyEnter);
-  fixedTabPage2.move(enemyEnter, 310, 170);
+  fixedTabPage2.move(enemyEnter, 300, 170);
   fixedTabPage2.add(clearAllModel);
   fixedTabPage2.move(clearAllModel, 340, 130);
   fixedTabPage2.add(clearAllEnemy);
-  fixedTabPage2.move(clearAllEnemy, 350, 170);
+  fixedTabPage2.move(clearAllEnemy, 340, 170);
   fixedTabPage2.add(openArmyPopup);
-  fixedTabPage2.move(openArmyPopup, 410, (130+170)/2);
+  fixedTabPage2.move(openArmyPopup, 400, (130+170)/2);
   fixedTabPage2.add(textbox1);
   fixedTabPage2.move(textbox1, 10, 10);
   fixedTabPage2.add(button1);
@@ -454,6 +452,11 @@ int Form :: openArmyView() {
   return 0;
 }
 
+std::string Form :: toLower(std::string data) {
+  std::transform(data.begin(), data.end(), data.begin(),[](unsigned char c){ return std::tolower(c); });
+  return data;
+}
+
 // model: id = 0
 // enemy: id = 1
 
@@ -464,10 +467,12 @@ bool Form :: isValidUnit(int id, std::string name) {
 
   const auto& unitData = j.at("UnitData");
   for (const auto& unit : unitData) {
-    if (strcmp(unit.at("Name").get<std::string>().data(), name.data()) == 0) {
-      if (id == 0 && strcmp(unit.at("Army").get<std::string>().data(), modelClass.substr(1, modelClass.length()).data()) == 0) {
+    if (strcmp(toLower(unit.at("Name").get<std::string>()).data(), toLower(name).data()) == 0) {
+      if (id == 0 && strcmp(toLower(unit.at("Army").get<std::string>()).data(), toLower(modelClass.substr(1, modelClass.length())).data()) == 0) {
+        modelUnits.push_back(unit.at("Name").get<std::string>());
         return true;
-      } else if (id == 1 && strcmp(unit.at("Army").get<std::string>().data(), enemyClass.substr(1, enemyClass.length()).data()) == 0) {
+      } else if (id == 1 && strcmp(toLower(unit.at("Army").get<std::string>()).data(), toLower(enemyClass.substr(1, enemyClass.length())).data()) == 0) {
+        enemyUnits.push_back(unit.at("Name").get<std::string>());
         return true;
       }
     }
