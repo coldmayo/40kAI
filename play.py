@@ -6,28 +6,62 @@ import sys
 from gym_mod.envs.warhamEnv import *
 from gym_mod.engine import genDisplay
 
+from model.DQN import *
+from model.utils import *
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 if sys.argv[1] == "None":
     savePath = "models/"
 
     folders = os.listdir(savePath)
 
-    files = []
+    envs = []
+    model = []
 
     for i in folders:
         fs = os.listdir(savePath+i+"/")
         for j in fs:
-            files.append(savePath+i+"/"+j)
+            if j[-len(".pickle"):] == ".pickle":
+                envs.append(savePath+i+"/"+j)
+            elif j[-len(".pth"):] == ".pth":
+                model.append(savePath+i+"/"+j)
 
-    files.sort(key=lambda x: os.path.getmtime(x))
+    envs.sort(key=lambda x: os.path.getmtime(x))
+    model.sort()
 
-    print("Playing with model saved here: ", files[-1])
-    with open(files[-1], 'rb') as f:
+    checkpoint = torch.load(model[-1])
+
+    print("Playing with environment saved here: ", envs[-1])
+    with open(envs[-1], 'rb') as f:
         env = pickle.load(f)
 else: 
     print("Playing with model saved here: ", sys.argv[1])
     with open(sys.argv[1], 'rb') as f:
         env = pickle.load(f)
+    f = str(sys.argv[1])
+    modelpth = f[:-len("pickle")]+"pth"
+    checkpoint = torch.load(modelpth)
 
+
+state, info = env.reset()
+n_actions = [4,2,len(info["player health"]), len(info["player health"])]
+n_observations = len(state)
+
+policy_net = DQN(n_observations, n_actions).to(device)
+target_net = DQN(n_observations, n_actions).to(device)
+optimizer = torch.optim.Adam(policy_net.parameters())
+
+policy_net.load_state_dict(checkpoint['policy_net'])
+target_net.load_state_dict(checkpoint['target_net'])
+optimizer.load_state_dict(checkpoint['optimizer'])
+
+policy_net.eval()
+target_net.eval()
 
 isdone = False
 i = 0
@@ -43,11 +77,14 @@ print("The player (you) controls units starting with 1 (i.e. 11, 12, etc)")
 print("The model controls units starting with 2 (i.e. 21, 22, etc)\n")
 
 while isdone == False:
-    action = env.action_space.sample()
+    state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
+    action = select_action(env, state, i, policy_net)
+    action_dict = convertToDict(action)
     print(env.get_info())
     done, info = env.player()
     if done != True:
-        next_observation, reward, done, _, info = env.step(action)
+        next_observation, reward, done, _, info = env.step(action_dict)
+        reward = torch.tensor([reward], device=device)
         unit_health = info["model health"]
         enemy_health = info["player health"]
         inAttack = info["in attack"]
@@ -58,6 +95,8 @@ while isdone == False:
         board = env.render()
         message = "Iteration {} ended with reward {}, Player health {}, Model health {}".format(i, reward, enemy_health, unit_health)
         print(message)
+        next_state = torch.tensor(next_observation, dtype=torch.float32, device=device).unsqueeze(0)
+        state = next_state
     if done == True:
         if reward > 0:
             print("model won!")
