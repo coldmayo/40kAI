@@ -52,7 +52,9 @@ def select_action(env, state, steps_done, policy_net):
             sampled_action['move'],
             sampled_action['attack'],
             sampled_action['shoot'],
-            sampled_action['charge']
+            sampled_action['charge'],
+            sampled_action['use_cp'],
+            sampled_action['cp_on']
         ]
         action = torch.tensor([action_list], device=device, dtype=torch.long)
         return action
@@ -63,11 +65,13 @@ def convertToDict(action):
         'move': naction[0],
         'attack': naction[1],
         'shoot': naction[2],
-        'charge': naction[3]
+        'charge': naction[3],
+        'use_cp': naction[4],
+        'cp_on': naction[5]
     }
     return action_dict
 
-def optimize_model(policy_net, target_net, optimizer, memory):
+def optimize_model(policy_net, target_net, optimizer, memory, n_obs):
     if len(memory) < BATCH_SIZE:
         return
     transitions = memory.sample(BATCH_SIZE)
@@ -77,22 +81,24 @@ def optimize_model(policy_net, target_net, optimizer, memory):
                                           batch.next_state)), device=device, dtype=torch.bool)
     non_final_next_states = torch.cat([s for s in batch.next_state
                                                 if s is not None])
-    desired_shape = (1, 13)
+    desired_shape = (1, n_obs)
 
     state_batch = torch.cat([s.view(desired_shape) if s is not None else torch.zeros(desired_shape) for s in batch.state], dim=0)
     action_batch = torch.cat(batch.action)
     reward_batch = torch.cat(batch.reward)
 
     state_action_values = policy_net(state_batch)
-    move_action, attack_action, shoot_action, charge_action = state_action_values
+    move_action, attack_action, shoot_action, charge_action, use_cp_action, cp_on_action = state_action_values
     selected_action_values = torch.cat([
         move_action.gather(1, action_batch[:, 0].unsqueeze(1)),
         attack_action.gather(1, action_batch[:, 1].unsqueeze(1)),
         shoot_action.gather(1, action_batch[:, 2].unsqueeze(1)),
-        charge_action.gather(1, action_batch[:, 3].unsqueeze(1))
+        charge_action.gather(1, action_batch[:, 3].unsqueeze(1)),
+        use_cp_action.gather(1, action_batch[:, 4].unsqueeze(1)),
+        cp_on_action.gather(1, action_batch[:, 5].unsqueeze(1))
     ], dim=1)
 
-    next_state_values = torch.zeros((BATCH_SIZE,4), device=device)
+    next_state_values = torch.zeros((BATCH_SIZE,6), device=device)
     with torch.no_grad():
         decision = target_net(non_final_next_states)
         action = []

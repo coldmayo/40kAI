@@ -69,7 +69,7 @@ numLifeT = 0
 
 env = gym.make("40kAI-v0", disable_env_checker=True, enemy = enemy, model = model, b_len = b_len, b_hei = b_hei)
 
-n_actions = [4,2,len(enemy), len(enemy)]
+n_actions = [4,2,len(enemy), len(enemy), 3, len(model)]
 state, info = env.reset()
 n_observations = len(state)
 
@@ -125,13 +125,11 @@ while end == False:
     next_state = torch.tensor(next_observation, dtype=torch.float32, device=device).unsqueeze(0)
     memory.push(state, action, next_state, reward)
     state = next_state
-    optimize_model(policy_net, target_net, optimizer, memory)
+    optimize_model(policy_net, target_net, optimizer, memory, n_observations)
 
-    target_net_state_dict = target_net.state_dict()
-    policy_net_state_dict = policy_net.state_dict()
-    for key in policy_net_state_dict:
-        target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
-    target_net.load_state_dict(target_net_state_dict)
+    for key in policy_net.state_dict():
+        target_net.state_dict()[key] = policy_net.state_dict()[key]*TAU + target_net.state_dict()[key]*(1-TAU)
+    target_net.load_state_dict(target_net.state_dict())
 
     if done == True:
         pbar.update(1)

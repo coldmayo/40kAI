@@ -121,6 +121,16 @@
 
     "WeaponData": [
         {
+            "Name": "Big Choppa",
+            "Type": "Melee",
+            "WS": 2,
+            "S": 8,
+            "AP": -1,
+            "Range": 2,
+            "Damage": 2
+
+        },
+        {
             "Name": "Shoota",
             "Type": "Ranged",
             "BS": 4,

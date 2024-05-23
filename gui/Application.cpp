@@ -8,8 +8,8 @@
 #include <chrono>
 #include <fstream>
 #include <nlohmann/json.hpp>
-#include "popup.h"
-#include "units.h"
+#include "include/popup.h"
+#include "include/units.h"
 
 using namespace Glib;
 using namespace Gtk;
@@ -402,7 +402,6 @@ Form :: Form() {
     char resolved_path[PATH_MAX];
     realpath("../../40kAI", resolved_path);
     strcat(resolved_path, "/models");
-    printf("%s\n", resolved_path);
     folderBrowserDialog.set_current_folder(resolved_path);
     folderBrowserDialog.set_transient_for(*this);
 
@@ -518,6 +517,7 @@ void Form :: startTrainInBackground() {
 
 void Form :: startTrain() {
   training = true;
+  system("clear");
   system("cd .. ; ./train.sh");
   status.set_text("Completed!");
   training = false;
@@ -538,6 +538,7 @@ void Form :: playAgainstModel() {
     command.append(path);
   }
   playing = true;
+  system("clear");
   system(command.data());
   playing = false;
 }

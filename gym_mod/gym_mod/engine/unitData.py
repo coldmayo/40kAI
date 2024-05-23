@@ -16,7 +16,7 @@ def weaponData(name):
     for i in data["WeaponData"]:
         if i["Name"].lower() == name.lower():
             return i
-    print("Weapon Not Found")
+    print(i, "Weapon Not Found")
     return {}
 
 if __name__ == "__main__":

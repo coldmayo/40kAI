@@ -16,7 +16,9 @@ class Warhammer40kEnv(gym.Env):
             'move': spaces.Discrete(4),  # Four directions: Up, Down, Left, Right
             'attack': spaces.Discrete(2),  # Two attack options: Engage Attack, Leave Attack/move
             'shoot': spaces.Discrete(len(enemy)),   # choose which model to attack in the shooting phase
-            'charge': spaces.Discrete(len(enemy))   # choose which model to attack in the charge phase
+            'charge': spaces.Discrete(len(enemy)),   # choose which model to attack in the charge phase
+            'use_cp': spaces.Discrete(3),   # choose to use cp, 0 = no stratagems, 1 = insane bravery, 2 = overwatch
+            'cp_on': spaces.Discrete(len(model))   # choose which model unit cp is used on
         })
 
         # Initialize game state + board
@@ -39,6 +41,10 @@ class Warhammer40kEnv(gym.Env):
         self.unitInAttack = []
         self.enemyInAttack = []
         self.trunc = False
+        self.enemyCP = 0
+        self.modelCP = 0
+        self.modelOverwatch = -1
+        self.enemyOverwatch = -1
 
         for i in range(len(enemy)):
             self.enemy_weapon.append(enemy[i].showWeapon())
@@ -61,7 +67,7 @@ class Warhammer40kEnv(gym.Env):
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(obsSpace,), dtype=np.float32)  # 7-dimensional observation space
 
     def get_info(self):
-        return {"model health":self.unit_health, "player health": self.enemy_health, "in attack": self.unitInAttack}
+        return {"model health":self.unit_health, "player health": self.enemy_health, "modelCP": self.modelCP, "playerCP": self.enemyCP, "in attack": self.unitInAttack}
 
     # small reset = used in training
     # big reset reset env completely for testing/validation
@@ -84,6 +90,8 @@ class Warhammer40kEnv(gym.Env):
         self.unit_health = []
         self.enemyInAttack = []
         self.unitInAttack = []
+        self.modelCP = 0
+        self.enemyCP = 0
         for i in range(len(self.enemy_data)):
             self.enemy_coords.append([np.random.randint(0,self.b_len), np.random.randint(0,self.b_hei)])
             self.enemy_health.append(self.enemy_data[i]["W"]*self.enemy_data[i]["#OfModels"])
@@ -102,10 +110,16 @@ class Warhammer40kEnv(gym.Env):
     def enemyTurn(self, trunc=False):
         if trunc == True:
             self.trunc = True
+        self.enemyCP += 1
+        self.modelCP += 1
+        cp_on = np.random.randint(0,len(self.enemy_health))
+        use_cp = np.random.randint(0, 3)
         for i in range(len(self.enemy_health)):
+            # command phase
+
             enemyName = i+21
             battleSh = False
-            if isBelowHalfStr(self.unit_data[i],self.unit_health[i]) == True:
+            if isBelowHalfStr(self.enemy_data[i],self.enemy_health[i]) == True:
                 if trunc == False:
                     print("This unit is Battle-shocked, starting test...")
                     print("Rolling 2D6...")
@@ -119,6 +133,10 @@ class Warhammer40kEnv(gym.Env):
                     battleSh = True
                     if trunc == False:
                         print("Battle-shock test failed")
+                    if use_cp == 1 and cp_on == i and self.enemyCP -1 >= 0:
+                        battleSh = False
+                        self.enemyCP -= 1
+
             if self.enemyInAttack[i][0] == 0 and self.enemy_health[i] > 0:
 
                 # the enemy used for training will try to get as close to the model units as possible
@@ -148,6 +166,17 @@ class Warhammer40kEnv(gym.Env):
                 for j in range(len(self.unit_health)):
                     if self.enemy_coords[i] == self.unit_coords[j]:
                         self.enemy_coords[i][0] -= 1
+                        
+                if self.modelOverwatch != -1:
+                    if distance(self.enemy_coords[i], self.unit_coords[self.modelOverwatch]) <= self.unit_weapon[self.modelOverwatch]["Range"]:
+                        dmg, modHealth = attack(self.unit_health[self.modelOverwatch], self.unit_weapon[self.modelOverwatch], self.unit_data[self.modelOverwatch], self.enemy_health[i], self.enemy_data[i])
+                        self.enemy_health[i] = modHealth
+                        self.modelOverwatch = -1
+                
+                # set overwatch
+                if use_cp == 2 and cp_on == i and self.enemyCP - 1 >= 0:
+                    self.enemyCP -= 1
+                    self.enemyOverwatch = i
 
                 # Shooting phase (if applicable)
                 shootAbleUnits = []
@@ -168,7 +197,7 @@ class Warhammer40kEnv(gym.Env):
 
                 for j in range(len(self.unit_health)):
                     if distance(self.enemy_coords[i], self.unit_coords[j]) <= 12 and self.unitInAttack[j][0] == 0:
-                        if distance(self.enemy_coords[i], self.unit_coords[i]) - diceRoll <= 5:
+                        if distance(self.enemy_coords[i], self.unit_coords[j]) - diceRoll <= 5:
                             chargeAble.append(j)
 
                 if (len(chargeAble) > 0):  
@@ -211,9 +240,14 @@ class Warhammer40kEnv(gym.Env):
                 else:
                     dmg, modHealth = attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfM], self.unit_data[idOfM], rangeOfComb="Melee")
                     self.unit_health[idOfM] = modHealth
+        
+        if self.modelOverwatch != -1:
+            self.modelOverwatch = -1
     
     def step(self, action):
         reward = 0
+        self.enemyCP += 1
+        self.modelCP += 1
         for i in range(len(self.unit_health)):
             modelName = i+21
             battleSh = False
@@ -231,6 +265,15 @@ class Warhammer40kEnv(gym.Env):
                     battleSh = True
                     if self.trunc == False:
                         print("Battle-shock test failed")
+                    if action["use_cp"] == 1 and action["cp_on"] == i:
+                        if self.modelCP - 1 >= 0:
+                            battleSh = False
+                            self.modelCP -= 1
+                            if self.trunc == False:
+                                print("Used Insane Bravery Stratagem to pass Battle Shock test")
+                        else:
+                            reward -= 1
+
             if self.unitInAttack[i][0] == 0 and self.unit_health[i] > 0:
                 movement = dice()+self.unit_data[i]["Movement"]
                 if action["move"] == 0:   # down
@@ -248,6 +291,21 @@ class Warhammer40kEnv(gym.Env):
                 for j in range(len(self.enemy_health)):
                     if self.unit_coords[i] == self.enemy_coords[j]:
                         self.unit_coords[i][0] -= 1
+
+                if self.enemyOverwatch != -1:
+                    if distance(self.unit_coords[i], self.enemy_coords[self.enemyOverwatch]) <= self.enemy_weapon[self.enemyOverwatch]["Range"]:
+                        dmg, modHealth = attack(self.enemy_health[self.enemyOverwatch], self.enemy_weapon[self.enemyOverwatch], self.enemy_data[self.enemyOverwatch], self.unit_health[i], self.unit_data[i])
+                        self.unit_health[i] = modHealth
+                        if self.trunc == False:
+                            print("Player unit", self.modelOverwatch+11, "successfully hit model unit", i+11, "for", sum(dmg), "damage using the overwatch strategem")
+                        self.enemyOverwatch = -1
+
+                if action["use_cp"] == 2 and action["cp_on"] == i:
+                    if self.modelCP - 1 >= 0:
+                        self.modelCP -= 1
+                        self.modelOverwatch = i
+                    else:
+                        reward -= 1
 
                 # shooting phase (if eligible)
                 shootAbleUnits = []
@@ -341,6 +399,9 @@ class Warhammer40kEnv(gym.Env):
                 if self.trunc == False:
                     print("Model unit", modelName ,"is destroyed")
 
+        if self.enemyOverwatch != -1:
+            self.enemyOverwatch = -1
+
         for i in self.unit_health:
             if i < 0:
                 i = 0
@@ -362,6 +423,9 @@ class Warhammer40kEnv(gym.Env):
 
     # for a real person playing
     def player(self):
+        self.enemyCP += 1
+        self.modelCP += 1
+        print(self.get_info())
         for i in range(len(self.enemy_health)):
             playerName = i+11
             print("For unit", playerName)
@@ -376,6 +440,19 @@ class Warhammer40kEnv(gym.Env):
                 else:
                     battleSh = True
                     print("Battle-shock test failed")
+                    response = False
+                    if self.enemyCP -1 >= 0:
+                        strat = input("Would you like to use the Insane Bravery Strategem? (y/n): ")
+                        while respone == False:
+                            if strat.lower() == "y" or strat.lower() == "yes":
+                                response = True
+                                battleSh = False
+                                self.enemyCP -= 1
+                            elif strat.lower() == "n" or strat.lower() == "no":
+                                reponse = True
+                            else: 
+                                strat = input("Valid answers are: y, yes, n, and no: ")
+
 
             if self.enemyInAttack[i][0] == 0 and self.enemy_health[i] > 0:
                 self.updateBoard()
@@ -421,7 +498,25 @@ class Warhammer40kEnv(gym.Env):
                 for j in range(len(self.enemy_health)):
                     if self.enemy_coords[i] == self.unit_coords[j]:
                         self.enemy_coords[i][0] -= 1
+                if self.enemyCP - 1 >= 0:
+                    response = False
+                    strat = input("Would you like to use the Fire Overwatch Strategem? (y/n)")
+                    while response == False:
+                        if strat.lower() == "y" or strat.lower() == "yes":
+                            response = True
+                            self.enemyOverwatch = i
+                            self.enemyCP -= 1
+                        elif strat.lower() == "n" or strat.lower() == "no":
+                            response = True
+                        else: 
+                            strat = input("Valid answers are: y, yes, n, and no: ")
 
+                if self.modelOverwatch != -1:
+                    if distance(self.enemy_coords[i], self.unit_coords[self.modelOverwatch]) <= self.unit_weapon[self.modelOverwatch]["Range"]:
+                        dmg, modHealth = attack(self.unit_health[self.modelOverwatch], self.unit_weapon[self.modelOverwatch], self.unit_data[self.modelOverwatch], self.enemy_health[i], self.enemy_data[i])
+                        self.enemy_health[i] = modHealth
+                        print("Model unit", self.modelOverwatch+21, "successfully hit player unit", i+11, "for", sum(dmg), "damage using the overwatch strategem")
+                        self.modelOverwatch = -1
                 self.updateBoard()
                 self.showBoard()
                 print("Take a look at board.txt to view the updated board")
@@ -540,6 +635,9 @@ class Warhammer40kEnv(gym.Env):
             elif self.enemy_health[i] == 0:
                 print("Unit", playerName, "is dead")
 
+        if self.modelOverwatch != -1:
+            self.modelOverwatch = -1
+
         for i in self.enemy_health:
             if i < 0:
                 i = 0
@@ -577,7 +675,7 @@ class Warhammer40kEnv(gym.Env):
         title = "Iteration "+str(self.iter)+" Lifetime "+str(self.restarts)
         fig.suptitle(title)
 
-        health = "Model Units health: {}; Enemy Units health: {}".format(self.unit_health, self.enemy_health)
+        health = "Model Unit health: {}, CP: {}; Enemy Unit health: {}, CP {}".format(self.unit_health, self.modelCP, self.enemy_health, self.enemyCP)
         ax.set_title(health)
         message = ""
 
@@ -634,10 +732,14 @@ class Warhammer40kEnv(gym.Env):
             obs.append(self.unit_coords[i][0])
             obs.append(self.unit_coords[i][1])
 
+        obs.append(self.modelCP)
+
         for i in range(len(self.enemy_health)):
             obs.append(self.enemy_health[i])
             obs.append(self.enemy_coords[i][0])
             obs.append(self.enemy_coords[i][1])
+        
+        obs.append(self.enemyCP)
 
         obs.append(int(self.game_over))
 

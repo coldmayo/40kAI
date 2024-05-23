@@ -4,7 +4,8 @@ import pickle
 import os
 import sys
 from gym_mod.envs.warhamEnv import *
-from gym_mod.engine import genDisplay
+import warnings
+warnings.filterwarnings("ignore")
 
 from model.DQN import *
 from model.utils import *
@@ -49,7 +50,7 @@ else:
 
 
 state, info = env.reset()
-n_actions = [4,2,len(info["player health"]), len(info["player health"])]
+n_actions = [4,2,len(info["player health"]), len(info["player health"]), 3, len(info["model health"])]
 n_observations = len(state)
 
 policy_net = DQN(n_observations, n_actions).to(device)
@@ -77,11 +78,10 @@ print("The player (you) controls units starting with 1 (i.e. 11, 12, etc)")
 print("The model controls units starting with 2 (i.e. 21, 22, etc)\n")
 
 while isdone == False:
+    done, info = env.player()
     state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
     action = select_action(env, state, i, policy_net)
     action_dict = convertToDict(action)
-    print(env.get_info())
-    done, info = env.player()
     if done != True:
         next_observation, reward, done, _, info = env.step(action_dict)
         reward = torch.tensor([reward], device=device)

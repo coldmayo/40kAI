@@ -1,4 +1,4 @@
-#include "Application.h"
+#include "include/Application.h"
 #include <gtkmm.h>
 
 int main(int argc, char* argv[]) {
