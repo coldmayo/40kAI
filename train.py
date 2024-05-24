@@ -69,7 +69,7 @@ numLifeT = 0
 
 env = gym.make("40kAI-v0", disable_env_checker=True, enemy = enemy, model = model, b_len = b_len, b_hei = b_hei)
 
-n_actions = [4,2,len(enemy), len(enemy), 3, len(model)]
+n_actions = [4,2,len(enemy), len(enemy), 4, len(model)]
 state, info = env.reset()
 n_observations = len(state)
 

@@ -34,7 +34,12 @@ def bounds(coords, b_len, b_hei):
         coords[1] = b_hei-1
     return coords
 
-def attack(attackerHealth, attackerWeapon, attackerData, attackeeHealth, attackeeData, rangeOfComb="Ranged"):
+def attack(attackerHealth, attackerWeapon, attackerData, attackeeHealth, attackeeData, rangeOfComb="Ranged", effects=None):
+    if effects == "benefit of cover" and rangeOfComb == "Ranged":
+        armorSave = attackeeData["Sv"]+1
+    else:
+        armorSave = attackeeData["Sv"]
+
     rolls = dice(num=attackerData["#OfModels"])
     hits = 0
     if type(rolls) != type(1):
@@ -85,9 +90,17 @@ def attack(attackerHealth, attackerWeapon, attackerData, attackeeHealth, attacke
                     dmg = np.append(dmg, attackerWeapon["Damage"])
                 elif attackerWeapon["Damage"] == "D3":
                     dmg = np.append(dmg, dice(min=1,max=3))
-        # saving throws
+        # saving throws (automatically does invulnerable saves)
     for k in range(len(dmg)):
-        if dice()-attackerWeapon["AP"] > attackeeData["Sv"]:
+        diceRoll = dice()
+        if diceRoll > 1:
+            if attackeeData["IVSave"] == 0 or attackerWeapon["AP"] <= 0:
+                if diceRoll+attackerWeapon["AP"] > armorSave:
+                    dmg[k] = 0
+            elif attackeeData["IVSave"] > 0 and attackerWeapon["AP"] > 0:
+                if diceRoll+attackerWeapon["AP"] > attackeeData["IVSave"]:
+                    dmg[k] = 0
+        else:
             dmg[k] = 0
         # allocating damage
     for k in dmg:

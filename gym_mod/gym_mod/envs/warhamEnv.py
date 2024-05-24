@@ -17,7 +17,7 @@ class Warhammer40kEnv(gym.Env):
             'attack': spaces.Discrete(2),  # Two attack options: Engage Attack, Leave Attack/move
             'shoot': spaces.Discrete(len(enemy)),   # choose which model to attack in the shooting phase
             'charge': spaces.Discrete(len(enemy)),   # choose which model to attack in the charge phase
-            'use_cp': spaces.Discrete(3),   # choose to use cp, 0 = no stratagems, 1 = insane bravery, 2 = overwatch
+            'use_cp': spaces.Discrete(4),   # choose to use cp, 0 = no stratagems, 1 = insane bravery, 2 = overwatch, 3 = smokescreen
             'cp_on': spaces.Discrete(len(model))   # choose which model unit cp is used on
         })
 
@@ -43,8 +43,9 @@ class Warhammer40kEnv(gym.Env):
         self.trunc = False
         self.enemyCP = 0
         self.modelCP = 0
-        self.modelOverwatch = -1
         self.enemyOverwatch = -1
+        self.modelStrat = {"overwatch": -1, "smokescreen": -1}
+        self.enemyStrat = {"overwatch": -1, "smokescreen": -1}
 
         for i in range(len(enemy)):
             self.enemy_weapon.append(enemy[i].showWeapon())
@@ -113,7 +114,7 @@ class Warhammer40kEnv(gym.Env):
         self.enemyCP += 1
         self.modelCP += 1
         cp_on = np.random.randint(0,len(self.enemy_health))
-        use_cp = np.random.randint(0, 3)
+        use_cp = np.random.randint(0, 4)
         for i in range(len(self.enemy_health)):
             # command phase
 
@@ -167,25 +168,30 @@ class Warhammer40kEnv(gym.Env):
                     if self.enemy_coords[i] == self.unit_coords[j]:
                         self.enemy_coords[i][0] -= 1
                         
-                if self.modelOverwatch != -1:
-                    if distance(self.enemy_coords[i], self.unit_coords[self.modelOverwatch]) <= self.unit_weapon[self.modelOverwatch]["Range"]:
-                        dmg, modHealth = attack(self.unit_health[self.modelOverwatch], self.unit_weapon[self.modelOverwatch], self.unit_data[self.modelOverwatch], self.enemy_health[i], self.enemy_data[i])
+                if self.modelStrat["overwatch"] != -1:
+                    if distance(self.enemy_coords[i], self.unit_coords[self.modelStrat["overwatch"]]) <= self.unit_weapon[self.modelStrat["overwatch"]]["Range"]:
+                        dmg, modHealth = attack(self.unit_health[self.modelStrat["overwatch"]], self.unit_weapon[self.modelStrat["overwatch"]], self.unit_data[self.modelStrat["overwatch"]], self.enemy_health[i], self.enemy_data[i])
                         self.enemy_health[i] = modHealth
-                        self.modelOverwatch = -1
+                        self.modelStrat["overwatch"] = -1
                 
                 # set overwatch
                 if use_cp == 2 and cp_on == i and self.enemyCP - 1 >= 0:
                     self.enemyCP -= 1
-                    self.enemyOverwatch = i
+                    self.enemyStrat["overwatch"] = i
 
                 # Shooting phase (if applicable)
                 shootAbleUnits = []
                 for j in range(len(self.unit_health)):
                     if distance(self.enemy_coords[i], self.unit_coords[j]) <= self.enemy_weapon[i]["Range"] and self.unit_health[j] > 0 and self.unitInAttack[j][0] == 0:
                         shootAbleUnits.append(j)
-                if (len(shootAbleUnits) > 0) :
+                if (len(shootAbleUnits) > 0):
                     idOfM = np.random.choice(shootAbleUnits)
-                    dmg, modHealth = attack(self.enemy_health[i], self.enemy_weapon[i], self.enemy_data[i], self.unit_health[idOfM], self.unit_data[idOfM])
+                    if self.modelStrat["smokescreen"] != -1 and self.modelStrat["smokescreen"] == idOfM:
+                        self.modelStrat["smokescreen"] = -1
+                        effect = "benefit of cover"
+                    else:
+                        effect = None
+                    dmg, modHealth = attack(self.enemy_health[i], self.enemy_weapon[i], self.enemy_data[i], self.unit_health[idOfM], self.unit_data[idOfM], effects=effect)
                     self.unit_health[idOfM] = modHealth
                     if trunc == False:
                         print("Enemy Unit",enemyName,"shoots Model Unit",idOfM+11,sum(dmg),"times")
@@ -218,6 +224,10 @@ class Warhammer40kEnv(gym.Env):
                     self.enemyInAttack[i][0] = 1
                     self.enemyInAttack[i][1] = idOfM
 
+                if use_cp == 3 and cp_on == i and self.enemyCP - 1 >= 0:
+                    self.enemyCP -= 1
+                    self.enemyStrat["smokescreen"] = i
+
             elif self.enemyInAttack[i][0] == 1 and self.enemy_health[i] > 0:
                 decide = np.random.randint(0,10)
                 idOfM = self.enemyInAttack[i][1]
@@ -241,8 +251,10 @@ class Warhammer40kEnv(gym.Env):
                     dmg, modHealth = attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfM], self.unit_data[idOfM], rangeOfComb="Melee")
                     self.unit_health[idOfM] = modHealth
         
-        if self.modelOverwatch != -1:
-            self.modelOverwatch = -1
+        if self.modelStrat["overwatch"] != -1:
+            self.modelStrat["overwatch"] = -1
+        if self.modelStrat["smokescreen"] != -1:
+            self.modelStrat["smokescreen"] = -1
     
     def step(self, action):
         reward = 0
@@ -268,6 +280,7 @@ class Warhammer40kEnv(gym.Env):
                     if action["use_cp"] == 1 and action["cp_on"] == i:
                         if self.modelCP - 1 >= 0:
                             battleSh = False
+                            reward += 0.5
                             self.modelCP -= 1
                             if self.trunc == False:
                                 print("Used Insane Bravery Stratagem to pass Battle Shock test")
@@ -292,18 +305,19 @@ class Warhammer40kEnv(gym.Env):
                     if self.unit_coords[i] == self.enemy_coords[j]:
                         self.unit_coords[i][0] -= 1
 
-                if self.enemyOverwatch != -1:
-                    if distance(self.unit_coords[i], self.enemy_coords[self.enemyOverwatch]) <= self.enemy_weapon[self.enemyOverwatch]["Range"]:
-                        dmg, modHealth = attack(self.enemy_health[self.enemyOverwatch], self.enemy_weapon[self.enemyOverwatch], self.enemy_data[self.enemyOverwatch], self.unit_health[i], self.unit_data[i])
+                if self.enemyStrat["overwatch"] != -1:
+                    if distance(self.unit_coords[i], self.enemy_coords[self.enemyStrat["overwatch"]]) <= self.enemy_weapon[self.enemyStrat["overwatch"]]["Range"]:
+                        dmg, modHealth = attack(self.enemy_health[self.enemyStrat["overwatch"]], self.enemy_weapon[self.enemyStrat["overwatch"]], self.enemy_data[self.enemyStrat["overwatch"]], self.unit_health[i], self.unit_data[i])
                         self.unit_health[i] = modHealth
                         if self.trunc == False:
-                            print("Player unit", self.modelOverwatch+11, "successfully hit model unit", i+11, "for", sum(dmg), "damage using the overwatch strategem")
-                        self.enemyOverwatch = -1
+                            print("Player unit", self.enemyStrat["overwatch"]+11, "successfully hit model unit", i+11, "for", sum(dmg), "damage using the overwatch strategem")
+                        self.enemyStrat["overwatch"] = -1
 
                 if action["use_cp"] == 2 and action["cp_on"] == i:
                     if self.modelCP - 1 >= 0:
                         self.modelCP -= 1
-                        self.modelOverwatch = i
+                        self.modelStrat["overwatch"] = i
+                        reward += 0.5
                     else:
                         reward -= 1
 
@@ -316,8 +330,12 @@ class Warhammer40kEnv(gym.Env):
                 
                 if (len(shootAbleUnits) > 0):        
                     idOfE = action["shoot"]
-                    if (idOfE in shootAbleUnits): 
-                        dmg, modHealth = attack(self.unit_health[i], self.unit_weapon[i], self.unit_data[i], self.enemy_health[idOfE], self.enemy_data[idOfE])
+                    if (idOfE in shootAbleUnits):
+                        if idOfE == self.enemyStrat["smokescreen"]:
+                            effect = "benefit of cover"
+                        else:
+                            effect = None
+                        dmg, modHealth = attack(self.unit_health[i], self.unit_weapon[i], self.unit_data[i], self.enemy_health[idOfE], self.enemy_data[idOfE], effects = effect)
                         self.enemy_health[idOfE] = modHealth
                         reward += 0.2
                         if self.trunc == False:
@@ -359,6 +377,15 @@ class Warhammer40kEnv(gym.Env):
                         if self.trunc == False:
                             print("Model unit", modelName, "failed to attack Enemy")
                         reward -= 0.5
+                # use smokescreen strategem
+                if action["use_cp"] == 3 and action["cp_on"] == i:
+                    if self.modelCP - 1 >= 0:
+                        self.modelCP -= 1
+                        self.modelStrat["smokescreen"] = i
+                        reward += 0.5
+                    else:
+                        reward -= 1
+
             
             elif self.unitInAttack[i][0] == 1 and self.unit_health[i] > 0:
                 reward = 0
@@ -399,8 +426,10 @@ class Warhammer40kEnv(gym.Env):
                 if self.trunc == False:
                     print("Model unit", modelName ,"is destroyed")
 
-        if self.enemyOverwatch != -1:
-            self.enemyOverwatch = -1
+        if self.enemyStrat["overwatch"] != -1:
+            self.enemyStrat["overwatch"] = -1
+        if self.enemyStrat["smokescreen"] != -1:
+            self.enemyStrat["smokescreen"] = -1
 
         for i in self.unit_health:
             if i < 0:
@@ -498,25 +527,26 @@ class Warhammer40kEnv(gym.Env):
                 for j in range(len(self.enemy_health)):
                     if self.enemy_coords[i] == self.unit_coords[j]:
                         self.enemy_coords[i][0] -= 1
+                
                 if self.enemyCP - 1 >= 0:
                     response = False
                     strat = input("Would you like to use the Fire Overwatch Strategem? (y/n)")
                     while response == False:
                         if strat.lower() == "y" or strat.lower() == "yes":
                             response = True
-                            self.enemyOverwatch = i
+                            self.enemyStrat["overwatch"] = i
                             self.enemyCP -= 1
                         elif strat.lower() == "n" or strat.lower() == "no":
                             response = True
                         else: 
                             strat = input("Valid answers are: y, yes, n, and no: ")
 
-                if self.modelOverwatch != -1:
-                    if distance(self.enemy_coords[i], self.unit_coords[self.modelOverwatch]) <= self.unit_weapon[self.modelOverwatch]["Range"]:
-                        dmg, modHealth = attack(self.unit_health[self.modelOverwatch], self.unit_weapon[self.modelOverwatch], self.unit_data[self.modelOverwatch], self.enemy_health[i], self.enemy_data[i])
+                if self.modelStrat["overwatch"] != -1:
+                    if distance(self.enemy_coords[i], self.unit_coords[self.modelStrat["overwatch"]]) <= self.unit_weapon[self.modelStrat["overwatch"]]["Range"]:
+                        dmg, modHealth = attack(self.unit_health[self.modelStrat["overwatch"]], self.unit_weapon[self.modelStrat["overwatch"]], self.unit_data[self.modelStrat["overwatch"]], self.enemy_health[i], self.enemy_data[i])
                         self.enemy_health[i] = modHealth
-                        print("Model unit", self.modelOverwatch+21, "successfully hit player unit", i+11, "for", sum(dmg), "damage using the overwatch strategem")
-                        self.modelOverwatch = -1
+                        print("Model unit", self.modelStrat["overwatch"]+21, "successfully hit player unit", i+11, "for", sum(dmg), "damage using the overwatch strategem")
+                        self.modelStrat["overwatch"] = -1
                 self.updateBoard()
                 self.showBoard()
                 print("Take a look at board.txt to view the updated board")
@@ -535,7 +565,13 @@ class Warhammer40kEnv(gym.Env):
                         shoot = input("Select which enemy unit you would like to shoot ({}): ".format(shootAble+21))
                         if is_num(shoot) == True and int(shoot)-21 in shootAble:
                             idOfE = int(shoot)-21
-                            dmg, modHealth = attack(self.enemy_health[i], self.enemy_weapon[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE])
+                            if self.modelStrat["smokescreen"] != -1 and self.modelStrat["smokescreen"] == idOfM:
+                                print("Model unit", self.modelStrat["smokescreen"]+21, "used the Smokescreen Strategem")
+                                self.modelStrat["smokescreen"] = -1
+                                effect = "benefit of cover"
+                            else:
+                                effect = None
+                            dmg, modHealth = attack(self.enemy_health[i], self.enemy_weapon[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE], effects = effect)
                             self.unit_health[idOfE] = modHealth
                             print("Player Unit",playerName,"shoots Model Unit",idOfE+21,sum(dmg),"times")
                             response = True
@@ -545,6 +581,7 @@ class Warhammer40kEnv(gym.Env):
                             return self.game_over, info
                         else:
                             print("Not an available unit")
+                    
                 else:
                     print("No available units to attack")
 
@@ -591,7 +628,18 @@ class Warhammer40kEnv(gym.Env):
                         else:
                             print("Not an available unit")
                 else:
-                    print("No available units to attack")                
+                    print("No available units to attack")  
+
+                response = False
+                strat = input("Would you like to use the Smokescreen Strategem for this unit? (y/n): ")
+                while response == False:
+                    if strat.lower() == "y" or strat.lower() == "yes":
+                        self.enemyStrat["smokescreen"] = i 
+                        response = True
+                    elif strat.lower() == "n" or strat.lower() == "no":
+                        response = True
+                    else:
+                        strat = input("It's a yes or no question dude")
             
             elif self.enemyInAttack[i][0] == 1 and self.enemy_health[i] > 0:
                 idOfE = self.enemyInAttack[i][1]
@@ -635,8 +683,10 @@ class Warhammer40kEnv(gym.Env):
             elif self.enemy_health[i] == 0:
                 print("Unit", playerName, "is dead")
 
-        if self.modelOverwatch != -1:
-            self.modelOverwatch = -1
+        if self.modelStrat["overwatch"] != -1:
+            self.modelStrat["overwatch"] = -1
+        if self.modelStrat["smokescreen"] != -1:
+            self.modelStrat["smokescreen"] = -1
 
         for i in self.enemy_health:
             if i < 0:
