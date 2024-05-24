@@ -25,6 +25,7 @@ class Units : public Gtk::Window {
     Label possible;
     Fixed fixed;
     ScrolledWindow scrolledWindow;
+    HeaderBar bar;
 };
 
 void Units :: getAvailUnits() {
@@ -108,10 +109,14 @@ void Units :: backgroudUpdate() {
 }
 
 Units :: Units() {
+
+    bar.set_show_close_button(true);
+    set_titlebar(bar);
+
     add(scrolledWindow);
     scrolledWindow.add(fixed);
 
-    set_title("Army Viewer");
+    bar.set_title("Army Viewer");
     backgroudUpdate();
 
     getAvailUnits();

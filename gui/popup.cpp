@@ -22,6 +22,7 @@ class PopUp : public Gtk::Window {
     Label contents;
     Fixed fixed;
     ScrolledWindow scrolledWindow;
+    HeaderBar bar;
 };
 
 bool PopUp :: isNum(char num) {
@@ -82,10 +83,14 @@ void PopUp :: backgroudUpdate() {
 }
 
 PopUp :: PopUp() {
+
+  bar.set_show_close_button(true);
+  set_titlebar(bar);
+
   add(scrolledWindow);
   scrolledWindow.add(fixed);
   
-  set_title("board.txt");
+  bar.set_title("board.txt");
 
   backgroudUpdate();
   

@@ -23,4 +23,5 @@ class Units : public Gtk::Window {
     Label possible;
     Fixed fixed;
     ScrolledWindow scrolledWindow;
+    HeaderBar bar;
 };

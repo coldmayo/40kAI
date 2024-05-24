@@ -113,6 +113,7 @@ private:
   Label enemyUnitLabel;
   std::vector<std::string> modelUnits;
   std::vector<std::string> enemyUnits;
+  HeaderBar bar;
 };
 
 Form :: Form() {
@@ -126,7 +127,8 @@ Form :: Form() {
   training = false;
   playing = false;
 
-  set_icon_from_file(imgpth);
+  bar.set_show_close_button(true);
+  set_titlebar(bar);
 
   add(scrolledWindow);
   scrolledWindow.add(fixed);
@@ -434,7 +436,7 @@ Form :: Form() {
   fixedTabPage4.move(button5, 10, 40);
   fixedTabPage4.move(setModelFile, 80, 40);
 
-  set_title("GUI");
+  bar.set_title("40kAI GUI");
   resize(700, 600);
   show_all();
 }

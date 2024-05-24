@@ -14,7 +14,7 @@ class PopUp : public Gtk::Window {
     Label contents;
     Fixed fixed;
     ScrolledWindow scrolledWindow;
-    Button refresh;
+    HeaderBar bar;
 };
 
 #endif

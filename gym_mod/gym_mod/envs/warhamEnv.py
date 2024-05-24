@@ -743,15 +743,6 @@ class Warhammer40kEnv(gym.Env):
 
         health = "Model Unit health: {}, CP: {}; Enemy Unit health: {}, CP {}".format(self.unit_health, self.modelCP, self.enemy_health, self.enemyCP)
         ax.set_title(health)
-        message = ""
-
-        for i in range(len(self.unit_health)):
-            if self.unit_health[i] <= 0:
-                message += "Unit model "+str(i)+" is Dead "
-            elif self.unitInAttack[i][0] == 0:
-                message += "Unit model "+str(i)+" is Moving "
-            elif self.unitInAttack[i][0] == 1:
-                message += "Unit model "+str(i)+" is in Combat "
         
         ax.set_xlabel(message)
         x1 = np.linspace(0,self.b_len,10)

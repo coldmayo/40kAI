@@ -106,6 +106,7 @@ private:
   Label enemyUnitLabel;
   std::vector<std::string> modelUnits;
   std::vector<std::string> enemyUnits;
+  HeaderBar bar;
 };
 
 #endif
