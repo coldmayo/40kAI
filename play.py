@@ -50,7 +50,7 @@ else:
 
 
 state, info = env.reset()
-n_actions = [4,2,len(info["player health"]), len(info["player health"]), 3, len(info["model health"])]
+n_actions = [4,2,len(info["player health"]), len(info["player health"]), 4, len(info["model health"])]
 n_observations = len(state)
 
 policy_net = DQN(n_observations, n_actions).to(device)

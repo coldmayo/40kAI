@@ -480,13 +480,17 @@ class Warhammer40kEnv(gym.Env):
                     response = False
                     if self.enemyCP -1 >= 0:
                         strat = input("Would you like to use the Insane Bravery Strategem? (y/n): ")
-                        while respone == False:
+                        while response == False:
                             if strat.lower() == "y" or strat.lower() == "yes":
                                 response = True
                                 battleSh = False
                                 self.enemyCP -= 1
                             elif strat.lower() == "n" or strat.lower() == "no":
-                                reponse = True
+                                response = True
+                            elif strat.lower() == "quit":
+                                self.game_over = True
+                                info = self.get_info()
+                                return self.game_over, info
                             else: 
                                 strat = input("Valid answers are: y, yes, n, and no: ")
 
@@ -546,6 +550,10 @@ class Warhammer40kEnv(gym.Env):
                             self.enemyCP -= 1
                         elif strat.lower() == "n" or strat.lower() == "no":
                             response = True
+                        elif strat.lower() == "quit":
+                            self.game_over = True
+                            info = self.get_info()
+                            return self.game_over, info
                         else: 
                             strat = input("Valid answers are: y, yes, n, and no: ")
 
@@ -573,7 +581,7 @@ class Warhammer40kEnv(gym.Env):
                         shoot = input("Select which enemy unit you would like to shoot ({}): ".format(shootAble+21))
                         if is_num(shoot) == True and int(shoot)-21 in shootAble:
                             idOfE = int(shoot)-21
-                            if self.modelStrat["smokescreen"] != -1 and self.modelStrat["smokescreen"] == idOfM:
+                            if self.modelStrat["smokescreen"] != -1 and self.modelStrat["smokescreen"] == idOfE:
                                 print("Model unit", self.modelStrat["smokescreen"]+21, "used the Smokescreen Strategem")
                                 self.modelStrat["smokescreen"] = -1
                                 effect = "benefit of cover"
