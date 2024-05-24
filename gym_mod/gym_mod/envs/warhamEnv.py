@@ -116,6 +116,7 @@ class Warhammer40kEnv(gym.Env):
         cp_on = np.random.randint(0,len(self.enemy_health))
         use_cp = np.random.randint(0, 4)
         for i in range(len(self.enemy_health)):
+
             # command phase
 
             enemyName = i+21
@@ -248,8 +249,15 @@ class Warhammer40kEnv(gym.Env):
                     self.enemyInAttack[i][0] = 0
                     self.enemyInAttack[i][1] = 0
                 else:
-                    dmg, modHealth = attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfM], self.unit_data[idOfM], rangeOfComb="Melee")
-                    self.unit_health[idOfM] = modHealth
+                    if self.unit_health[idOfM] > 0:
+                        dmg, modHealth = attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfM], self.unit_data[idOfM], rangeOfComb="Melee")
+                        self.unit_health[idOfM] = modHealth
+                    else:
+                        self.unitInAttack[idOfM][0] = 0
+                        self.unitInAttack[idOfM][1] = 0
+
+                        self.enemyInAttack[i][0] = 0
+                        self.enemyInAttack[i][1] = 0
         
         if self.modelStrat["overwatch"] != -1:
             self.modelStrat["overwatch"] = -1
