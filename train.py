@@ -6,7 +6,7 @@ import pickle
 import datetime
 from tqdm import tqdm
 from gym_mod.envs.warhamEnv import *
-from gym_mod.engine import genDisplay, Unit, unitData, weaponData, initFile
+from gym_mod.engine import genDisplay, Unit, unitData, weaponData, initFile, metrics
 
 from model.DQN import *
 from model.memory import *
@@ -96,6 +96,10 @@ pbar = tqdm(total=totLifeT)
 
 state, info = env.reset(Type="big")
 
+metrics = metrics()
+
+rewArr = []
+
 while end == False:
     state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
     
@@ -106,6 +110,7 @@ while end == False:
 
     env.enemyTurn(trunc=trunc)
     next_observation, reward, done, _, info = env.step(action_dict)
+    rewArr.append(reward)
     reward = torch.tensor([reward], device=device)
 
     unit_health = info["model health"]
@@ -125,14 +130,17 @@ while end == False:
     next_state = torch.tensor(next_observation, dtype=torch.float32, device=device).unsqueeze(0)
     memory.push(state, action, next_state, reward)
     state = next_state
-    optimize_model(policy_net, target_net, optimizer, memory, n_observations)
-
+    loss = optimize_model(policy_net, target_net, optimizer, memory, n_observations)
+    metrics.updateLoss(loss)
+    
     for key in policy_net.state_dict():
         target_net.state_dict()[key] = policy_net.state_dict()[key]*TAU + target_net.state_dict()[key]*(1-TAU)
     target_net.load_state_dict(target_net.state_dict())
 
     if done == True:
         pbar.update(1)
+        metrics.updateRew(sum(rewArr)/len(rewArr))
+        rewArr = []
         if reward > 0:
             inText.append("model won!")
             if trunc == False:
@@ -162,6 +170,9 @@ if totLifeT > 20:
     genDisplay.makeGif(numOfLife=totLifeT, trunc = True)
 else:
     genDisplay.makeGif(numOfLife=totLifeT)
+
+metrics.lossCurve()
+metrics.showRew()
 
 current_time = datetime.datetime.now()
 date = str(current_time.second)+"-"+str(current_time.microsecond)

@@ -744,7 +744,6 @@ class Warhammer40kEnv(gym.Env):
         health = "Model Unit health: {}, CP: {}; Enemy Unit health: {}, CP {}".format(self.unit_health, self.modelCP, self.enemy_health, self.enemyCP)
         ax.set_title(health)
         
-        ax.set_xlabel(message)
         x1 = np.linspace(0,self.b_len,10)
         y1 = np.zeros(10)
         x2 = np.zeros(10)

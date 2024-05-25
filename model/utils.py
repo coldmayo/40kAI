@@ -56,7 +56,7 @@ def select_action(env, state, steps_done, policy_net):
             sampled_action['use_cp'],
             sampled_action['cp_on']
         ]
-        action = torch.tensor([action_list], device=device, dtype=torch.long)
+        action = torch.tensor([action_list])
         return action
 
 def convertToDict(action):
@@ -73,7 +73,7 @@ def convertToDict(action):
 
 def optimize_model(policy_net, target_net, optimizer, memory, n_obs):
     if len(memory) < BATCH_SIZE:
-        return
+        return 0
     transitions = memory.sample(BATCH_SIZE)
     batch = Transition(*zip(*transitions))
 
@@ -114,8 +114,9 @@ def optimize_model(policy_net, target_net, optimizer, memory, n_obs):
 
     criterion = nn.SmoothL1Loss()
     loss = criterion(torch.transpose(selected_action_values, 0,1), expected_state_action_values.unsqueeze(1))
-
     optimizer.zero_grad()
+    loss.retain_grad()
     loss.backward()
     torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
     optimizer.step()
+    return loss.item()
