@@ -31,7 +31,7 @@ Just like the tabletop game, it is played in turns, with each turn divided into 
 4. Fight Phase
     - Close combat between engaged units is resolved
 
-The object of the game is to kill all of the units on the opposing team.
+The object of the game is to kill all of the units on the opposing team.<br>
 
 ## Installation
 

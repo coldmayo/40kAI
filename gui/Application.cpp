@@ -16,6 +16,9 @@ using namespace Gtk;
 using json = nlohmann::json;
 
 const char *gifpth = "img/model_train.gif";
+const char *rewpth = "img/reward.png";
+const char *losspth = "img/loss.png";
+const char *eplenpth = "img/epLen.png";
 const char *imgpth = "img/icon.png";
 
 class Form : public Window {
@@ -35,11 +38,15 @@ public :
   bool isValidUnit(int id, std::string name);
   int openArmyView();
   std::string toLower(std::string data);
+  void update_metrics();
 
 private:
   Window* boardShow;
   Window* armyView;
   Image pictureBox1;
+  Image metricBox;
+  Image metricBox2;
+  Image metricBox3;
   Fixed fixed;
   ScrolledWindow scrolledWindow;
   Notebook tabControl1;
@@ -47,11 +54,13 @@ private:
   Label labelPage2;
   Label labelPage3;
   Label labelPage4;
+  Label labelPage5;
   Label label1;
   Frame tabPage1;
   Frame tabPage2;
   Frame tabPage3;
   Frame tabPage4;
+  Frame tabPage5;
   RadioButtonGroup radioButtonGroup;
   RadioButton radioTop;
   RadioButton radioLeft;
@@ -61,6 +70,7 @@ private:
   Fixed fixedTabPage2;
   Fixed fixedTabPage3;
   Fixed fixedTabPage4;
+  Fixed fixedTabPage5;
   Button button1;
   Button button2;
   Button button3;
@@ -138,8 +148,9 @@ Form :: Form() {
 
   tabControl1.insert_page(tabPage2, "Train", 0);
   tabControl1.insert_page(tabPage3, "Show Trained Model", 1);
-  tabControl1.insert_page(tabPage4, "Play", 2);
-  tabControl1.insert_page(tabPage1, "Settings", 3);
+  tabControl1.insert_page(tabPage5, "Metrics", 2);
+  tabControl1.insert_page(tabPage4, "Play", 3);
+  tabControl1.insert_page(tabPage1, "Settings", 4);
 
     // settings tab
 
@@ -383,6 +394,18 @@ Form :: Form() {
   pictureBox1.set_size_request(280, 280);
   update_picture();
 
+  // show metrics tab
+  labelPage5.set_label("Model Metrics");
+  tabControl1.set_tab_label(tabPage5, labelPage5);
+  tabPage5.add(fixedTabPage5);
+
+  fixedTabPage5.add(metricBox);
+  fixedTabPage5.add(metricBox2);
+  fixedTabPage5.add(metricBox3);
+  fixedTabPage5.move(metricBox2, 640/2, 0);
+  fixedTabPage5.move(metricBox3, 640/4, 480/2+10);
+  update_metrics();
+
      // Play tab
   labelPage4.set_label("Play");
   tabControl1.set_tab_label(tabPage4, labelPage4);
@@ -499,6 +522,20 @@ void Form :: update_picture() {
   pictureBox1.set(gifpth);
 }
 
+void Form :: update_metrics() {
+  // scale down images
+  Glib::RefPtr<Gdk::Pixbuf> m_Pixbuf = Gdk::Pixbuf::create_from_file(rewpth);
+  Glib::RefPtr<Gdk::Pixbuf> m_Pixbuf2 = Gdk::Pixbuf::create_from_file(losspth);
+  Glib::RefPtr<Gdk::Pixbuf> m_Pixbuf3 = Gdk::Pixbuf::create_from_file(eplenpth);
+  
+  Glib::RefPtr<Gdk::Pixbuf> scaled_pixbuf = m_Pixbuf->scale_simple(350, 250, Gdk::INTERP_BILINEAR);
+  metricBox.set(scaled_pixbuf);
+  Glib::RefPtr<Gdk::Pixbuf> scaled_pixbuf2 = m_Pixbuf2->scale_simple(350, 250, Gdk::INTERP_BILINEAR);
+  metricBox2.set(scaled_pixbuf2);
+  Glib::RefPtr<Gdk::Pixbuf> scaled_pixbuf3 = m_Pixbuf3->scale_simple(350, 230, Gdk::INTERP_BILINEAR);
+  metricBox3.set(scaled_pixbuf3);
+}
+
 void Form :: updateInits(std::string model, std::string enemy) {
   std::string command = "cd .. ; ./data.sh ";
   command.append(setIters.get_text().data());
@@ -524,6 +561,7 @@ void Form :: startTrain() {
   status.set_text("Completed!");
   training = false;
   update_picture();
+  update_metrics();
 }
 
 void Form :: runPlayAgainstModelInBackground() {

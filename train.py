@@ -46,7 +46,7 @@ model = [model1, model2]
 
 end = False
 trunc = True
-totLifeT = 600
+totLifeT = 10
 steps_done = 0
 
 if os.path.isfile("gui/data.json"):
@@ -100,7 +100,10 @@ metrics = metrics()
 
 rewArr = []
 
+epLen = 0
+
 while end == False:
+    epLen += 1
     state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
     
     action = select_action(env, state, i, policy_net)
@@ -140,6 +143,8 @@ while end == False:
     if done == True:
         pbar.update(1)
         metrics.updateRew(sum(rewArr)/len(rewArr))
+        metrics.updateEpLen(epLen)
+        epLen = 0
         rewArr = []
         if reward > 0:
             inText.append("model won!")
@@ -173,6 +178,7 @@ else:
 
 metrics.lossCurve()
 metrics.showRew()
+metrics.showEpLen()
 
 current_time = datetime.datetime.now()
 date = str(current_time.second)+"-"+str(current_time.microsecond)

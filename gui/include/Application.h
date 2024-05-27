@@ -33,6 +33,9 @@ private:
   Window* boardShow;
   Window* armyView;
   Image pictureBox1;
+  Image metricBox;
+  Image metricBox2;
+  Image metricBox3;
   Fixed fixed;
   ScrolledWindow scrolledWindow;
   Notebook tabControl1;
@@ -40,11 +43,13 @@ private:
   Label labelPage2;
   Label labelPage3;
   Label labelPage4;
+  Label labelPage5;
   Label label1;
   Frame tabPage1;
   Frame tabPage2;
   Frame tabPage3;
   Frame tabPage4;
+  Frame tabPage5;
   RadioButtonGroup radioButtonGroup;
   RadioButton radioTop;
   RadioButton radioLeft;
@@ -54,6 +59,7 @@ private:
   Fixed fixedTabPage2;
   Fixed fixedTabPage3;
   Fixed fixedTabPage4;
+  Fixed fixedTabPage5;
   Button button1;
   Button button2;
   Button button3;

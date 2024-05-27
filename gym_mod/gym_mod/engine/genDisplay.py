@@ -32,7 +32,7 @@ def makeGif(numOfLife, name="", Type = "train", trunc = False):
     for fil in tqdm(files):
         images.append(imageio.imread(fil))
     if Type == "train":
-        imageio.mimsave('model_train{}.gif'.format(name), images)
+        imageio.mimsave('metrics/model_train{}.gif'.format(name), images)
         imageio.mimsave('gui/img/model_train{}.gif'.format(name), images)
         imageio.mimsave('gui/build/img/model_train{}.gif'.format(name), images)
         imageio.mimsave('gui/build/Debug/img/model_train{}.gif'.format(name), images)
