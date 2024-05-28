@@ -1,0 +1,9 @@
+{
+    "lr":1e-4,
+    "tau":0.005,
+    "eps_start": 0.9,
+    "eps_end": 0.05,
+    "eps_decay": 1000,
+    "batch_size": 128,
+    "gamma": 0.99
+}

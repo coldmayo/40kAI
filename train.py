@@ -4,6 +4,7 @@ import numpy as np
 import gymnasium as gym
 import pickle
 import datetime
+import json
 from tqdm import tqdm
 from gym_mod.envs.warhamEnv import *
 from gym_mod.engine import genDisplay, Unit, unitData, weaponData, initFile, metrics
@@ -27,8 +28,11 @@ def flatten_extend(matrix):
         flat_list.extend(row)
     return flat_list
 
-TAU = 0.005
-LR = 1e-4
+with open(os.path.abspath("hyperparams.json")) as j:
+    data = json.loads(j.read())
+
+TAU = data["tau"]
+LR = data["lr"]
 
 b_len = 60
 b_hei = 40

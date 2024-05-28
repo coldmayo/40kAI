@@ -18,6 +18,3 @@ def weaponData(name):
             return i
     print(i, "Weapon Not Found")
     return {}
-
-if __name__ == "__main__":
-    print(unitData("Space Marine", "Eliminator Squad"))

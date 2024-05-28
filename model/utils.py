@@ -5,6 +5,8 @@ import torch.nn.functional as F
 import collections
 import numpy as np
 import pandas as pd
+import os
+import json
 
 import itertools
 
@@ -13,11 +15,14 @@ import math
 
 from collections import namedtuple
 
-EPS_START = 0.9
-EPS_END = 0.05
-EPS_DECAY = 1000
-BATCH_SIZE = 128
-GAMMA = 0.99
+with open(os.path.abspath("hyperparams.json")) as j:
+    data = json.loads(j.read())
+
+EPS_START = data["eps_start"]
+EPS_END = data["eps_end"]
+EPS_DECAY = data["eps_decay"]
+BATCH_SIZE = data["batch_size"]
+GAMMA = data["gamma"]
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
