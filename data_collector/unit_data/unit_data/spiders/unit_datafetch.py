@@ -25,6 +25,7 @@ class DataSpider(scrapy.Spider):
         data = response.css('.dsCharValue').xpath("string()").extract()
         unitComp = response.css('.dsUl').xpath('string()').extract()
         splitNames = response.css(".dsModelName").xpath('string()').extract() 
+        invVals = response.css(".dsCharInvulValue").xpath('string()').extract()
         M = []
         T = []
         Sv = []
@@ -33,6 +34,7 @@ class DataSpider(scrapy.Spider):
         OC = []
         numOfModels = []
         names = []
+        IVSave = []
         all_data = {"UnitData": []}
         
         ind = 0
@@ -44,12 +46,17 @@ class DataSpider(scrapy.Spider):
                 ind += 1
             else:
                 names.append(i)
-
+        ind = 0
         for i in unitComp:
             if i[-len("Superior"):] != "Superior":
                 numOfModels.append(int(i[0]))
             elif i[-len("Repentia Superior"):] == "Repentia Superior" or i[-len("Novitiate Superior"):] == "Novitiate Superior":
                 numOfModels.append(int(i[0]))
+            if i[-len("EPIC HERO"):] == "EPIC HERO":
+                IVSave.append(self.toint(invVals[ind]))
+                ind += 1
+            else:
+                IVSave.append(0)
 
         
         ind = 0
@@ -79,5 +86,5 @@ class DataSpider(scrapy.Spider):
                 ind = 0
 
         for i in range(len(M)):
-            all_data["UnitData"].append({"Army": "Sisters_of_Battle", "Name": names[i], "Movement": M[i], "#OfModels": numOfModels[i],"T": T[i], "Sv": Sv[i], "W": W[i], "Ld": Ld[i], "OC": OC[i]})                
+            all_data["UnitData"].append({"Army": "Sisters_of_Battle", "Name": names[i], "Movement": M[i], "#OfModels": numOfModels[i],"T": T[i], "Sv": Sv[i], "W": W[i], "Ld": Ld[i], "OC": OC[i], "IVSave": IVSave[i]})                
         return all_data
