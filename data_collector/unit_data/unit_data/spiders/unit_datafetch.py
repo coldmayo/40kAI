@@ -11,73 +11,73 @@ class DataSpider(scrapy.Spider):
 
         for i in urls:
             yield scrapy.Request(url = i, callback = self.parse)
-    
+    def toint(self, string):
+        toapp = ""
+        for j in string:
+            if j.isnumeric() == True:
+                toapp += j
+        if toapp == "":
+            return 0
+        else:
+            return int(toapp)
     def parse(self, response):
-        names = response.css('.dsH2Header').xpath("string()").extract()    
-        data = response.css('.dsProfileBaseWrap').xpath("string()").extract()
+        name = response.css('.dsH2Header').xpath("string()").extract()    
+        data = response.css('.dsCharValue').xpath("string()").extract()
+        unitComp = response.css('.dsUl').xpath('string()').extract()
+        splitNames = response.css(".dsModelName").xpath('string()').extract() 
         M = []
         T = []
         Sv = []
         W = []
         Ld = []
         OC = []
+        numOfModels = []
+        names = []
+        all_data = {"UnitData": []}
+        
+        ind = 0
+        for i in name:
+            if i == "Aestred Thurga And Agathae Dolan" or i == "Daemonifuge" or i == "Saint Celestine" or i == "Repentia Squad" or i == "Sisters Novitiate Squad":
+                names.append(splitNames[ind])
+                ind += 1
+                names.append(splitNames[ind])
+                ind += 1
+            else:
+                names.append(i)
 
+        for i in unitComp:
+            if i[-len("Superior"):] != "Superior":
+                numOfModels.append(int(i[0]))
+            elif i[-len("Repentia Superior"):] == "Repentia Superior" or i[-len("Novitiate Superior"):] == "Novitiate Superior":
+                numOfModels.append(int(i[0]))
+
+        
+        ind = 0
         for i in data:
-            ind = -1
-            for j in range(len(i)):
-                char = i[j]
-                if char == "M":
-                    ind = 0
-                elif char == "T":
-                    ind = 1
-                elif char == "S" and i[j+1] == "v":
-                    ind = 2
-                elif char == "W":
-                    ind = 3
-                elif char == "L" and i[j+1] == "d":
-                    ind = 4
-                elif char == "O" and i[j+1] == "C":
-                    ind = 5
+            if ind == 0:
+                M.append(self.toint(i))
+                ind = 1
 
-                if ind == 0 and char.isnumeric() == True:
-                    ind = -1
-                    if i[j+1].isnumeric() == True:
-                        val = int(str(char)+str(i[j+1]))
-                        if val <= 12:
-                            M.append(val)
-                        else:
-                            M.append(int(char))
-                    else:
-                        M.append(int(char))
+            elif ind == 1:
+                T.append(self.toint(i))
+                ind = 2
 
-                elif ind == 1 and char.isnumeric() == True:
-                    ind = -1
-                    T.append(int(char))
+            elif ind == 2:
+                Sv.append(self.toint(i))
+                ind = 3
 
-                elif ind == 2 and char.isnumeric() == True:
-                    ind = -1
-                    Sv.append(int(char))
+            elif ind == 3:
+                W.append(self.toint(i))
+                ind = 4
+            
+            elif ind == 4:
+                Ld.append(self.toint(i))
+                ind = 5
 
-                elif ind == 3 and char.isnumeric() == True:
-                    ind = -1
-                    W.append(int(char))
+            elif ind == 5:
+                OC.append(self.toint(i))
+                ind = 0
 
-                elif ind == 4 and char.isnumeric() == True:
-                    ind = -1
-                    Ld.append(int(char))
-
-                elif ind == 5 and char.isnumeric() == True:
-                    ind = -1
-                    OC.append(int(char))
-                
-
-        return {
-            "names": names,
-            "M": M,
-            "T": T,
-            "Sv": Sv,
-            "W": W,
-            "Ld": Ld,
-            "OC": OC,
-            "check_lens": [len(names), len(M), len(T), len(Sv), len(W), len(Ld), len(OC)]
-            }
+        for i in range(len(M)):
+            all_data["UnitData"].append({"Army": "Sisters_of_Battle", "Name": names[i], "Movement": M[i], "#OfModels": numOfModels[i],"T": T[i], "Sv": Sv[i], "W": W[i], "Ld": Ld[i], "OC": OC[i]})                
+        return all_data
