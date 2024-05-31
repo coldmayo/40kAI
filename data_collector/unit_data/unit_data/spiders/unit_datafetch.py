@@ -16,7 +16,9 @@ class DataSpider(scrapy.Spider):
         for j in string:
             if j.isnumeric() == True:
                 toapp += j
-        if toapp == "":
+        if string == "D3" or string == "D6" or string == "Melee":
+            return string
+        elif toapp == "":
             return 0
         else:
             return int(toapp)
@@ -26,16 +28,27 @@ class DataSpider(scrapy.Spider):
         unitComp = response.css('.dsUl').xpath('string()').extract()
         splitNames = response.css(".dsModelName").xpath('string()').extract() 
         invVals = response.css(".dsCharInvulValue").xpath('string()').extract()
+        weapons = response.css(".wTable2_short").xpath('string()').extract()
+        weapRan = response.css(".ct").xpath('string()').extract()
+        
         M = []
         T = []
         Sv = []
         W = []
         Ld = []
         OC = []
+        
+        Range = []
+        A = []
+        BS = []
+        S = []
+        AP = []
+        D = []
+
         numOfModels = []
         names = []
         IVSave = []
-        all_data = {"UnitData": []}
+        all_data = {"UnitData": [], "WeaponData": []}
         
         ind = 0
         for i in name:
@@ -46,6 +59,7 @@ class DataSpider(scrapy.Spider):
                 ind += 1
             else:
                 names.append(i)
+
         ind = 0
         for i in unitComp:
             if i[-len("Superior"):] != "Superior":
@@ -57,7 +71,6 @@ class DataSpider(scrapy.Spider):
                 ind += 1
             else:
                 IVSave.append(0)
-
         
         ind = 0
         for i in data:
@@ -84,7 +97,35 @@ class DataSpider(scrapy.Spider):
             elif ind == 5:
                 OC.append(self.toint(i))
                 ind = 0
+        
+        ind = 0
+        for i in weapRan:
+            if i != "RANGE" and i != "A" and i != "BS" and i != "WS" and i != "S" and i != "AP" and i != "D":
+                if ind == 0:
+                    Range.append(self.toint(i))
+                    ind += 1
+                elif ind == 1:
+                    A.append(self.toint(i))
+                    ind += 1
+                elif ind == 2:
+                    BS.append(self.toint(i))
+                    ind += 1
+                elif ind == 3:
+                    S.append(self.toint(i))
+                    ind += 1
+                elif ind == 4:
+                    AP.append(self.toint(i))
+                    ind += 1
+                elif ind == 5:
+                    D.append(self.toint(i))
+                    ind = 0
 
         for i in range(len(M)):
-            all_data["UnitData"].append({"Army": "Sisters_of_Battle", "Name": names[i], "Movement": M[i], "#OfModels": numOfModels[i],"T": T[i], "Sv": Sv[i], "W": W[i], "Ld": Ld[i], "OC": OC[i], "IVSave": IVSave[i]})                
+            all_data["UnitData"].append({"Army": "Sisters_of_Battle", "Name": names[i], "Movement": M[i], "#OfModels": numOfModels[i],"T": T[i], "Sv": Sv[i], "W": W[i], "Ld": Ld[i], "OC": OC[i], "IVSave": IVSave[i]})
+        for i in range(len(D)):
+            if Range[i] == "Melee":
+                all_data["WeaponData"].append({"Army": "Sisters_of_Battle", "Name": weapons[i], "Type": Range[i], "WS": BS[i], "S": S[i], "AP": AP[i], "Range": 2, "Damage": D[i]})
+            else:
+                all_data["WeaponData"].append({"Army": "Sisters_of_Battle", "Name": weapons[i], "Type": "Ranged", "BS": BS[i], "S": S[i], "AP": AP[i], "Range": Range[i], "Damage": D[i]})
+        
         return all_data
