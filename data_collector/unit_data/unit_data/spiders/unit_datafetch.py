@@ -30,7 +30,8 @@ class DataSpider(scrapy.Spider):
         invVals = response.css(".dsCharInvulValue").xpath('string()').extract()
         weapons = response.css(".wTable2_short").xpath('string()').extract()
         weapRan = response.css(".ct").xpath('string()').extract()
-        
+        info = response.css(".dsAbility").xpath('string()').extract()
+
         M = []
         T = []
         Sv = []
@@ -119,13 +120,34 @@ class DataSpider(scrapy.Spider):
                 elif ind == 5:
                     D.append(self.toint(i))
                     ind = 0
+        equ = []
+        for entry in info:
+            for ind in range(len(entry)):
+                if entry[ind:ind+len("is equipped with:")] == "is equipped with:":
+                    app = True
+                    appInd = ind+len("is equipped with:")+1
+                    weap = []
+                    weapName = ""
+                    while app == True:
+                        if entry[appInd] == ".":
+                            weap.append(weapName)
+                            app = False
+                        else:
+                            if entry[appInd] == ";":
+                                appInd += 1
+                                weap.append(weapName)
+                                weapName = ""
+                            else:
+                                weapName += entry[appInd]
+                        appInd += 1
+                    if weap[0] != "nothing":
+                        equ.append(weap)
 
         for i in range(len(M)):
-            all_data["UnitData"].append({"Army": "Sisters_of_Battle", "Name": names[i], "Movement": M[i], "#OfModels": numOfModels[i],"T": T[i], "Sv": Sv[i], "W": W[i], "Ld": Ld[i], "OC": OC[i], "IVSave": IVSave[i]})
+            all_data["UnitData"].append({"Army": "Sisters_of_Battle", "Name": names[i], "Movement": M[i], "#OfModels": numOfModels[i],"T": T[i], "Sv": Sv[i], "W": W[i], "Ld": Ld[i], "OC": OC[i], "IVSave": IVSave[i], "Weapons": equ[i]})
         for i in range(len(D)):
             if Range[i] == "Melee":
                 all_data["WeaponData"].append({"Army": "Sisters_of_Battle", "Name": weapons[i], "Type": Range[i], "WS": BS[i], "S": S[i], "AP": AP[i], "Range": 2, "Damage": D[i]})
             else:
                 all_data["WeaponData"].append({"Army": "Sisters_of_Battle", "Name": weapons[i], "Type": "Ranged", "BS": BS[i], "S": S[i], "AP": AP[i], "Range": Range[i], "Damage": D[i]})
-        
         return all_data
