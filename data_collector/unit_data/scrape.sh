@@ -1,0 +1,1 @@
+scrapy crawl data -o links.json
