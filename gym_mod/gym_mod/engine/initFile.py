@@ -46,11 +46,28 @@ def addingWeapons(m, e):
 
     for i in data["UnitData"]:
         for j in m:
+            weaps = ["None", "None"]
             if i["Name"] == j:
-                model.append(i["Weapons"])
+                for k in i["Weapons"]:
+                    for l in data["WeaponData"]:
+                        if l["Name"].lower() == k.lower():
+                            if l["Type"] == "Ranged":
+                                weaps[0] = l["Name"]
+                            elif l["Type"] == "Melee":
+                                weaps[1] = l["Name"]
+                model.append(weaps)
+
         for j in e:
+            weaps = ["None", "None"]
             if i["Name"] == j:
-                enemy.append(i["Weapons"])
+                for k in i["Weapons"]:
+                    for l in data["WeaponData"]:
+                        if l["Name"].lower() == k.lower():
+                            if l["Type"] == "Ranged":
+                                weaps[0] = l["Name"]
+                            elif l["Type"] == "Melee":
+                                weaps[1] = l["Name"]
+                enemy.append(weaps)
     
     return model, enemy
 

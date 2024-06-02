@@ -89,9 +89,11 @@ private:
   RadioButtonGroup factionModel;
   RadioButton orksModel;
   RadioButton spmModel;
+  RadioButton sobModel;
   RadioButtonGroup factionEnemy;
   RadioButton orksEnemy;
   RadioButton spmEnemy;
+  RadioButton sobEnemy;
   std::string enemyClass;
   std::string modelClass;
   std::string path;
@@ -278,6 +280,13 @@ Form :: Form() {
     modelClass = " Orks";
   });
 
+  sobModel.set_label("Sisters of Battle");
+  sobModel.set_group(factionModel);
+  sobModel.signal_toggled().connect([this]() {
+    modelUnits.clear();
+    modelClass = " Sisters_of_Battle";
+  });
+
   spmEnemy.set_label("Space Marine");
   spmEnemy.set_group(factionEnemy);
   spmEnemy.signal_toggled().connect([this]() {
@@ -292,7 +301,14 @@ Form :: Form() {
     enemyClass = " Orks";
   });
 
-  enemyFact.set_text("Enemy Faction: ");
+  sobEnemy.set_label("Sisters of Battle");
+  sobEnemy.set_group(factionEnemy);
+  sobEnemy.signal_toggled().connect([this]() {
+    enemyUnits.clear();
+    enemyClass = " Sisters_of_Battle";
+  });
+
+  enemyFact.set_text("Player Faction: ");
   modelFact.set_text("Model Faction: ");
   clearAllModel.set_label("Clear");
   clearAllModel.signal_button_release_event().connect([&](GdkEventButton*) {
@@ -351,10 +367,14 @@ Form :: Form() {
   fixedTabPage2.move(orksModel, 100, 80);
   fixedTabPage2.add(spmModel);
   fixedTabPage2.move(spmModel, 160, 80);
+  fixedTabPage2.add(sobModel);
+  fixedTabPage2.move(sobModel, 270, 80);
   fixedTabPage2.add(orksEnemy);
   fixedTabPage2.move(orksEnemy, 100, 100);
   fixedTabPage2.add(spmEnemy);
   fixedTabPage2.move(spmEnemy, 160, 100);
+  fixedTabPage2.add(sobEnemy);
+  fixedTabPage2.move(sobEnemy, 270, 100);
   fixedTabPage2.add(modelUnitLabel);
   fixedTabPage2.move(modelUnitLabel, 10, 133);
   fixedTabPage2.add(enterModelUnit);
