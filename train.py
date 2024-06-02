@@ -183,6 +183,7 @@ else:
 metrics.lossCurve()
 metrics.showRew()
 metrics.showEpLen()
+print("Generated metrics")
 
 current_time = datetime.datetime.now()
 date = str(current_time.second)+"-"+str(current_time.microsecond)

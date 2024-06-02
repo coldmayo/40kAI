@@ -24,4 +24,5 @@ class Units : public Gtk::Window {
     Fixed fixed;
     ScrolledWindow scrolledWindow;
     HeaderBar bar;
+    int lines;
 };

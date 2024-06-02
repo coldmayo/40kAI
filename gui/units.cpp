@@ -26,6 +26,7 @@ class Units : public Gtk::Window {
     Fixed fixed;
     ScrolledWindow scrolledWindow;
     HeaderBar bar;
+    int lines;
 };
 
 void Units :: getAvailUnits() {
@@ -34,7 +35,9 @@ void Units :: getAvailUnits() {
   infile >> j;
 
   std::vector<std::string> orks;
-    std::vector<std::string> spm;
+  std::vector<std::string> spm;
+  std::vector<std::string> sob;
+  lines = 0;
 
     const auto& unitData = j.at("UnitData");
     for (const auto& unit : unitData) {
@@ -44,28 +47,56 @@ void Units :: getAvailUnits() {
             orks.push_back(name);
         } else if (army == "Space_Marine") {
             spm.push_back(name);
+        } else if (army == "Sisters_of_Battle") {
+            sob.push_back(name);
         }
     }
 
     std::string output = "Available Units:\nOrks:\n";
-
+    int skipLine = 0;
     for (const auto& ork : orks) {
         output += ork + ", ";
+        skipLine++;
+        if (skipLine == 4) {
+          output += "\n";
+          lines++;
+          skipLine = 0;
+        }
     }
 
-    // Remove the trailing comma and space
     if (!orks.empty()) {
         output = output.substr(0, output.size() - 2);
     }
 
     output += "\nSpace Marines:\n";
-
+    skipLine = 0;
     for (const auto& marine : spm) {
         output += marine + ", ";
+        skipLine++;
+        if (skipLine == 4) {
+          output += "\n";
+          lines++;
+          skipLine = 0;
+        }
     }
 
-    // Remove the trailing comma and space
     if (!spm.empty()) {
+        output = output.substr(0, output.size() - 2);
+    }
+
+    output += "\nSisters of Battle:\n";
+    skipLine = 0;
+    for (const auto& sobs : sob) {
+        output += sobs + ", ";
+        skipLine++;
+        if (skipLine == 4) {
+          output += "\n";
+          lines++;
+          skipLine = 0;
+        }
+    }
+
+    if (!sob.empty()) {
         output = output.substr(0, output.size() - 2);
     }
 
@@ -122,7 +153,7 @@ Units :: Units() {
     getAvailUnits();
 
     fixed.add(contents);
-    fixed.move(contents, 10, 110);
+    fixed.move(contents, 10, (lines+5)*20);
     fixed.add(possible);
     fixed.move(possible, 10, 10);
 
