@@ -37,6 +37,8 @@ void Units :: getAvailUnits() {
   std::vector<std::string> orks;
   std::vector<std::string> spm;
   std::vector<std::string> sob;
+  std::vector<std::string> adc;
+
   lines = 0;
 
     const auto& unitData = j.at("UnitData");
@@ -49,6 +51,8 @@ void Units :: getAvailUnits() {
             spm.push_back(name);
         } else if (army == "Sisters_of_Battle") {
             sob.push_back(name);
+        } else if (army == "Custodes") {
+            adc.push_back(name);
         }
     }
 
@@ -97,6 +101,22 @@ void Units :: getAvailUnits() {
     }
 
     if (!sob.empty()) {
+        output = output.substr(0, output.size() - 2);
+    }
+
+    output += "\nAdeptus Custodes:\n";
+    skipLine = 0;
+    for (const auto& adcs : adc) {
+        output += adcs + ", ";
+        skipLine++;
+        if (skipLine == 4) {
+          output += "\n";
+          lines++;
+          skipLine = 0;
+        }
+    }
+
+    if (!adc.empty()) {
         output = output.substr(0, output.size() - 2);
     }
 
@@ -153,7 +173,7 @@ Units :: Units() {
     getAvailUnits();
 
     fixed.add(contents);
-    fixed.move(contents, 10, (lines+5)*20);
+    fixed.move(contents, 10, (lines+6)*20);
     fixed.add(possible);
     fixed.move(possible, 10, 10);
 

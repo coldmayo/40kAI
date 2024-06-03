@@ -33,6 +33,12 @@ Just like the tabletop game, it is played in turns, with each turn divided into 
 
 The object of the game is to kill all of the units on the opposing team.<br>
 
+Current factions available are:
+- Space Marines
+- Adeptus Custodes
+- Adepta Sororitas
+- Orks
+
 ## Installation
 
 ### Application 

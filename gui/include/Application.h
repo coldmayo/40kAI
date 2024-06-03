@@ -79,10 +79,12 @@ private:
   RadioButton orksModel;
   RadioButton spmModel;
   RadioButton sobModel;
+  RadioButton adcModel;
   RadioButtonGroup factionEnemy;
   RadioButton orksEnemy;
   RadioButton spmEnemy;
   RadioButton sobEnemy;
+  RadioButton adcEnemy;
   std::string enemyClass;
   std::string modelClass;
   std::string path;

@@ -58,17 +58,18 @@ if os.path.isfile("gui/data.json"):
     totLifeT = initFile.getNumLife()
     b_len = initFile.getBoardX()
     b_hei = initFile.getBoardY()
-
+    print("Model Units:\n")
     if len(initFile.getEnemyUnits()) > 0:
         enemy = []
         for i in range(len(initFile.getEnemyUnits())):
             enemy.append(Unit(unitData(initFile.getEnemyFaction(), initFile.getEnemyUnits()[i]), weaponData(initFile.getEnemyW()[i][0]), weaponData(initFile.getEnemyW()[i][1]), np.random.randint(0,b_len - b_len/2), np.random.randint(0,b_hei)))
-
+            print("Name:", initFile.getEnemyUnits()[i], "Weapons: ", initFile.getEnemyW()[i][0], initFile.getEnemyW()[i][1])
+    print("Enemy Units:\n")
     if len(initFile.getModelUnits()) > 0:
         model = []
         for i in range(len(initFile.getModelUnits())):
             model.append(Unit(unitData(initFile.getModelFaction(), initFile.getModelUnits()[i]), weaponData(initFile.getModelW()[i][0]), weaponData(initFile.getModelW()[i][1]), np.random.randint(0,b_len/2), np.random.randint(0,b_hei)))
-
+            print("Name:", initFile.getModelUnits()[i], "Weapons: ", initFile.getModelW()[i][0], initFile.getModelW()[i][1])
 numLifeT = 0
 
 env = gym.make("40kAI-v0", disable_env_checker=True, enemy = enemy, model = model, b_len = b_len, b_hei = b_hei)

@@ -7,7 +7,11 @@ class DataSpider(scrapy.Spider):
     f.truncate(0)
 
     def start_requests(self):
-        urls = ["https://www.wahapedia.ru/wh40k10ed/factions/adepta-sororitas/datasheets.html", "https://wahapedia.ru/wh40k10ed/factions/orks/datasheets.html"]
+        urls = [
+            "https://www.wahapedia.ru/wh40k10ed/factions/adepta-sororitas/datasheets.html", 
+            "https://wahapedia.ru/wh40k10ed/factions/orks/datasheets.html", 
+            "https://wahapedia.ru/wh40k10ed/factions/adeptus-custodes/datasheets.html"
+        ]
 
         for i in urls:
             yield scrapy.Request(url = i, callback = self.parse)
@@ -29,6 +33,8 @@ class DataSpider(scrapy.Spider):
             return 0
         elif url == "https://wahapedia.ru/wh40k10ed/factions/orks/datasheets.html":
             return 1
+        elif url == "https://wahapedia.ru/wh40k10ed/factions/adeptus-custodes/datasheets.html":
+            return 2
         
 
     def parse(self, response):
@@ -103,6 +109,14 @@ class DataSpider(scrapy.Spider):
                     ind += 1
                 else:
                     IVSave.append(0)
+            elif curr_url == 2:
+                if i[-len("Superior"):] != "Superior":
+                    numOfModels.append(int(i[0]))
+                if i[-len("EPIC HERO"):] == "EPIC HERO":
+                    IVSave.append(self.toint(invVals[ind]))
+                    ind += 1
+                else:
+                    IVSave.append(0)
 
         
         ind = 0
@@ -163,7 +177,12 @@ class DataSpider(scrapy.Spider):
                     weapName = ""
                     while app == True:
                         if appInd == len(entry)-1:
-                            weap.append(weapName)
+                            if weapName == "vaultswords":
+                                weap.append("Vaultswords – Behemor [precision]")
+                                weap.append("Vaultswords – Hurricanus [sustained hits 1]")
+                                weap.append("Vaultswords – Victus [devastating wounds]")
+                            else:
+                                weap.append(weapName)
                             app == False
                             break
                         if entry[appInd] == ".":
@@ -182,20 +201,14 @@ class DataSpider(scrapy.Spider):
                         num += 1
         equ.append(["slugga", "choppa"])
 
+        armies = ["Sisters_of_Battle", "Orks", "Custodes"]
+
         for i in range(len(M)):
-            if curr_url == 0:
-                all_data["UnitData"].append({"Army": "Sisters_of_Battle", "Name": names[i], "Movement": M[i], "#OfModels": numOfModels[i],"T": T[i], "Sv": Sv[i], "W": W[i], "Ld": Ld[i], "OC": OC[i], "IVSave": IVSave[i], "Weapons": equ[i]})
-            elif curr_url == 1:
-                all_data["UnitData"].append({"Army": "Orks", "Name": names[i], "Movement": M[i], "#OfModels": numOfModels[i],"T": T[i], "Sv": Sv[i], "W": W[i], "Ld": Ld[i], "OC": OC[i], "IVSave": IVSave[i], "Weapons": equ[i]})
+            all_data["UnitData"].append({"Army": armies[curr_url], "Name": names[i], "Movement": M[i], "#OfModels": numOfModels[i],"T": T[i], "Sv": Sv[i], "W": W[i], "Ld": Ld[i], "OC": OC[i], "IVSave": IVSave[i], "Weapons": equ[i]})
         for i in range(len(weapons)):
-            if curr_url == 0:
                 if Range[i] == "Melee":
-                    all_data["WeaponData"].append({"Army": "Sisters_of_Battle", "Name": weapons[i], "Type": Range[i], "WS": BS[i], "S": S[i], "AP": AP[i], "Range": 2, "Damage": D[i]})
+                    all_data["WeaponData"].append({"Army": armies[curr_url], "Name": weapons[i], "Type": Range[i], "WS": BS[i], "S": S[i], "AP": AP[i], "Range": 2, "Damage": D[i]})
                 else:
-                    all_data["WeaponData"].append({"Army": "Sisters_of_Battle", "Name": weapons[i], "Type": "Ranged", "BS": BS[i], "S": S[i], "AP": AP[i], "Range": Range[i], "Damage": D[i]})
-            elif curr_url == 1:
-                if Range[i] == "Melee":
-                    all_data["WeaponData"].append({"Army": "Orks", "Name": weapons[i], "Type": Range[i], "WS": BS[i], "S": S[i], "AP": AP[i], "Range": 2, "Damage": D[i]})
-                else:
-                    all_data["WeaponData"].append({"Army": "Orks", "Name": weapons[i], "Type": "Ranged", "BS": BS[i], "S": S[i], "AP": AP[i], "Range": Range[i], "Damage": D[i]})
+                    all_data["WeaponData"].append({"Army": armies[curr_url], "Name": weapons[i], "Type": "Ranged", "BS": BS[i], "S": S[i], "AP": AP[i], "Range": Range[i], "Damage": D[i]})
+
         return all_data

@@ -95,10 +95,10 @@ def attack(attackerHealth, attackerWeapon, attackerData, attackeeHealth, attacke
         diceRoll = dice()
         if diceRoll > 1:
             if attackeeData["IVSave"] == 0 or attackerWeapon["AP"] <= 0:
-                if diceRoll+attackerWeapon["AP"] > armorSave:
+                if diceRoll+attackerWeapon["AP"] <= armorSave:
                     dmg[k] = 0
             elif attackeeData["IVSave"] > 0 and attackerWeapon["AP"] > 0:
-                if diceRoll+attackerWeapon["AP"] > attackeeData["IVSave"]:
+                if diceRoll <= attackeeData["IVSave"]:
                     dmg[k] = 0
         else:
             dmg[k] = 0

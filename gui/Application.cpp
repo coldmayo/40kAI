@@ -90,10 +90,12 @@ private:
   RadioButton orksModel;
   RadioButton spmModel;
   RadioButton sobModel;
+  RadioButton adcModel;
   RadioButtonGroup factionEnemy;
   RadioButton orksEnemy;
   RadioButton spmEnemy;
   RadioButton sobEnemy;
+  RadioButton adcEnemy;
   std::string enemyClass;
   std::string modelClass;
   std::string path;
@@ -287,6 +289,13 @@ Form :: Form() {
     modelClass = " Sisters_of_Battle";
   });
 
+  adcModel.set_label("Adeptus Custodes");
+  adcModel.set_group(factionModel);
+  adcModel.signal_toggled().connect([this]() {
+    modelUnits.clear();
+    modelClass = " Custodes";
+  });
+
   spmEnemy.set_label("Space Marine");
   spmEnemy.set_group(factionEnemy);
   spmEnemy.signal_toggled().connect([this]() {
@@ -306,6 +315,13 @@ Form :: Form() {
   sobEnemy.signal_toggled().connect([this]() {
     enemyUnits.clear();
     enemyClass = " Sisters_of_Battle";
+  });
+
+  adcEnemy.set_label("Adeptus Custodes");
+  adcEnemy.set_group(factionEnemy);
+  adcEnemy.signal_toggled().connect([this]() {
+    enemyUnits.clear();
+    enemyClass = " Custodes";
   });
 
   enemyFact.set_text("Player Faction: ");
@@ -369,12 +385,16 @@ Form :: Form() {
   fixedTabPage2.move(spmModel, 160, 80);
   fixedTabPage2.add(sobModel);
   fixedTabPage2.move(sobModel, 270, 80);
+  fixedTabPage2.add(adcModel);
+  fixedTabPage2.move(adcModel, 390, 80);
   fixedTabPage2.add(orksEnemy);
   fixedTabPage2.move(orksEnemy, 100, 100);
   fixedTabPage2.add(spmEnemy);
   fixedTabPage2.move(spmEnemy, 160, 100);
   fixedTabPage2.add(sobEnemy);
   fixedTabPage2.move(sobEnemy, 270, 100);
+  fixedTabPage2.add(adcEnemy);
+  fixedTabPage2.move(adcEnemy, 390, 100);
   fixedTabPage2.add(modelUnitLabel);
   fixedTabPage2.move(modelUnitLabel, 10, 133);
   fixedTabPage2.add(enterModelUnit);
