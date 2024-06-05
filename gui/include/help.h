@@ -1,5 +1,5 @@
-#ifndef WARN_H
-#define WARN_H
+#ifndef HELP_H
+#define HELP_H
 
 #include <iostream>
 #include <gtkmm.h>
@@ -10,16 +10,13 @@
 using namespace Glib;
 using namespace Gtk;
 
-class Warn : public Gtk::Window {
+class Help : public Gtk::Window {
     public:
-        Warn(std::string message, int comm);
+        Help();
     private:
         Fixed fixed;
         ScrolledWindow scrolledWindow;
         HeaderBar bar;
-        Label text;
-        Button cancel;
-        Button cont;
 };
 
 #endif

@@ -48,4 +48,4 @@ add_definitions(-DG_DEBUG="${G_DEBUG}")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-add_executable(Application WIN32 main.cpp Application.cpp popup.cpp units.cpp warn.cpp)
+add_executable(Application WIN32 main.cpp Application.cpp popup.cpp units.cpp warn.cpp help.cpp)
