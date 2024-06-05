@@ -10,6 +10,8 @@
 #include <thread>
 #include <chrono>
 #include "popup.h"
+#include "units.h"
+#include "warn.h"
 
 class Form : public Window {
 
@@ -27,11 +29,13 @@ public :
   void savetoTxt(std::vector<std::string> enemyUnits, std::vector<std::string> modelUnits);
   bool isValidUnit(int id, std::string name);
   int openArmyView();
+  int openWarnMenu(std::string mess, int comm);
   std::string toLower(std::string data);
 
 private:
   Window* boardShow;
   Window* armyView;
+  Window* warn;
   Image pictureBox1;
   Image metricBox;
   Image metricBox2;

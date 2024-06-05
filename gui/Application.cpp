@@ -10,6 +10,7 @@
 #include <nlohmann/json.hpp>
 #include "include/popup.h"
 #include "include/units.h"
+#include "include/warn.h"
 
 using namespace Glib;
 using namespace Gtk;
@@ -37,12 +38,14 @@ public :
   void savetoTxt(std::vector<std::string> enemyUnits, std::vector<std::string> modelUnits);
   bool isValidUnit(int id, std::string name);
   int openArmyView();
+  int openWarnMenu(std::string mess, int comm);
   std::string toLower(std::string data);
   void update_metrics();
 
 private:
   Window* boardShow;
   Window* armyView;
+  Window* warn;
   Image pictureBox1;
   Image metricBox;
   Image metricBox2;
@@ -264,7 +267,8 @@ Form :: Form() {
 
   button3.set_label("Clear Model Cache");
   button3.signal_button_release_event().connect([&](GdkEventButton*) {
-    system("cd .. ; rm -r models/*");
+    std::string mess = "Warning: You are about to delete all of the saved models";
+    openWarnMenu(mess, 0);
     return true;
   });
 
@@ -516,6 +520,12 @@ int Form :: openArmyView() {
   return 0;
 }
 
+int Form :: openWarnMenu(std::string mess, int comm) {
+  warn = new Warn(mess, comm);
+  warn->show();
+  return 0;
+}
+
 std::string Form :: toLower(std::string data) {
   std::transform(data.begin(), data.end(), data.begin(),[](unsigned char c){ return std::tolower(c); });
   return data;
@@ -585,7 +595,6 @@ void Form :: updateInits(std::string model, std::string enemy) {
   command.append(enterDimensX.get_text().data());
   command.append(" ");
   command.append(enterDimensY.get_text().data());
-  std::cout << command << "\n";
   system(command.data());
 }
 
