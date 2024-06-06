@@ -17,6 +17,20 @@ class Help : public Gtk::Window {
         Fixed fixed;
         ScrolledWindow scrolledWindow;
         HeaderBar bar;
+        Notebook tabControl;
+        Frame tab1;
+        Label labelPage1;
+        Fixed fixedTabPage1;
+        Frame tab2;
+        Label labelPage2;
+        Fixed fixedTabPage2;
+        Frame tab3;
+        Label labelPage3;
+        Fixed fixedTabPage3;
+        Frame tab4;
+        Label labelPage4;
+        Fixed fixedTabPage4;
+
 };
 
 #endif
