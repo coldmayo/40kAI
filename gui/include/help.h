@@ -13,6 +13,7 @@ using namespace Gtk;
 class Help : public Gtk::Window {
     public:
         Help();
+        std::string openFile(std::string name);
     private:
         Fixed fixed;
         ScrolledWindow scrolledWindow;
@@ -21,6 +22,8 @@ class Help : public Gtk::Window {
         Frame tab1;
         Label labelPage1;
         Fixed fixedTabPage1;
+        Label text;
+        Glib::RefPtr<Gtk::TextBuffer> m_refTextBuffer1;
         Frame tab2;
         Label labelPage2;
         Fixed fixedTabPage2;
