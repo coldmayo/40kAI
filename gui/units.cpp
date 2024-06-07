@@ -39,6 +39,7 @@ void Units :: getAvailUnits() {
   std::vector<std::string> sob;
   std::vector<std::string> adc;
   std::vector<std::string> tyr;
+  std::vector<std::string> mec;
 
   lines = 0;
 
@@ -56,6 +57,8 @@ void Units :: getAvailUnits() {
             adc.push_back(name);
         } else if (army == "Tyranids") {
             tyr.push_back(name);
+        } else if (army == "Mechanicus") {
+            mec.push_back(name);
         }
     }
 
@@ -139,6 +142,22 @@ void Units :: getAvailUnits() {
         output = output.substr(0, output.size() - 2);
     }
 
+    output += "\nAdeptus Mechanicus:\n";
+    skipLine = 0;
+    for (const auto& mecs : mec) {
+        output += mecs + ", ";
+        skipLine++;
+        if (skipLine == 4) {
+          output += "\n";
+          lines++;
+          skipLine = 0;
+        }
+    }
+
+    if (!mec.empty()) {
+        output = output.substr(0, output.size() - 2);
+    }
+
     possible.set_text(output);
 
 }
@@ -192,7 +211,7 @@ Units :: Units() {
     getAvailUnits();
 
     fixed.add(contents);
-    fixed.move(contents, 10, (lines+7)*20);
+    fixed.move(contents, 10, (lines+9)*20);
     fixed.add(possible);
     fixed.move(possible, 10, 10);
 
