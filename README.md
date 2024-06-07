@@ -38,6 +38,7 @@ Current factions available are:
 - Adeptus Custodes
 - Adepta Sororitas
 - Orks
+- Tyranids
 
 ## Installation
 
