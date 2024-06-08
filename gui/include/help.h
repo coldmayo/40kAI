@@ -23,13 +23,14 @@ class Help : public Gtk::Window {
         Label labelPage1;
         Fixed fixedTabPage1;
         Label text;
-        Glib::RefPtr<Gtk::TextBuffer> m_refTextBuffer1;
         Frame tab2;
         Label labelPage2;
         Fixed fixedTabPage2;
+        Label aboutText;
         Frame tab3;
         Label labelPage3;
         Fixed fixedTabPage3;
+        Label contactText;
         Frame tab4;
         Label labelPage4;
         Fixed fixedTabPage4;
