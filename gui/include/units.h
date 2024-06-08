@@ -1,3 +1,6 @@
+#ifndef UNITS_H
+#define UNITS_H
+
 #include <iostream>
 #include <gtkmm.h>
 #include <cstdlib>
@@ -26,3 +29,5 @@ class Units : public Gtk::Window {
     HeaderBar bar;
     int lines;
 };
+
+#endif

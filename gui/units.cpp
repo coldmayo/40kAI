@@ -7,27 +7,11 @@
 #include <thread>
 #include <chrono>
 #include <nlohmann/json.hpp>
+#include "include/units.h"
 
 using namespace Glib;
 using namespace Gtk;
 using json = nlohmann::json;
-
-class Units : public Gtk::Window {
-  public : 
-    Units();
-    std::string openFile(std::string);
-    void update();
-    void keepUpdating();
-    void backgroudUpdate();
-    void getAvailUnits();
-  private:
-    Label contents;
-    Label possible;
-    Fixed fixed;
-    ScrolledWindow scrolledWindow;
-    HeaderBar bar;
-    int lines;
-};
 
 void Units :: getAvailUnits() {
   std::ifstream infile("../gym_mod/gym_mod/engine/unitData.json");
