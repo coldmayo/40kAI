@@ -94,11 +94,15 @@ private:
   RadioButton spmModel;
   RadioButton sobModel;
   RadioButton adcModel;
+  RadioButton tyrModel;
+  RadioButton milModel;
   RadioButtonGroup factionEnemy;
   RadioButton orksEnemy;
   RadioButton spmEnemy;
   RadioButton sobEnemy;
   RadioButton adcEnemy;
+  RadioButton tyrEnemy;
+  RadioButton milEnemy;
   std::string enemyClass;
   std::string modelClass;
   std::string path;
@@ -300,6 +304,20 @@ Form :: Form() {
     modelClass = " Custodes";
   });
 
+  tyrModel.set_label("Tyrannids");
+  tyrModel.set_group(factionModel);
+  tyrModel.signal_toggled().connect([this]() {
+    modelUnits.clear();
+    modelClass = " Tyrannids";
+  });
+
+  milModel.set_label("Astra Militarum");
+  milModel.set_group(factionModel);
+  milModel.signal_toggled().connect([this]() {
+    modelUnits.clear();
+    modelClass = " Militarum";
+  });
+
   spmEnemy.set_label("Space Marine");
   spmEnemy.set_group(factionEnemy);
   spmEnemy.signal_toggled().connect([this]() {
@@ -326,6 +344,20 @@ Form :: Form() {
   adcEnemy.signal_toggled().connect([this]() {
     enemyUnits.clear();
     enemyClass = " Custodes";
+  });
+
+  tyrEnemy.set_label("Tyrannids");
+  tyrEnemy.set_group(factionEnemy);
+  tyrEnemy.signal_toggled().connect([this]() {
+    enemyUnits.clear();
+    enemyClass = " Tyrannids";
+  });
+
+  milEnemy.set_label("Astra Militarum");
+  milEnemy.set_group(factionEnemy);
+  milEnemy.signal_toggled().connect([this]() {
+    enemyUnits.clear();
+    enemyClass = " Militarum";
   });
 
   enemyFact.set_text("Player Faction: ");
@@ -391,6 +423,10 @@ Form :: Form() {
   fixedTabPage2.move(sobModel, 270, 80);
   fixedTabPage2.add(adcModel);
   fixedTabPage2.move(adcModel, 390, 80);
+  fixedTabPage2.add(tyrModel);
+  fixedTabPage2.move(tyrModel, 530, 80);
+  fixedTabPage2.add(milModel);
+  fixedTabPage2.move(milModel, 610, 80);
   fixedTabPage2.add(orksEnemy);
   fixedTabPage2.move(orksEnemy, 100, 100);
   fixedTabPage2.add(spmEnemy);
@@ -399,6 +435,10 @@ Form :: Form() {
   fixedTabPage2.move(sobEnemy, 270, 100);
   fixedTabPage2.add(adcEnemy);
   fixedTabPage2.move(adcEnemy, 390, 100);
+  fixedTabPage2.add(tyrEnemy);
+  fixedTabPage2.move(tyrEnemy, 530, 100);
+  fixedTabPage2.add(milEnemy);
+  fixedTabPage2.move(milEnemy, 610, 100);
   fixedTabPage2.add(modelUnitLabel);
   fixedTabPage2.move(modelUnitLabel, 10, 133);
   fixedTabPage2.add(enterModelUnit);

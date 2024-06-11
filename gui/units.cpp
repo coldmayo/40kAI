@@ -40,6 +40,7 @@ void Units :: getAvailUnits() {
   std::vector<std::string> adc;
   std::vector<std::string> tyr;
   std::vector<std::string> mec;
+  std::vector<std::string> mil;
 
   lines = 0;
 
@@ -59,6 +60,8 @@ void Units :: getAvailUnits() {
             tyr.push_back(name);
         } else if (army == "Mechanicus") {
             mec.push_back(name);
+        } else if (army == "Militarum") {
+            mil.push_back(name);
         }
     }
 
@@ -155,6 +158,22 @@ void Units :: getAvailUnits() {
     }
 
     if (!mec.empty()) {
+        output = output.substr(0, output.size() - 2);
+    }
+
+    output += "\nAstra Militarum:\n";
+    skipLine = 0;
+    for (const auto& mils : mil) {
+        output += mils + ", ";
+        skipLine++;
+        if (skipLine == 4) {
+          output += "\n";
+          lines++;
+          skipLine = 0;
+        }
+    }
+
+    if (!mil.empty()) {
         output = output.substr(0, output.size() - 2);
     }
 
