@@ -13,7 +13,8 @@ class DataSpider(scrapy.Spider):
             "https://wahapedia.ru/wh40k10ed/factions/adeptus-custodes/datasheets.html",
             "https://wahapedia.ru/wh40k10ed/factions/tyranids/datasheets.html",
             "https://wahapedia.ru/wh40k10ed/factions/adeptus-mechanicus/datasheets.html",
-            "https://wahapedia.ru/wh40k10ed/factions/astra-militarum/datasheets.html"
+            "https://wahapedia.ru/wh40k10ed/factions/astra-militarum/datasheets.html",
+            "https://wahapedia.ru/wh40k10ed/factions/t-au-empire/datasheets.html"
         ]
 
         for i in urls:
@@ -44,7 +45,8 @@ class DataSpider(scrapy.Spider):
             return 4
         elif url == "https://wahapedia.ru/wh40k10ed/factions/astra-militarum/datasheets.html":
             return 5
-        
+        elif url == "https://wahapedia.ru/wh40k10ed/factions/t-au-empire/datasheets.html":
+            return 6
 
     def parse(self, response):
         name = response.css('.dsH2Header').xpath("string()").extract()    
@@ -162,6 +164,14 @@ class DataSpider(scrapy.Spider):
                 else:
                     IVSave.append(0)
                 nums += 1
+            elif curr_url == 6:
+                if i[-len("Shas’ui"):] != "Shas’ui" and i[-len("Long-quill"):] != "Long-quill" and i[-len("Kill-broker"):] != "Kill-broker" and i[-len("Strain Leader"):] != "Strain Leader":
+                    numOfModels.append(self.toint(i[0:2]))
+                if i[-len("EPIC HERO"):] == "EPIC HERO":
+                    IVSave.append(self.toint(invVals[ind]))
+                    ind += 1
+                else:
+                    IVSave.append(0)
         ind = 0
         for i in data:
             if ind == 0:
@@ -240,7 +250,7 @@ class DataSpider(scrapy.Spider):
                             else:
                                 weapName += entry[appInd]
                         appInd += 1
-                    if weap[0] != "nothing":
+                    if weap[0] != "nothing" and weap[0] != "Fidelity":
                         equ.append(weap)
                         num += 1
                     elif curr_url == 3:
@@ -250,12 +260,9 @@ class DataSpider(scrapy.Spider):
             equ.append(["slugga", "choppa"])
 
         # check lens
-        print(curr_url, len(names), len(names), len(numOfModels), len(weapons), len(equ), len(M))
+        print(curr_url, len(names), len(numOfModels), len(weapons), len(equ), len(M))
 
-        #if curr_url == 5:
-        #    print(unitComp)
-        #    print(names)
-        armies = ["Sisters_of_Battle", "Orks", "Custodes", "Tyranids", "Mechanicus", "Militarum"]
+        armies = ["Sisters_of_Battle", "Orks", "Custodes", "Tyranids", "Mechanicus", "Militarum", "Tau"]
 
         for i in range(len(M)):
             all_data["UnitData"].append({"Army": armies[curr_url], "Name": names[i], "Movement": M[i], "#OfModels": numOfModels[i],"T": T[i], "Sv": Sv[i], "W": W[i], "Ld": Ld[i], "OC": OC[i], "IVSave": IVSave[i], "Weapons": equ[i]})

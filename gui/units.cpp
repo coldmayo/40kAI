@@ -20,6 +20,7 @@ class Units : public Gtk::Window {
     void keepUpdating();
     void backgroudUpdate();
     void getAvailUnits();
+    void addFact(std::vector<std::string> facts);
   private:
     Label contents;
     Label possible;
@@ -27,7 +28,25 @@ class Units : public Gtk::Window {
     ScrolledWindow scrolledWindow;
     HeaderBar bar;
     int lines;
+    std::string output;
 };
+
+void Units :: addFact(std::vector<std::string> facts) {
+  int skipLine = 0;
+  for (const auto& fact : facts) {
+    output += fact + ", ";
+    skipLine++;
+    if (skipLine == 4) {
+      output += "\n";
+      lines++;
+      skipLine = 0;
+    }
+  }
+
+  if (!facts.empty()) {
+    output = output.substr(0, output.size() - 2);
+  }
+}
 
 void Units :: getAvailUnits() {
   std::ifstream infile("../gym_mod/gym_mod/engine/unitData.json");
@@ -41,6 +60,7 @@ void Units :: getAvailUnits() {
   std::vector<std::string> tyr;
   std::vector<std::string> mec;
   std::vector<std::string> mil;
+  std::vector<std::string> tau;
 
   lines = 0;
 
@@ -62,120 +82,34 @@ void Units :: getAvailUnits() {
             mec.push_back(name);
         } else if (army == "Militarum") {
             mil.push_back(name);
+        } else if (army == "Tau") {
+            tau.push_back(name);
         }
     }
 
-    std::string output = "Available Units:\nOrks:\n";
-    int skipLine = 0;
-    for (const auto& ork : orks) {
-        output += ork + ", ";
-        skipLine++;
-        if (skipLine == 4) {
-          output += "\n";
-          lines++;
-          skipLine = 0;
-        }
-    }
-
-    if (!orks.empty()) {
-        output = output.substr(0, output.size() - 2);
-    }
+    output = "Available Units:\nOrks:\n";
+    addFact(orks);
 
     output += "\nSpace Marines:\n";
-    skipLine = 0;
-    for (const auto& marine : spm) {
-        output += marine + ", ";
-        skipLine++;
-        if (skipLine == 4) {
-          output += "\n";
-          lines++;
-          skipLine = 0;
-        }
-    }
-
-    if (!spm.empty()) {
-        output = output.substr(0, output.size() - 2);
-    }
+    addFact(spm);
 
     output += "\nSisters of Battle:\n";
-    skipLine = 0;
-    for (const auto& sobs : sob) {
-        output += sobs + ", ";
-        skipLine++;
-        if (skipLine == 4) {
-          output += "\n";
-          lines++;
-          skipLine = 0;
-        }
-    }
-
-    if (!sob.empty()) {
-        output = output.substr(0, output.size() - 2);
-    }
+    addFact(sob);
 
     output += "\nAdeptus Custodes:\n";
-    skipLine = 0;
-    for (const auto& adcs : adc) {
-        output += adcs + ", ";
-        skipLine++;
-        if (skipLine == 4) {
-          output += "\n";
-          lines++;
-          skipLine = 0;
-        }
-    }
-
-    if (!adc.empty()) {
-        output = output.substr(0, output.size() - 2);
-    }
+    addFact(adc);
 
     output += "\nTyranids:\n";
-    skipLine = 0;
-    for (const auto& tyrs : tyr) {
-        output += tyrs + ", ";
-        skipLine++;
-        if (skipLine == 4) {
-          output += "\n";
-          lines++;
-          skipLine = 0;
-        }
-    }
-
-    if (!tyr.empty()) {
-        output = output.substr(0, output.size() - 2);
-    }
+    addFact(tyr);
 
     output += "\nAdeptus Mechanicus:\n";
-    skipLine = 0;
-    for (const auto& mecs : mec) {
-        output += mecs + ", ";
-        skipLine++;
-        if (skipLine == 4) {
-          output += "\n";
-          lines++;
-          skipLine = 0;
-        }
-    }
-
-    if (!mec.empty()) {
-        output = output.substr(0, output.size() - 2);
-    }
+    addFact(mec);
 
     output += "\nAstra Militarum:\n";
-    skipLine = 0;
-    for (const auto& mils : mil) {
-        output += mils + ", ";
-        skipLine++;
-        if (skipLine == 4) {
-          output += "\n";
-          lines++;
-          skipLine = 0;
-        }
-    }
+    addFact(mil);
 
-    if (!mil.empty()) {
-        output = output.substr(0, output.size() - 2);
-    }
+    output += "\nTau:\n";
+    addFact(tau);
 
     possible.set_text(output);
 

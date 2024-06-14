@@ -18,6 +18,7 @@ class Units : public Gtk::Window {
     void keepUpdating();
     void backgroudUpdate();
     void getAvailUnits();
+    void addFact(std::vector<std::string> facts);
   private:
     Label contents;
     Label possible;
@@ -25,4 +26,5 @@ class Units : public Gtk::Window {
     ScrolledWindow scrolledWindow;
     HeaderBar bar;
     int lines;
+    std::string output;
 };

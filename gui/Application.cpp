@@ -96,6 +96,7 @@ private:
   RadioButton adcModel;
   RadioButton tyrModel;
   RadioButton milModel;
+  RadioButton tauModel;
   RadioButtonGroup factionEnemy;
   RadioButton orksEnemy;
   RadioButton spmEnemy;
@@ -103,6 +104,7 @@ private:
   RadioButton adcEnemy;
   RadioButton tyrEnemy;
   RadioButton milEnemy;
+  RadioButton tauEnemy;
   std::string enemyClass;
   std::string modelClass;
   std::string path;
@@ -318,6 +320,13 @@ Form :: Form() {
     modelClass = " Militarum";
   });
 
+  tauModel.set_label("Tau");
+  tauModel.set_group(factionModel);
+  tauModel.signal_toggled().connect([this]() {
+    modelUnits.clear();
+    modelClass = " Tau";
+  });
+
   spmEnemy.set_label("Space Marine");
   spmEnemy.set_group(factionEnemy);
   spmEnemy.signal_toggled().connect([this]() {
@@ -351,6 +360,13 @@ Form :: Form() {
   tyrEnemy.signal_toggled().connect([this]() {
     enemyUnits.clear();
     enemyClass = " Tyrannids";
+  });
+
+  tauEnemy.set_label("Tau");
+  tauEnemy.set_group(factionEnemy);
+  tauEnemy.signal_toggled().connect([this]() {
+    enemyUnits.clear();
+    enemyClass = " Tau";
   });
 
   milEnemy.set_label("Astra Militarum");
@@ -390,29 +406,29 @@ Form :: Form() {
   });
 
   fixedTabPage2.add(dimX);
-  fixedTabPage2.move(dimX, 10, 235);
+  fixedTabPage2.move(dimX, 10, 265);
   fixedTabPage2.add(dimens);
-  fixedTabPage2.move(dimens, 10, 210);
+  fixedTabPage2.move(dimens, 10, 240);
   fixedTabPage2.add(enterDimensX);
-  fixedTabPage2.move(enterDimensX, 30, 230);
+  fixedTabPage2.move(enterDimensX, 30, 260);
   fixedTabPage2.add(upX);
-  fixedTabPage2.move(upX, 200, 230);
+  fixedTabPage2.move(upX, 200, 260);
   fixedTabPage2.add(downX);
-  fixedTabPage2.move(downX, 220, 230);
+  fixedTabPage2.move(downX, 220, 260);
 
   fixedTabPage2.add(dimY);
-  fixedTabPage2.move(dimY, 260, 235);
+  fixedTabPage2.move(dimY, 260, 265);
   fixedTabPage2.add(enterDimensY);
-  fixedTabPage2.move(enterDimensY, 250+30, 230);
+  fixedTabPage2.move(enterDimensY, 260+30, 260);
   fixedTabPage2.add(upY);
-  fixedTabPage2.move(upY, 250+200, 230);
+  fixedTabPage2.move(upY, 250+200, 260);
   fixedTabPage2.add(downY);
-  fixedTabPage2.move(downY, 250+220, 230);
+  fixedTabPage2.move(downY, 250+220, 260);
 
   fixedTabPage2.add(numOfGames);
   fixedTabPage2.move(numOfGames, 10, 45);
   fixedTabPage2.add(enemyFact);
-  fixedTabPage2.move(enemyFact, 10, 100);
+  fixedTabPage2.move(enemyFact, 10, 120);
   fixedTabPage2.add(modelFact);
   fixedTabPage2.move(modelFact, 10, 80);
   fixedTabPage2.add(orksModel);
@@ -426,47 +442,51 @@ Form :: Form() {
   fixedTabPage2.add(tyrModel);
   fixedTabPage2.move(tyrModel, 530, 80);
   fixedTabPage2.add(milModel);
-  fixedTabPage2.move(milModel, 610, 80);
+  fixedTabPage2.move(milModel, 100, 100);
+  fixedTabPage2.add(tauModel);
+  fixedTabPage2.move(tauModel, 220, 100);
   fixedTabPage2.add(orksEnemy);
-  fixedTabPage2.move(orksEnemy, 100, 100);
+  fixedTabPage2.move(orksEnemy, 100, 120);
   fixedTabPage2.add(spmEnemy);
-  fixedTabPage2.move(spmEnemy, 160, 100);
+  fixedTabPage2.move(spmEnemy, 160, 120);
   fixedTabPage2.add(sobEnemy);
-  fixedTabPage2.move(sobEnemy, 270, 100);
+  fixedTabPage2.move(sobEnemy, 270, 120);
   fixedTabPage2.add(adcEnemy);
-  fixedTabPage2.move(adcEnemy, 390, 100);
+  fixedTabPage2.move(adcEnemy, 390, 120);
   fixedTabPage2.add(tyrEnemy);
-  fixedTabPage2.move(tyrEnemy, 530, 100);
+  fixedTabPage2.move(tyrEnemy, 530, 120);
   fixedTabPage2.add(milEnemy);
-  fixedTabPage2.move(milEnemy, 610, 100);
+  fixedTabPage2.move(milEnemy, 100, 140);
+  fixedTabPage2.add(tauEnemy);
+  fixedTabPage2.move(tauEnemy, 220, 140);
   fixedTabPage2.add(modelUnitLabel);
-  fixedTabPage2.move(modelUnitLabel, 10, 133);
+  fixedTabPage2.move(modelUnitLabel, 10, 163);
   fixedTabPage2.add(enterModelUnit);
-  fixedTabPage2.move(enterModelUnit, 130, 130);
+  fixedTabPage2.move(enterModelUnit, 130, 160);
   fixedTabPage2.add(modelEnter);
-  fixedTabPage2.move(modelEnter, 300, 130);
+  fixedTabPage2.move(modelEnter, 300, 160);
   fixedTabPage2.add(enemyUnitLabel);
-  fixedTabPage2.move(enemyUnitLabel, 10, 173);
+  fixedTabPage2.move(enemyUnitLabel, 10, 203);
   fixedTabPage2.add(enterEnemyUnit);
-  fixedTabPage2.move(enterEnemyUnit, 130, 170);
+  fixedTabPage2.move(enterEnemyUnit, 130, 200);
   fixedTabPage2.add(enemyEnter);
-  fixedTabPage2.move(enemyEnter, 300, 170);
+  fixedTabPage2.move(enemyEnter, 300, 200);
   fixedTabPage2.add(clearAllModel);
-  fixedTabPage2.move(clearAllModel, 340, 130);
+  fixedTabPage2.move(clearAllModel, 340, 160);
   fixedTabPage2.add(clearAllEnemy);
-  fixedTabPage2.move(clearAllEnemy, 340, 170);
+  fixedTabPage2.move(clearAllEnemy, 340, 200);
   fixedTabPage2.add(openArmyPopup);
-  fixedTabPage2.move(openArmyPopup, 400, (130+170)/2);
+  fixedTabPage2.move(openArmyPopup, 400, (160+200)/2);
   fixedTabPage2.add(textbox1);
   fixedTabPage2.move(textbox1, 10, 10);
   fixedTabPage2.add(button1);
-  fixedTabPage2.move(button1, 150, 270);
+  fixedTabPage2.move(button1, 150, 300);
   fixedTabPage2.add(setIters);
   fixedTabPage2.move(setIters, 160, 40);
   fixedTabPage2.add(button3);
-  fixedTabPage2.move(button3, 10, 270);
+  fixedTabPage2.move(button3, 10, 300);
   fixedTabPage2.add(status);
-  fixedTabPage2.move(status, 10, 310);
+  fixedTabPage2.move(status, 10, 350);
 
     // show trained model tab
 

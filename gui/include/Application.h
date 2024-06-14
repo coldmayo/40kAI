@@ -86,6 +86,7 @@ private:
   RadioButton adcModel;
   RadioButton tyrModel;
   RadioButton milModel;
+  RadioButton tauModel;
   RadioButtonGroup factionEnemy;
   RadioButton orksEnemy;
   RadioButton spmEnemy;
@@ -93,6 +94,7 @@ private:
   RadioButton adcEnemy;
   RadioButton tyrEnemy;
   RadioButton milEnemy;
+  RadioButton tauEnemy;
   std::string enemyClass;
   std::string modelClass;
   std::string path;
