@@ -39,6 +39,9 @@ Current factions available are:
 - Adepta Sororitas
 - Orks
 - Tyranids
+- Adeptus Mechanicus
+- Astra Militarum
+- Tau
 
 ## Installation
 

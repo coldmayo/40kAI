@@ -23,6 +23,9 @@ void Units :: getAvailUnits() {
   std::vector<std::string> sob;
   std::vector<std::string> adc;
   std::vector<std::string> tyr;
+  std::vector<std::string> mec;
+  std::vector<std::string> mil;
+  std::vector<std::string> tau;
 
   lines = 0;
 
@@ -40,88 +43,38 @@ void Units :: getAvailUnits() {
             adc.push_back(name);
         } else if (army == "Tyranids") {
             tyr.push_back(name);
+        } else if (army == "Mechanicus") {
+            mec.push_back(name);
+        } else if (army == "Militarum") {
+            mil.push_back(name);
+        } else if (army == "Tau") {
+            tau.push_back(name);
         }
     }
 
-    std::string output = "Available Units:\nOrks:\n";
-    int skipLine = 0;
-    for (const auto& ork : orks) {
-        output += ork + ", ";
-        skipLine++;
-        if (skipLine == 4) {
-          output += "\n";
-          lines++;
-          skipLine = 0;
-        }
-    }
-
-    if (!orks.empty()) {
-        output = output.substr(0, output.size() - 2);
-    }
+    output = "Available Units:\nOrks:\n";
+    addFact(orks);
 
     output += "\nSpace Marines:\n";
-    skipLine = 0;
-    for (const auto& marine : spm) {
-        output += marine + ", ";
-        skipLine++;
-        if (skipLine == 4) {
-          output += "\n";
-          lines++;
-          skipLine = 0;
-        }
-    }
-
-    if (!spm.empty()) {
-        output = output.substr(0, output.size() - 2);
-    }
+    addFact(spm);
 
     output += "\nSisters of Battle:\n";
-    skipLine = 0;
-    for (const auto& sobs : sob) {
-        output += sobs + ", ";
-        skipLine++;
-        if (skipLine == 4) {
-          output += "\n";
-          lines++;
-          skipLine = 0;
-        }
-    }
-
-    if (!sob.empty()) {
-        output = output.substr(0, output.size() - 2);
-    }
+    addFact(sob);
 
     output += "\nAdeptus Custodes:\n";
-    skipLine = 0;
-    for (const auto& adcs : adc) {
-        output += adcs + ", ";
-        skipLine++;
-        if (skipLine == 4) {
-          output += "\n";
-          lines++;
-          skipLine = 0;
-        }
-    }
-
-    if (!adc.empty()) {
-        output = output.substr(0, output.size() - 2);
-    }
+    addFact(adc);
 
     output += "\nTyranids:\n";
-    skipLine = 0;
-    for (const auto& tyrs : tyr) {
-        output += tyrs + ", ";
-        skipLine++;
-        if (skipLine == 4) {
-          output += "\n";
-          lines++;
-          skipLine = 0;
-        }
-    }
+    addFact(tyr);
 
-    if (!tyr.empty()) {
-        output = output.substr(0, output.size() - 2);
-    }
+    output += "\nAdeptus Mechanicus:\n";
+    addFact(mec);
+
+    output += "\nAstra Militarum:\n";
+    addFact(mil);
+
+    output += "\nTau:\n";
+    addFact(tau);
 
     possible.set_text(output);
 
@@ -176,7 +129,7 @@ Units :: Units() {
     getAvailUnits();
 
     fixed.add(contents);
-    fixed.move(contents, 10, (lines+7)*20);
+    fixed.move(contents, 10, (lines+9)*20);
     fixed.add(possible);
     fixed.move(possible, 10, 10);
 

@@ -16,7 +16,7 @@ def weaponData(name):
     with open(os.path.abspath("gym_mod/gym_mod/engine/unitData.json")) as j:
         data = json.loads(j.read())
     for i in data["WeaponData"]:
-        if i["Name"].lower() == name.lower():
+        if i["Name"][0:len(name)].lower() == name.lower():
             return i
     print(name, "Weapon Not Found")
     return {}

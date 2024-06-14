@@ -50,7 +50,7 @@ def addingWeapons(m, e):
             if i["Name"] == j:
                 for k in i["Weapons"]:
                     for l in data["WeaponData"]:
-                        if l["Name"].lower() == k.lower():
+                        if l["Name"][0:len(k)].lower() == k.lower():
                             if l["Type"] == "Ranged":
                                 weaps[0] = l["Name"]
                             elif l["Type"] == "Melee":
@@ -63,6 +63,11 @@ def addingWeapons(m, e):
                 for k in i["Weapons"]:
                     for l in data["WeaponData"]:
                         if l["Name"].lower() == k.lower():
+                            if l["Type"] == "Ranged":
+                                weaps[0] = l["Name"]
+                            elif l["Type"] == "Melee":
+                                weaps[1] = l["Name"]
+                        elif l["Name"][0:len(k)].lower() == k.lower():
                             if l["Type"] == "Ranged":
                                 weaps[0] = l["Name"]
                             elif l["Type"] == "Melee":
