@@ -1,3 +1,6 @@
+#ifndef WARN_H
+#define WARN_H
+
 #include <iostream>
 #include <gtkmm.h>
 #include <cstdlib>
@@ -18,3 +21,5 @@ class Warn : public Gtk::Window {
         Button cancel;
         Button cont;
 };
+
+#endif

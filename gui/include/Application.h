@@ -12,6 +12,7 @@
 #include "popup.h"
 #include "units.h"
 #include "warn.h"
+#include "help.h"
 
 class Form : public Window {
 
@@ -19,6 +20,7 @@ public :
   Form();
   int openPopUp();
   void update_picture();
+  void update_metrics();
   void updateInits(std::string model, std::string enemy);
   void startTrainInBackground();
   void startTrain();
@@ -30,12 +32,14 @@ public :
   bool isValidUnit(int id, std::string name);
   int openArmyView();
   int openWarnMenu(std::string mess, int comm);
+  int openHelpMenu();
   std::string toLower(std::string data);
 
 private:
   Window* boardShow;
   Window* armyView;
   Window* warn;
+  Window* helpMenu;
   Image pictureBox1;
   Image metricBox;
   Image metricBox2;
@@ -121,6 +125,7 @@ private:
   std::vector<std::string> modelUnits;
   std::vector<std::string> enemyUnits;
   HeaderBar bar;
+  Button help;
 };
 
 #endif
