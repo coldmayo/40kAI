@@ -8,9 +8,11 @@
 #include <chrono>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include "include/Application.h"
 #include "include/popup.h"
 #include "include/units.h"
 #include "include/warn.h"
+#include "include/help.h"
 
 using namespace Glib;
 using namespace Gtk;
@@ -21,123 +23,6 @@ const char *rewpth = "img/reward.png";
 const char *losspth = "img/loss.png";
 const char *eplenpth = "img/epLen.png";
 const char *imgpth = "img/icon.png";
-
-class Form : public Window {
-
-public : 
-  Form();
-  int openPopUp();
-  void update_picture();
-  void updateInits(std::string model, std::string enemy);
-  void startTrainInBackground();
-  void startTrain();
-  void runPlayAgainstModelInBackground();
-  void playAgainstModel();
-  inline bool exists_test (const std::string& name);
-  void on_dropdown_changed();
-  void savetoTxt(std::vector<std::string> enemyUnits, std::vector<std::string> modelUnits);
-  bool isValidUnit(int id, std::string name);
-  int openArmyView();
-  int openWarnMenu(std::string mess, int comm);
-  std::string toLower(std::string data);
-  void update_metrics();
-
-private:
-  Window* boardShow;
-  Window* armyView;
-  Window* warn;
-  Image pictureBox1;
-  Image metricBox;
-  Image metricBox2;
-  Image metricBox3;
-  Fixed fixed;
-  ScrolledWindow scrolledWindow;
-  Notebook tabControl1;
-  Label labelPage1;
-  Label labelPage2;
-  Label labelPage3;
-  Label labelPage4;
-  Label labelPage5;
-  Label label1;
-  Frame tabPage1;
-  Frame tabPage2;
-  Frame tabPage3;
-  Frame tabPage4;
-  Frame tabPage5;
-  RadioButtonGroup radioButtonGroup;
-  RadioButton radioTop;
-  RadioButton radioLeft;
-  RadioButton radioRight;
-  RadioButton radioBottom;
-  Fixed fixedTabPage1;
-  Fixed fixedTabPage2;
-  Fixed fixedTabPage3;
-  Fixed fixedTabPage4;
-  Fixed fixedTabPage5;
-  Button button1;
-  Button button2;
-  Button button3;
-  Button button4;
-  Button button5;
-  Button button6;
-  Button showBoard;
-  Label textbox;
-  Label textbox2;
-  Label textbox1;
-  Label enemyFact;
-  Label modelFact;
-  Label status;
-  Entry setIters;
-  Entry setModelFile;
-  RadioButtonGroup factionModel;
-  RadioButton orksModel;
-  RadioButton spmModel;
-  RadioButton sobModel;
-  RadioButton adcModel;
-  RadioButton tyrModel;
-  RadioButton milModel;
-  RadioButton tauModel;
-  RadioButtonGroup factionEnemy;
-  RadioButton orksEnemy;
-  RadioButton spmEnemy;
-  RadioButton sobEnemy;
-  RadioButton adcEnemy;
-  RadioButton tyrEnemy;
-  RadioButton milEnemy;
-  RadioButton tauEnemy;
-  std::string enemyClass;
-  std::string modelClass;
-  std::string path;
-  std::string foldPath;
-  Label numOfGames;
-  Label dimens;
-  Label dimX;
-  Label dimY;
-  Entry enterDimensX;
-  Entry enterDimensY;
-  Button upX;
-  Button downX;
-  Button upY;
-  Button downY;
-  Button modelEnter;
-  Button enemyEnter;
-  Button openArmyPopup;
-  Entry enterModelUnit;
-  Entry enterEnemyUnit;
-  Button clearAllModel;
-  Button clearAllEnemy;
-  int x;
-  int y;
-  bool open;
-  bool training;
-  bool playing;
-  Label error;
-  Label modelUnitLabel;
-  Label enemyUnitLabel;
-  std::vector<std::string> modelUnits;
-  std::vector<std::string> enemyUnits;
-  HeaderBar bar;
-};
 
 Form :: Form() {
 
@@ -151,6 +36,12 @@ Form :: Form() {
   playing = false;
 
   bar.set_show_close_button(true);
+  help.set_image_from_icon_name("help-about");
+  help.signal_button_release_event().connect([&](GdkEventButton*){
+    openHelpMenu();
+    return true;
+  });
+  bar.pack_end(help);
   set_titlebar(bar);
 
   add(scrolledWindow);
@@ -583,6 +474,12 @@ int Form :: openArmyView() {
 int Form :: openWarnMenu(std::string mess, int comm) {
   warn = new Warn(mess, comm);
   warn->show();
+  return 0;
+}
+
+int Form :: openHelpMenu() {
+  helpMenu = new Help;
+  helpMenu->show();
   return 0;
 }
 

@@ -1,3 +1,6 @@
+#ifndef UNITS_H
+#define UNITS_H
+
 #include <iostream>
 #include <gtkmm.h>
 #include <cstdlib>
@@ -28,3 +31,5 @@ class Units : public Gtk::Window {
     int lines;
     std::string output;
 };
+
+#endif
