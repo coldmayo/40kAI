@@ -43,13 +43,21 @@ if sys.argv[1] == "None":
 else: 
     print("Playing with model saved here: ", sys.argv[1])
     with open(sys.argv[1], 'rb') as f:
-        env = pickle.load(f)
+        env, model, enemy = pickle.load(f)
     f = str(sys.argv[1])
     modelpth = f[:-len("pickle")]+"pth"
     checkpoint = torch.load(modelpth)
 
+deployType = ["Search and Destroy", "Hammer and Anvil"]
+deployChang = np.random.choice(deployType)
+for m in model:
+    m.deployUnit(deployChang, "model")
+for e in enemy:
+    e.deployUnit(deployChang, "player")
 
-state, info = env.reset()
+print("Deployment Type: ", deployChang)
+
+state, info = env.reset(m=model, e=enemy)
 n_actions = [4,2,len(info["player health"]), len(info["player health"]), 4, len(info["model health"])]
 n_observations = len(state)
 
@@ -67,7 +75,7 @@ target_net.eval()
 isdone = False
 i = 0
 
-env.reset(Type="big")
+env.reset(m=model, e=enemy, Type="big")
 
 reward = 0
 

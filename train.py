@@ -213,8 +213,10 @@ torch.save({
     'optimizer': optimizer.state_dict(),}
     , ("models/{}/model-{}.pth".format(name, date)))
 
+toSave = [env, model, enemy]
+
 with open("models/{}/model-{}.pickle".format(name, date), "wb") as file:
-    pickle.dump(env, file)
+    pickle.dump(toSave, file)
 
 if os.path.isfile("gui/data.json"):
     initFile.delFile()
