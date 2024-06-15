@@ -1,0 +1,5 @@
+40kAI aims to create a way for warhammer players to play the tabletop game by themselves. It is a great way to practice strategy and it can be a learning tool for new players. The application allows for complete control over the factions units and weapons, number of training iterations, dimension of the board, etc. The hyperparameters for the model are stored in a json file named "hyperparameters.json" in case the user would also like to adjust that as well.
+
+The model used is called a Deep Q Network (DQN) and it is built using the PyTorch package. The envirement was made using Gymnasium. Currently, the model is capable of choosing which strategem to use, when to charge and shoot, where to move, and when to fall back.
+
+The envirement and the model files are saved to .pickle and .pth files in the /40kAI/model/ directory, respectfully. Metrics showing the average reward per game in training, loss curve, and the episode length per game in training can be found in the /40kAI/metrics/ directory.

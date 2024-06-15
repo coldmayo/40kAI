@@ -39,11 +39,11 @@ b_hei = 40
 
 print("\nTraining...\n")
 
-enemy1 = Unit(unitData("Space_Marine", "Eliminator Squad"), weaponData("Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
-model1 = Unit(unitData("Space_Marine", "Eliminator Squad"), weaponData("Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
+enemy1 = Unit(unitData("Space_Marine", "Eliminator Squad"), weaponData("Bolt Pistol"), weaponData("Close combat weapon"), b_len, b_hei)
+model1 = Unit(unitData("Space_Marine", "Eliminator Squad"), weaponData("Bolt Pistol"), weaponData("Close combat weapon"), b_len, b_hei)
 
-enemy2 = Unit(unitData("Space_Marine", "Apothecary"), weaponData("Absolver Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
-model2 = Unit(unitData("Space_Marine", "Apothecary"), weaponData("Absolver Bolt Pistol"), weaponData("Close combat weapon"), np.random.randint(0,b_len), np.random.randint(0,b_hei))
+enemy2 = Unit(unitData("Space_Marine", "Apothecary"), weaponData("Absolver Bolt Pistol"), weaponData("Close combat weapon"), b_len, b_hei)
+model2 = Unit(unitData("Space_Marine", "Apothecary"), weaponData("Absolver Bolt Pistol"), weaponData("Close combat weapon"), b_len, b_hei)
 
 enemy = [enemy1, enemy2]
 model = [model1, model2]
@@ -62,20 +62,28 @@ if os.path.isfile("gui/data.json"):
     if len(initFile.getEnemyUnits()) > 0:
         enemy = []
         for i in range(len(initFile.getEnemyUnits())):
-            enemy.append(Unit(unitData(initFile.getEnemyFaction(), initFile.getEnemyUnits()[i]), weaponData(initFile.getEnemyW()[i][0]), weaponData(initFile.getEnemyW()[i][1]), np.random.randint(0,b_len - b_len/2), np.random.randint(0,b_hei)))
+            enemy.append(Unit(unitData(initFile.getEnemyFaction(), initFile.getEnemyUnits()[i]), weaponData(initFile.getEnemyW()[i][0]), weaponData(initFile.getEnemyW()[i][1]), b_len, b_hei))
             print("Name:", initFile.getEnemyUnits()[i], "Weapons: ", initFile.getEnemyW()[i][0], initFile.getEnemyW()[i][1])
     print("Enemy Units:\n")
     if len(initFile.getModelUnits()) > 0:
         model = []
         for i in range(len(initFile.getModelUnits())):
-            model.append(Unit(unitData(initFile.getModelFaction(), initFile.getModelUnits()[i]), weaponData(initFile.getModelW()[i][0]), weaponData(initFile.getModelW()[i][1]), np.random.randint(0,b_len/2), np.random.randint(0,b_hei)))
+            model.append(Unit(unitData(initFile.getModelFaction(), initFile.getModelUnits()[i]), weaponData(initFile.getModelW()[i][0]), weaponData(initFile.getModelW()[i][1]), b_len, b_hei))
             print("Name:", initFile.getModelUnits()[i], "Weapons: ", initFile.getModelW()[i][0], initFile.getModelW()[i][1])
+
 numLifeT = 0
+
+deployType = ["Search and Destroy", "Hammer and Anvil"]
+deployChang = np.random.choice(deployType)
+for m in model:
+    m.deployUnit(deployChang, "model")
+for e in enemy:
+    e.deployUnit(deployChang, "player")
 
 env = gym.make("40kAI-v0", disable_env_checker=True, enemy = enemy, model = model, b_len = b_len, b_hei = b_hei)
 
 n_actions = [4,2,len(enemy), len(enemy), 4, len(model)]
-state, info = env.reset()
+state, info = env.reset(m=model, e=enemy)
 n_observations = len(state)
 
 policy_net = DQN(n_observations, n_actions).to(device)
@@ -99,7 +107,7 @@ i = 0
 
 pbar = tqdm(total=totLifeT)
 
-state, info = env.reset(Type="big")
+state, info = env.reset(m = model, e = enemy, Type="big")
 
 metrics = metrics()
 
@@ -162,7 +170,14 @@ while end == False:
         if trunc == False:
             print("Restarting...")
         numLifeT+=1
-        state, info = env.reset(Type="small")
+
+        deployChang = np.random.choice(deployType)
+        for m in model:
+            m.deployUnit(deployChang, "model")
+        for e in enemy:
+            e.deployUnit(deployChang, "player")
+
+        state, info = env.reset(m=model, e=enemy, Type="small")
 
     if numLifeT == totLifeT:
         end = True

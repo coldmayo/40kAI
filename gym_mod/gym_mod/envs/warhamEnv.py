@@ -67,13 +67,14 @@ class Warhammer40kEnv(gym.Env):
 
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(obsSpace,), dtype=np.float32)  # 7-dimensional observation space
 
+
     def get_info(self):
         return {"model health":self.unit_health, "player health": self.enemy_health, "modelCP": self.modelCP, "playerCP": self.enemyCP, "in attack": self.unitInAttack}
 
     # small reset = used in training
     # big reset reset env completely for testing/validation
 
-    def reset(self, Type = "small"):
+    def reset(self, m, e, Type = "small"):
         self.iter = 0
         self.trunc = False
         if Type == "small":
@@ -94,12 +95,12 @@ class Warhammer40kEnv(gym.Env):
         self.modelCP = 0
         self.enemyCP = 0
         for i in range(len(self.enemy_data)):
-            self.enemy_coords.append([np.random.randint(0,self.b_len), np.random.randint(0,self.b_hei)])
+            self.enemy_coords.append([e[i].showCoords()[0], e[i].showCoords()[1]])
             self.enemy_health.append(self.enemy_data[i]["W"]*self.enemy_data[i]["#OfModels"])
             self.enemyInAttack.append([0,0])   # in attack, index of enemy attacking
 
         for i in range(len(self.unit_data)):
-            self.unit_coords.append([np.random.randint(0,self.b_len), np.random.randint(0,self.b_hei)])
+            self.unit_coords.append([m[i].showCoords()[0], m[i].showCoords()[1]])
             self.unit_health.append(self.unit_data[i]["W"]*self.unit_data[i]["#OfModels"])
             self.unitInAttack.append([0,0])   # in attack, index of enemy attacking
         
