@@ -13,6 +13,23 @@ using namespace Glib;
 using namespace Gtk;
 using json = nlohmann::json;
 
+void Units :: addFact(std::vector<std::string> facts) {
+  int skipLine = 0;
+  for (const auto& fact : facts) {
+    output += fact + ", ";
+    skipLine++;
+    if (skipLine == 4) {
+      output += "\n";
+      lines++;
+      skipLine = 0;
+    }
+  }
+
+  if (!facts.empty()) {
+    output = output.substr(0, output.size() - 2);
+  }
+}
+
 void Units :: getAvailUnits() {
   std::ifstream infile("../gym_mod/gym_mod/engine/unitData.json");
   json j;
