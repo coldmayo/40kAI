@@ -50,12 +50,11 @@ else:
 
 deployType = ["Search and Destroy", "Hammer and Anvil"]
 deployChang = np.random.choice(deployType)
+print("Deployment Type: ", deployChang)
 for m in model:
     m.deployUnit(deployChang, "model")
 for e in enemy:
-    e.deployUnit(deployChang, "player")
-
-print("Deployment Type: ", deployChang)
+    e.deployUnit(deployChang, "player", choose = True)
 
 state, info = env.reset(m=model, e=enemy)
 n_actions = [4,2,len(info["player health"]), len(info["player health"]), 4, len(info["model health"])]

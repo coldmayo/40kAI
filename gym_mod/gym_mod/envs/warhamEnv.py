@@ -107,6 +107,10 @@ class Warhammer40kEnv(gym.Env):
         self.game_over = False
         self.current_action_index = 0
         info = self.get_info()
+
+        if Type == "big":
+            self.updateBoard()
+
         return self._get_observation(), info
 
     def enemyTurn(self, trunc=False):
