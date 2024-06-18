@@ -126,7 +126,7 @@ class Warhammer40kEnv(gym.Env):
 
             enemyName = i+21
             battleSh = False
-            if isBelowHalfStr(self.enemy_data[i],self.enemy_health[i]) == True:
+            if isBelowHalfStr(self.enemy_data[i],self.enemy_health[i]) == True and self.unit_health[i] > 0:
                 if trunc == False:
                     print("This unit is Battle-shocked, starting test...")
                     print("Rolling 2D6...")
@@ -278,7 +278,7 @@ class Warhammer40kEnv(gym.Env):
         for i in range(len(self.unit_health)):
             modelName = i+21
             battleSh = False
-            if isBelowHalfStr(self.unit_data[i],self.unit_health[i]) == True:
+            if isBelowHalfStr(self.unit_data[i],self.unit_health[i]) == True and self.unit_health[i] > 0:
                 if self.trunc == False:
                     print("This unit is Battle-shocked, starting test...")
                     print("Rolling 2D6...")
@@ -475,7 +475,7 @@ class Warhammer40kEnv(gym.Env):
             playerName = i+11
             print("For unit", playerName)
             battleSh = False
-            if isBelowHalfStr(self.enemy_data[i],self.enemy_health[i]) == True:
+            if isBelowHalfStr(self.enemy_data[i],self.enemy_health[i]) == True and self.unit_health[i] > 0:
                 print("This unit is Battle-shocked, starting test...")
                 print("Rolling 2D6...")
                 diceRoll = dice(num=2)
