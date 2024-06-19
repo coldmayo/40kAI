@@ -46,6 +46,8 @@ class Warhammer40kEnv(gym.Env):
         self.enemyOverwatch = -1
         self.modelStrat = {"overwatch": -1, "smokescreen": -1}
         self.enemyStrat = {"overwatch": -1, "smokescreen": -1}
+        self.modelVP = 0
+        self.enemyVP = 0
 
         for i in range(len(enemy)):
             self.enemy_weapon.append(enemy[i].showWeapon())
@@ -94,6 +96,8 @@ class Warhammer40kEnv(gym.Env):
         self.unitInAttack = []
         self.modelCP = 0
         self.enemyCP = 0
+        self.modelVP = 0
+        self.enemyVP = 0
         for i in range(len(self.enemy_data)):
             self.enemy_coords.append([e[i].showCoords()[0], e[i].showCoords()[1]])
             self.enemy_health.append(self.enemy_data[i]["W"]*self.enemy_data[i]["#OfModels"])

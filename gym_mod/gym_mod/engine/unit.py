@@ -76,6 +76,20 @@ class Unit:
                 if unitType == "player":
                     print("The bounds for x axis: {} to {}\nThe bounds for y axis: {} to {}".format(0, self.b_hei, self.b_len*3/4, self.b_len))
                     self.selectUnitPos(0, self.b_hei, self.b_len*3/4, self.b_len)
+
+        elif deployment == "Dawn of War":
+            if choose == False:
+                if unitType == "model":
+                    self.unit_coords[0] = np.random.randint(0, self.b_hei/4)
+                    self.unit_coords[1] = np.random.randint(0, self.b_len)
+                elif unitType == "player":
+                    self.unit_coords[0] = np.random.randint(self.b_hei*3/4, self.b_hei)
+                    self.unit_coords[1] = np.random.randint(0, self.b_len)
+            elif choose == True:
+                if unitType == "player":
+                    print("The bounds for x axis: {} to {}\nThe bounds for y axis: {} to {}".format(0, self.b_hei, self.b_len*3/4, self.b_len))
+                    self.selectUnitPos(self.b_hei*3/4, self.b_hei, 0, self.b_len)
+
     def showUnitData(self):
         return self.unit_data
     def showWeapon(self):
