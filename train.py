@@ -22,12 +22,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 import warnings
 warnings.filterwarnings("ignore") 
 
-def flatten_extend(matrix):
-    flat_list = []
-    for row in matrix:
-        flat_list.extend(row)
-    return flat_list
-
 with open(os.path.abspath("hyperparams.json")) as j:
     data = json.loads(j.read())
 
@@ -73,7 +67,7 @@ if os.path.isfile("gui/data.json"):
 
 numLifeT = 0
 
-deployType = ["Search and Destroy", "Hammer and Anvil"]
+deployType = ["Search and Destroy", "Hammer and Anvil", "Dawn of War"]
 deployChang = np.random.choice(deployType)
 for m in model:
     m.deployUnit(deployChang, "model")

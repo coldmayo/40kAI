@@ -46,6 +46,8 @@ class Warhammer40kEnv(gym.Env):
         self.enemyOverwatch = -1
         self.modelStrat = {"overwatch": -1, "smokescreen": -1}
         self.enemyStrat = {"overwatch": -1, "smokescreen": -1}
+        self.modelVP = 0
+        self.enemyVP = 0
 
         for i in range(len(enemy)):
             self.enemy_weapon.append(enemy[i].showWeapon())
@@ -94,6 +96,8 @@ class Warhammer40kEnv(gym.Env):
         self.unitInAttack = []
         self.modelCP = 0
         self.enemyCP = 0
+        self.modelVP = 0
+        self.enemyVP = 0
         for i in range(len(self.enemy_data)):
             self.enemy_coords.append([e[i].showCoords()[0], e[i].showCoords()[1]])
             self.enemy_health.append(self.enemy_data[i]["W"]*self.enemy_data[i]["#OfModels"])
@@ -499,6 +503,9 @@ class Warhammer40kEnv(gym.Env):
                                 self.game_over = True
                                 info = self.get_info()
                                 return self.game_over, info
+                            elif strat.lower() == "?" or strat.lower() == "help":
+                                print("The Insane Bravery Stratagem costs 1 Command Point and is used when a unit fails a Battle-Shock Test. If used it treats the unit as if it passed.")
+                                strat = input("Would you like to use the Insane Bravery Stratagem? (y/n): ")
                             else: 
                                 strat = input("Valid answers are: y, yes, n, and no: ")
 
@@ -550,7 +557,7 @@ class Warhammer40kEnv(gym.Env):
                 
                 if self.enemyCP - 1 >= 0:
                     response = False
-                    strat = input("Would you like to use the Fire Overwatch Strategem? (y/n)")
+                    strat = input("Would you like to use the Fire Overwatch Stratagem? (y/n)")
                     while response == False:
                         if strat.lower() == "y" or strat.lower() == "yes":
                             response = True
@@ -558,6 +565,9 @@ class Warhammer40kEnv(gym.Env):
                             self.enemyCP -= 1
                         elif strat.lower() == "n" or strat.lower() == "no":
                             response = True
+                        elif strat.lower() == "?" or strat.lower() == "help":
+                                print("The Fire Overwatch Stratagem costs 1 Command Point and if your unit and the opposing unit are 21 inches from each other during their Movement/Charge Phase then your unit can shoot that enemy unit as if it were your Shooting phase")
+                                strat = input("Would you like to use the Fire Overwatch Stratagem? (y/n): ")
                         elif strat.lower() == "quit":
                             self.game_over = True
                             info = self.get_info()
@@ -656,13 +666,16 @@ class Warhammer40kEnv(gym.Env):
                     print("No available units to attack")  
 
                 response = False
-                strat = input("Would you like to use the Smokescreen Strategem for this unit? (y/n): ")
+                strat = input("Would you like to use the Smokescreen Stratagem for this unit? (y/n): ")
                 while response == False:
                     if strat.lower() == "y" or strat.lower() == "yes":
                         self.enemyStrat["smokescreen"] = i 
                         response = True
                     elif strat.lower() == "n" or strat.lower() == "no":
                         response = True
+                    elif strat.lower() == "?" or strat.lower() == "help":
+                                print("The Smokescreen Stratagem costs 1 Command Point and when used all models in the unit have the Benefit of Cover and the Stealth ability")
+                                strat = input("Would you like to use the Smokescreen Stratagem? (y/n): ")
                     else:
                         strat = input("It's a yes or no question dude")
             
