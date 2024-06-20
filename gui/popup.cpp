@@ -52,10 +52,17 @@ std::string PopUp :: openFile(std::string board) {
       }
       if (last == '0' && ch != ',') {
         fullFile += '\n';
-      } else if (ch == '0' && isNum(last) == true) {
+      } else if (ch == '0' && isNum(last)) {
         fullFile += '\n';
+      } else if (isNum(ch) && ch != '0' && ch != '3') {
+        fullFile += ch;
+      } else if (isNum(ch) && ch == '3') {
+        fullFile += '0';
+        fullFile += '\x20';
+      } else {
+        fullFile += '_';
+        fullFile += '\x20';
       }
-      fullFile += ch;
       last = ch;
     }
   }
@@ -97,6 +104,6 @@ PopUp :: PopUp() {
   fixed.add(contents);
   fixed.move(contents, 0, 0);
 
-  resize(600,500);
+  resize(800,500);
   show_all();
 }

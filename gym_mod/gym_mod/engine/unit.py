@@ -31,7 +31,7 @@ class Unit:
                         x += coords[i]
                     elif switch == 1:
                         y += coords[i]
-                if int(x) >= self.b_hei/2 and int(x) <= self.b_hei and int(y) >= self.b_len/2 and int(y) <= self.b_len:
+                if int(x) >= xmin and int(x) <= xmax and int(y) >= ymin and int(y) <= ymax:
                     run = False
                     self.unit_coords[0] = int(x)
                     self.unit_coords[1] = int(y)

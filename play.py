@@ -57,7 +57,7 @@ for e in enemy:
     e.deployUnit(deployChang, "player", choose = True)
 
 state, info = env.reset(m=model, e=enemy)
-n_actions = [4,2,len(info["player health"]), len(info["player health"]), 4, len(info["model health"])]
+n_actions = [5,2,len(info["player health"]), len(info["player health"]), 4, len(info["model health"])]
 n_observations = len(state)
 
 policy_net = DQN(n_observations, n_actions).to(device)
