@@ -35,7 +35,17 @@ Just like the tabletop game, it is played in turns, with each turn divided into 
 
 Before the game is played, a deployment card is drawn at random. These cards determine where the players can place their units on the board.<br>
 
-The only mission available is Only War and the only Victory Condition is slaying all of your foes. More missions and win conditions are coming in the future.<br>
+The only mission available is Only War and the Victory Conditions are described below:
+- Major Victory:
+   - All foes are eliminated
+- Slay and Secure:
+   - At the end of the game each Objective Marker are worth 2 Victory Points to the player that controls it. Players also earn D3 Victory Points if the opposing Warlord is defeated
+- Ancient Relic:
+   - At the start of the first battle round, but before the first turn begins, select an objective marker. At the end of the battle, whoever controls that objective marker receives 6 Victory Points
+- Domination:
+   - At the end of each turn each objective marker is worth 1 Victory Point to the player who controls it. Keep a running score from turn to turn
+
+These victory conditions are decided by a roll of a D3 and there will be 5 total turns in a game. (or less if one army is completely slain before then)
 
 Current factions available are:
 - Space Marines
