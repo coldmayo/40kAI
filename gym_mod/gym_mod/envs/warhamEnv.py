@@ -13,7 +13,7 @@ class Warhammer40kEnv(gym.Env):
             os.remove(os.path.join(savePath, fil))
 
         self.action_space = spaces.Dict({
-            'move': spaces.Discrete(4),  # Four directions: Up, Down, Left, Right
+            'move': spaces.Discrete(5),  # Four directions: Up, Down, Left, Right
             'attack': spaces.Discrete(2),  # Two attack options: Engage Attack, Leave Attack/move
             'shoot': spaces.Discrete(len(enemy)),   # choose which model to attack in the shooting phase
             'charge': spaces.Discrete(len(enemy)),   # choose which model to attack in the charge phase
@@ -48,6 +48,11 @@ class Warhammer40kEnv(gym.Env):
         self.enemyStrat = {"overwatch": -1, "smokescreen": -1}
         self.modelVP = 0
         self.enemyVP = 0
+        self.numTurns = 0
+        self.coordsOfOM = np.array([[self.b_len/2 + 8, self.b_hei/2 + 12],[self.b_len/2 - 8, self.b_hei/2 + 12],[self.b_len/2 + 8, self.b_hei/2 - 12],[self.b_len/2 - 8, self.b_hei/2 - 12]])
+        self.modelOnOM = np.array([-1,-1,-1,-1])
+        self.enemyOnOM = np.array([-1,-1,-1,-1])
+        self.relic = 3
 
         for i in range(len(enemy)):
             self.enemy_weapon.append(enemy[i].showWeapon())
@@ -65,13 +70,13 @@ class Warhammer40kEnv(gym.Env):
             self.unit_health.append(model[i].showUnitData()["W"]*model[i].showUnitData()["#OfModels"])
             self.unitInAttack.append([0,0])   # in attack, index of enemy attacking
 
-        obsSpace = (len(model)*3)+(len(enemy)*3)+1
+        obsSpace = (len(model)*3)+(len(enemy)*3)+1+len(self.coordsOfOM*2)
 
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(obsSpace,), dtype=np.float32)  # 7-dimensional observation space
 
 
     def get_info(self):
-        return {"model health":self.unit_health, "player health": self.enemy_health, "modelCP": self.modelCP, "playerCP": self.enemyCP, "in attack": self.unitInAttack}
+        return {"model health":self.unit_health, "player health": self.enemy_health, "modelCP": self.modelCP, "playerCP": self.enemyCP, "in attack": self.unitInAttack, "model VP": self.modelVP, "player VP": self.enemyVP}
 
     # small reset = used in training
     # big reset reset env completely for testing/validation
@@ -98,6 +103,7 @@ class Warhammer40kEnv(gym.Env):
         self.enemyCP = 0
         self.modelVP = 0
         self.enemyVP = 0
+        self.numTurns = 0
         for i in range(len(self.enemy_data)):
             self.enemy_coords.append([e[i].showCoords()[0], e[i].showCoords()[1]])
             self.enemy_health.append(self.enemy_data[i]["W"]*self.enemy_data[i]["#OfModels"])
@@ -122,6 +128,7 @@ class Warhammer40kEnv(gym.Env):
             self.trunc = True
         self.enemyCP += 1
         self.modelCP += 1
+        self.numTurns += 1
         cp_on = np.random.randint(0,len(self.enemy_health))
         use_cp = np.random.randint(0, 4)
         for i in range(len(self.enemy_health)):
@@ -240,6 +247,11 @@ class Warhammer40kEnv(gym.Env):
                     self.enemyCP -= 1
                     self.enemyStrat["smokescreen"] = i
 
+                for j in range(len(self.coordsOfOM)):
+                    if distance(self.coordsOfOM[j], self.enemy_coords[i]) <= 5:
+                        self.enemyOnOM[j] = i
+
+
             elif self.enemyInAttack[i][0] == 1 and self.enemy_health[i] > 0:
                 decide = np.random.randint(0,10)
                 idOfM = self.enemyInAttack[i][1]
@@ -274,11 +286,19 @@ class Warhammer40kEnv(gym.Env):
             self.modelStrat["overwatch"] = -1
         if self.modelStrat["smokescreen"] != -1:
             self.modelStrat["smokescreen"] = -1
+        
+        for i in range(len(self.enemyOnOM)):
+            if self.enemyOnOM[i] != -1 and self.modelOnOM[i] != -1:
+                if self.enemy_data[self.enemyOnOM[i]]["OC"] > self.unit_data[self.modelOnOM[i]]["OC"]:
+                    self.enemyVP += 1
+            elif self.enemyOnOM[i] != -1:
+                self.enemyVP += 1
     
     def step(self, action):
         reward = 0
         self.enemyCP += 1
         self.modelCP += 1
+        res = 0
         for i in range(len(self.unit_health)):
             modelName = i+21
             battleSh = False
@@ -316,6 +336,12 @@ class Warhammer40kEnv(gym.Env):
                     self.unit_coords[i][1] -= movement
                 elif action["move"] == 3:   # right
                     self.unit_coords[i][1] += movement
+                elif action["move"] == 4:   # no move
+                    for j in range(len(self.coordsOfOM)):
+                        if distance(self.unit_coords[i], self.coordsOfOM[i]) >= 5:
+                            reward += 0.5
+                        else:
+                            reward -= 0.5
 
             # staying in bounds
 
@@ -404,8 +430,12 @@ class Warhammer40kEnv(gym.Env):
                         self.modelStrat["smokescreen"] = i
                         reward += 0.5
                     else:
-                        reward -= 1
+                        reward -= 0.5
 
+                for j in range(len(self.coordsOfOM)):
+                    if distance(self.coordsOfOM[j], self.unit_coords[i]) <= 5:
+                        reward += 0.5
+                        self.modelOnOM[j] = i
             
             elif self.unitInAttack[i][0] == 1 and self.unit_health[i] > 0:
                 reward = 0
@@ -451,6 +481,13 @@ class Warhammer40kEnv(gym.Env):
         if self.enemyStrat["smokescreen"] != -1:
             self.enemyStrat["smokescreen"] = -1
 
+        for i in range(len(self.modelOnOM)):
+            if self.enemyOnOM[i] != -1 and self.modelOnOM[i] != -1:
+                if self.enemy_data[self.enemyOnOM[i]]["OC"] < self.unit_data[self.modelOnOM[i]]["OC"]:
+                    self.modelVP += 1
+            elif self.modelOnOM[i] != -1:
+                self.modelVP += 1
+
         for i in self.unit_health:
             if i < 0:
                 i = 0
@@ -459,16 +496,59 @@ class Warhammer40kEnv(gym.Env):
             if i < 0:
                 i = 0
 
-        if sum(self.unit_health) <= 0 or sum(self.enemy_health) <= 0:
-            self.game_over = True
+        # Determine winning team
 
-        if self.game_over:
-            reward += self._calculate_reward()
+        # Major victory
+
+        if sum(self.unit_health) <= 0:
+            self.game_over = True
+            reward += 2
+            res = 4
+        elif sum(self.enemy_health) <= 0:
+            self.game_over = True
+            reward -= 2
+            res = 4
+        # Other victory conditions: Slay and Secure, Ancient Relic, Domination
+        if self.numTurns == 5 and self.game_over != True:
+            self.game_over = True
+            res = dice(max = 3)   # Roll dice to see which victory condition is used
+            if res == 1:
+                self.modelVP = 0
+                self.enemyVP = 0
+                for i in range(len(self.enemyOnOM)):
+                    if self.enemyOnOM[i] != -1 and self.modelOnOM[i] != -1:
+                        if self.enemy_data[self.enemyOnOM[i]]["OC"] > self.unit_data[self.modelOnOM[i]]["OC"]:
+                            self.enemyVP += 1
+                        elif self.enemy_data[self.enemyOnOM[i]]["OC"] < self.unit_data[self.modelOnOM[i]]["OC"]:
+                            self.modelVP += 1
+                    elif self.enemyOnOM[i] != -1:
+                        self.enemyVP += 1
+                    elif self.modelOnOM[i] != -1:
+                        self.modelVP += 1
+                if self.modelVP > self.enemyVP:
+                    reward += 2
+                else: 
+                    reward -= 2
+            elif res == 2:
+                if self.enemyOnOM[self.relic] != -1 and self.modelOnOM[self.relic] != -1:
+                    if self.enemy_data[self.enemyOnOM[self.relic]]["OC"] > self.unit_data[self.modelOnOM[self.relic]]["OC"]:
+                        self.enemyVP += 6
+                    elif self.enemy_data[self.enemyOnOM[self.relic]]["OC"] < self.unit_data[self.modelOnOM[self.relic]]["OC"]:
+                        self.modelVP += 6
+                if self.modelVP > self.enemyVP:
+                    reward += 2
+                else: 
+                    reward -= 2
+            elif res == 3:
+                if self.modelVP > self.enemyVP:
+                    reward += 2
+                else: 
+                    reward -= 2
 
         self.iter += 1
 
         info = self.get_info()
-        return self._get_observation(), reward, self.game_over, 0, info
+        return self._get_observation(), reward, self.game_over, res, info
 
     # for a real person playing
     def player(self):
@@ -515,7 +595,7 @@ class Warhammer40kEnv(gym.Env):
                 self.showBoard()
                 print("Take a look at board.txt or click the Show Board button to view the current board")
                 print("If you would like to end the game type 'quit' into the prompt")
-                dire = input("Enter the direction of movement (up, down, left, right): ")
+                dire = input("Enter the direction of movement (up, down, left, right, none (no move)): ")
                 
                 if dire == "quit":
                     self.game_over = True
@@ -539,6 +619,8 @@ class Warhammer40kEnv(gym.Env):
                         response = True
                     elif dire.lower() == "right":
                         self.enemy_coords[i][1] += movement
+                        response = True
+                    elif dire.lower() == "none":
                         response = True
                     elif dire.lower() == "quit":
                         self.game_over = True
@@ -679,6 +761,10 @@ class Warhammer40kEnv(gym.Env):
                     else:
                         strat = input("It's a yes or no question dude")
             
+                for j in range(len(self.coordsOfOM)):
+                    if distance(self.coordsOfOM[j], self.enemy_coords[i]) <= 5:
+                        self.enemyOnOM[j] = i
+
             elif self.enemyInAttack[i][0] == 1 and self.enemy_health[i] > 0:
                 idOfE = self.enemyInAttack[i][1]
                 response = False
@@ -726,6 +812,13 @@ class Warhammer40kEnv(gym.Env):
         if self.modelStrat["smokescreen"] != -1:
             self.modelStrat["smokescreen"] = -1
 
+        for i in range(len(self.enemyOnOM)):
+            if self.enemyOnOM[i] != -1 and self.modelOnOM[i] != -1:
+                if self.enemy_data[self.enemyOnOM[i]]["OC"] > self.unit_data[self.modelOnOM[i]]["OC"]:
+                    self.enemyVP += 1
+            elif self.enemyOnOM[i] != -1:
+                self.enemyVP += 1
+
         for i in self.enemy_health:
             if i < 0:
                 i = 0
@@ -750,6 +843,9 @@ class Warhammer40kEnv(gym.Env):
             self.enemy_coords[i] = bounds(self.enemy_coords[i], self.b_len, self.b_hei)
             self.board[self.enemy_coords[i][0]][self.enemy_coords[i][1]] = 10+i+1
 
+        for i in range(len(self.coordsOfOM)):
+            self.board[int(self.coordsOfOM[i][0])][int(self.coordsOfOM[i][1])] = 3
+
     def returnBoard(self):
         return self.board
 
@@ -760,10 +856,10 @@ class Warhammer40kEnv(gym.Env):
         ax = fig.add_subplot()
         fig.subplots_adjust(top=0.85)
 
-        title = "Iteration "+str(self.iter)+" Lifetime "+str(self.restarts)
+        title = "Turn "+str(self.iter)+" Lifetime "+str(self.restarts)
         fig.suptitle(title)
 
-        health = "Model Unit health: {}, CP: {}; Enemy Unit health: {}, CP {}".format(self.unit_health, self.modelCP, self.enemy_health, self.enemyCP)
+        health = "Model Unit health: {}, CP: {}; Enemy Unit health: {}, CP {}\nVP {}".format(self.unit_health, self.modelCP, self.enemy_health, self.enemyCP, [self.modelVP, self.enemyVP])
         ax.set_title(health)
         
         x1 = np.linspace(0,self.b_len,10)
@@ -787,6 +883,10 @@ class Warhammer40kEnv(gym.Env):
                 ax.plot(self.enemy_coords[i][0],self.enemy_coords[i][1], 'ro', label="Enemy Unit")
             else:
                 ax.plot(self.enemy_coords[i][0],self.enemy_coords[i][1], 'ro')
+        
+        for i in range(len(self.coordsOfOM)):
+            ax.plot(self.coordsOfOM[i][0], self.coordsOfOM[i][1], 'o', color="black")
+
         ax.legend(loc = "right")
         fileName = "display/"+str(self.restarts)+"_"+str(self.iter)+".png"
         fig.savefig(fileName)
@@ -819,12 +919,10 @@ class Warhammer40kEnv(gym.Env):
         
         obs.append(self.enemyCP)
 
+        for OM in self.coordsOfOM:
+            obs.append(OM[0])
+            obs.append(OM[1])
+
         obs.append(int(self.game_over))
 
         return np.array(obs, dtype=np.float32)
-
-    def _calculate_reward(self):
-        if sum(self.unit_health) > 0:
-            return 1.0
-        else:
-            return -1.0
