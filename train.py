@@ -119,7 +119,7 @@ while end == False:
         print(env.get_info())
 
     env.enemyTurn(trunc=trunc)
-    next_observation, reward, done, _, info = env.step(action_dict)
+    next_observation, reward, done, res, info = env.step(action_dict)
     rewArr.append(reward)
     reward = torch.tensor([reward], device=device)
 
@@ -132,7 +132,7 @@ while end == False:
             print("The units are fighting")
 
     board = env.render()
-    message = "Iteration {} ended with reward {}, enemy health {}, model health {}".format(i, reward, enemy_health, unit_health)
+    message = "Iteration {} ended with reward {}, enemy health {}, model health {}, model VP {}, enemy VP {}".format(i, reward, enemy_health, unit_health, info["model VP"], info["player VP"])
     if trunc == False:
         print(message)
     inText.append(message)
@@ -153,6 +153,16 @@ while end == False:
         metrics.updateEpLen(epLen)
         epLen = 0
         rewArr = []
+
+        if res == 1:
+            inText.append("Slay and Secure Victory Condition")
+        elif res == 2:
+            inText.append("Ancient Relic Victory Condition")
+        elif res == 3:
+            inText.append("Domination Victory Condition")
+        elif res == 4:
+            inText.append("Major Victory")
+
         if reward > 0:
             inText.append("model won!")
             if trunc == False:
