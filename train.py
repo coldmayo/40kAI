@@ -195,7 +195,7 @@ with open('trainRes.txt', 'w') as f:
         f.write(inText[i])
         f.write('\n')
 
-if totLifeT > 20:
+if totLifeT > 30:
     genDisplay.makeGif(numOfLife=totLifeT, trunc = True)
 else:
     genDisplay.makeGif(numOfLife=totLifeT)
