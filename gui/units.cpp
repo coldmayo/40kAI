@@ -43,6 +43,8 @@ void Units :: getAvailUnits() {
   std::vector<std::string> mec;
   std::vector<std::string> mil;
   std::vector<std::string> tau;
+  std::vector<std::string> vot;
+  std::vector<std::string> gen;
 
   lines = 0;
 
@@ -66,6 +68,10 @@ void Units :: getAvailUnits() {
             mil.push_back(name);
         } else if (army == "Tau") {
             tau.push_back(name);
+        } else if (army == "Votann") {
+            vot.push_back(name);
+        } else if (army == "Genestealer_Cults") {
+            gen.push_back(name);
         }
     }
 
@@ -92,6 +98,12 @@ void Units :: getAvailUnits() {
 
     output += "\nTau:\n";
     addFact(tau);
+
+    output += "\nVotann:\n";
+    addFact(vot);
+
+    output += "\nGenestealer Cults:\n";
+    addFact(gen);
 
     possible.set_text(output);
 
@@ -146,7 +158,7 @@ Units :: Units() {
     getAvailUnits();
 
     fixed.add(contents);
-    fixed.move(contents, 10, (lines+9)*20);
+    fixed.move(contents, 10, (lines+11)*20);
     fixed.add(possible);
     fixed.move(possible, 10, 10);
 
