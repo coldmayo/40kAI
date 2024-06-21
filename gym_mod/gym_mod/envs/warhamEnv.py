@@ -53,6 +53,14 @@ class Warhammer40kEnv(gym.Env):
         self.modelOnOM = np.array([-1,-1,-1,-1])
         self.enemyOnOM = np.array([-1,-1,-1,-1])
         self.relic = 3
+        self.vicCond = dice(max = 3)   # roll for victory condition: Slay and Secure, Ancient Relic, Domination
+        if self.trunc == True:
+            if self.vicCond == 1:
+                print("Victory Condition rolled: Slay and Secure")
+            elif self.vicCond == 2:
+                print("Victory Condition rolled: Ancient Relic")
+            elif self.vicCond == 3:
+                print("Victory Condition rolled: Domination")
 
         for i in range(len(enemy)):
             self.enemy_weapon.append(enemy[i].showWeapon())
@@ -70,13 +78,13 @@ class Warhammer40kEnv(gym.Env):
             self.unit_health.append(model[i].showUnitData()["W"]*model[i].showUnitData()["#OfModels"])
             self.unitInAttack.append([0,0])   # in attack, index of enemy attacking
 
-        obsSpace = (len(model)*3)+(len(enemy)*3)+1+len(self.coordsOfOM*2)
+        obsSpace = (len(model)*3)+(len(enemy)*3)+len(self.coordsOfOM*2)+2
 
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(obsSpace,), dtype=np.float32)  # 7-dimensional observation space
 
 
     def get_info(self):
-        return {"model health":self.unit_health, "player health": self.enemy_health, "modelCP": self.modelCP, "playerCP": self.enemyCP, "in attack": self.unitInAttack, "model VP": self.modelVP, "player VP": self.enemyVP}
+        return {"model health":self.unit_health, "player health": self.enemy_health, "modelCP": self.modelCP, "playerCP": self.enemyCP, "in attack": self.unitInAttack, "model VP": self.modelVP, "player VP": self.enemyVP, "victory condition": self.vicCond}
 
     # small reset = used in training
     # big reset reset env completely for testing/validation
@@ -104,6 +112,14 @@ class Warhammer40kEnv(gym.Env):
         self.modelVP = 0
         self.enemyVP = 0
         self.numTurns = 0
+        self.vicCond = dice(max = 3)
+        if self.trunc == True:
+            if self.vicCond == 1:
+                print("Victory Condition rolled: Slay and Secure")
+            elif self.vicCond == 2:
+                print("Victory Condition rolled: Ancient Relic")
+            elif self.vicCond == 3:
+                print("Victory Condition rolled: Domination")
         for i in range(len(self.enemy_data)):
             self.enemy_coords.append([e[i].showCoords()[0], e[i].showCoords()[1]])
             self.enemy_health.append(self.enemy_data[i]["W"]*self.enemy_data[i]["#OfModels"])
@@ -511,7 +527,7 @@ class Warhammer40kEnv(gym.Env):
         # Other victory conditions: Slay and Secure, Ancient Relic, Domination
         if self.numTurns == 5 and self.game_over != True:
             self.game_over = True
-            res = dice(max = 3)   # Roll dice to see which victory condition is used
+            res = self.vicCond   # Roll dice to see which victory condition is used
             if res == 1:
                 self.modelVP = 0
                 self.enemyVP = 0
@@ -924,5 +940,7 @@ class Warhammer40kEnv(gym.Env):
             obs.append(OM[1])
 
         obs.append(int(self.game_over))
+
+        obs.append(self.vicCond)
 
         return np.array(obs, dtype=np.float32)

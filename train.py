@@ -132,7 +132,7 @@ while end == False:
             print("The units are fighting")
 
     board = env.render()
-    message = "Iteration {} ended with reward {}, enemy health {}, model health {}, model VP {}, enemy VP {}".format(i, reward, enemy_health, unit_health, info["model VP"], info["player VP"])
+    message = "Iteration {} ended with reward {}, enemy health {}, model health {}, model VP {}, enemy VP {}, victory condition {}".format(i, reward, enemy_health, unit_health, info["model VP"], info["player VP"], info["victory condition"])
     if trunc == False:
         print(message)
     inText.append(message)
