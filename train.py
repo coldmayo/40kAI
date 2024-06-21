@@ -132,7 +132,7 @@ while end == False:
             print("The units are fighting")
 
     board = env.render()
-    message = "Iteration {} ended with reward {}, enemy health {}, model health {}, model VP {}, enemy VP {}".format(i, reward, enemy_health, unit_health, info["model VP"], info["player VP"])
+    message = "Iteration {} ended with reward {}, enemy health {}, model health {}, model VP {}, enemy VP {}, victory condition {}".format(i, reward, enemy_health, unit_health, info["model VP"], info["player VP"], info["victory condition"])
     if trunc == False:
         print(message)
     inText.append(message)
@@ -195,7 +195,7 @@ with open('trainRes.txt', 'w') as f:
         f.write(inText[i])
         f.write('\n')
 
-if totLifeT > 20:
+if totLifeT > 30:
     genDisplay.makeGif(numOfLife=totLifeT, trunc = True)
 else:
     genDisplay.makeGif(numOfLife=totLifeT)

@@ -15,7 +15,7 @@ def makeGif(numOfLife, name="", Type = "train", trunc = False):
 
     if trunc == True:
         its = np.arange(numOfLife)
-        itsChosen = np.random.choice(its-1, 10, replace=False)+1
+        itsChosen = np.random.choice(its-1, 30, replace=False)+1
         newFiles = []
         print(itsChosen)
 
