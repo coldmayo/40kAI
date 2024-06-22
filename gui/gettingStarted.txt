@@ -4,7 +4,7 @@ The "Train" tab is the one that the user sees upon opening and it's used for con
 
 The "Show Trained Model" tab simply shows a gif that displays a representation of the most recently trained model training by playing dummy games. The red dots are the "dummy" bot units that the model trains against and the blue dots are the model units.
 
-The "Model Metrics" tab shows varius plots that the user can use to evaluate how effective the most recently trained model is. The top left plot shows the average reward per game in training, the top right shows the loss curve, and the bottom plot shows the episode length per game in training.
+The "Model Metrics" tab shows varius plots that the user can use to evaluate how effective the trained models are. The top left plot shows the average reward per game in training, the top right shows the loss curve, and the bottom plot shows the episode length per game in training. The button on the bottom labeled "Choose" is used to change the model of the metrics being shown. When in the file explorer, the user must select the .pickle file of the model they want. Whenever a new model is trained or when first opening the application, the most recent model's metrics are shown.
 
 The "Play" tab's function is to allow the user to play against any of their saved trained models. This can be done by clicking the "Choose" button and selecting the .pickle file of the model the user wants. If the user fails to select a .pickle file, the application will select the most recently trained model instead. They then select the "Play" button which opens the game in the command prompt. The "Show Board" button shows the user the game board which updates automatically.
 

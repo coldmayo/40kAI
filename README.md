@@ -45,7 +45,7 @@ The only mission available is Only War and the Victory Conditions are described 
 - Domination:
    - At the end of each turn each objective marker is worth 1 Victory Point to the player who controls it. Keep a running score from turn to turn
 
-These victory conditions are decided by a roll of a D3 and there will be 5 total turns in a game. (or less if one army is completely slain before then)
+These victory conditions are decided by a roll of a D3 before the first turn and there will be 5 total turns in a game. (or less if one army is completely slain before then)
 
 Current factions available are:
 - Space Marines
