@@ -296,6 +296,20 @@ Form :: Form() {
     return true;
   });
 
+  // add initial armies (Space Marines) 
+
+  std::string unit = "Apothecary";
+  modelUnits.push_back(unit);
+  unit = "Eliminator Squad";
+  modelUnits.push_back(unit); 
+
+  unit = "Apothecary";
+  enemyUnits.push_back(unit);
+  unit = "Eliminator Squad";
+  enemyUnits.push_back(unit);  
+
+  savetoTxt(modelUnits, enemyUnits);
+
   fixedTabPage2.add(dimX);
   fixedTabPage2.move(dimX, 10, 265);
   fixedTabPage2.add(dimens);

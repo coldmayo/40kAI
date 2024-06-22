@@ -1,6 +1,6 @@
 Player Units
-Canoness
-Dominion Squad
+Apothecary
+Eliminator Squad
 Model Units
-Canoness
-Dominion Squad
+Apothecary
+Eliminator Squad

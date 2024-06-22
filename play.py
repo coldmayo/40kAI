@@ -48,7 +48,7 @@ else:
     modelpth = f[:-len("pickle")]+"pth"
     checkpoint = torch.load(modelpth)
 
-deployType = ["Search and Destroy", "Hammer and Anvil"]
+deployType = ["Search and Destroy", "Hammer and Anvil", "Dawn of War"]
 deployChang = np.random.choice(deployType)
 print("Deployment Type: ", deployChang)
 for m in model:
