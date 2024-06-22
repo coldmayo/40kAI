@@ -146,7 +146,7 @@ int parseInput(char *comm) {
         system("cd .. ; source .venv/bin/activate ; cd gym_mod ; pip install .");
         printf("Packages Installed!\n");
         printf("Installing Unit and Weapon Data...\n");
-        system("cd .. ; cd data_collector/unit_data ; ./scrape.sh");
+        system("cd .. ; cd data_collector/unit_data ; touch links.json ; ./scrape.sh");
         printf("Data Installed!\n");
         printf("Installation Complete!\n");
         
