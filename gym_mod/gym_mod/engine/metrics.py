@@ -1,12 +1,16 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import json
 
 class metrics(object):
-    def __init__(self):
+    def __init__(self, folder, randNum, modelName):
         self.avgRew = []
         self.loss = []
         self.episodeLen = []
-    
+        self.folder = folder
+        self.randNum = randNum
+        self.modelName = modelName
+
     def updateRew(self, add):
         self.avgRew.append(add)
 
@@ -22,8 +26,9 @@ class metrics(object):
         plt.ylabel("Loss")
         plt.plot(self.loss)
 
-        plt.savefig("metrics/loss.png")
+        plt.savefig("metrics/loss_{}.png".format(self.randNum))
         plt.savefig("gui/img/loss.png")
+        plt.savefig("gui/img/loss_{}.png".format(self.randNum))
         plt.close()
 
     def showRew(self):
@@ -32,8 +37,9 @@ class metrics(object):
         plt.ylabel("Reward")
         plt.plot(self.avgRew)
 
-        plt.savefig("metrics/reward.png")
+        plt.savefig("metrics/reward_{}.png".format(self.randNum))
         plt.savefig("gui/img/reward.png")
+        plt.savefig("gui/img/reward_{}.png".format(self.randNum))
         plt.close()
 
     def showEpLen(self):
@@ -42,6 +48,12 @@ class metrics(object):
         plt.ylabel("Episode Len")
         plt.plot(self.episodeLen)
 
-        plt.savefig("metrics/epLen.png")
+        plt.savefig("metrics/epLen_{}.png".format(self.randNum))
         plt.savefig("gui/img/epLen.png")
+        plt.savefig("gui/img/epLen_{}.png".format(self.randNum))
         plt.close()
+
+    def createJson(self):
+        data = {"loss":"img/loss_{}.png".format(self.randNum), "reward":"img/reward_{}.png".format(self.randNum), "epLen":"img/epLen_{}.png".format(self.randNum)}
+        with open("models/data_{}.json".format(self.modelName), "w") as f:
+            json.dump(data, f)

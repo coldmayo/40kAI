@@ -7,6 +7,9 @@
 #include <thread>
 #include <chrono>
 #include <fstream>
+#include <filesystem>
+#include <vector>
+#include <algorithm>
 #include <nlohmann/json.hpp>
 #include "include/Application.h"
 #include "include/popup.h"
@@ -16,13 +19,15 @@
 
 using namespace Glib;
 using namespace Gtk;
+namespace fs = std::filesystem;
+
 using json = nlohmann::json;
 
-const char *gifpth = "img/model_train.gif";
-const char *rewpth = "img/reward.png";
-const char *losspth = "img/loss.png";
-const char *eplenpth = "img/epLen.png";
-const char *imgpth = "img/icon.png";
+std::string gifpth = "img/model_train.gif";
+std::string rewpth = "img/reward.png";
+std::string losspth = "img/loss.png";
+std::string eplenpth = "img/epLen.png";
+std::string imgpth = "img/icon.png";
 
 Form :: Form() {
 
@@ -407,12 +412,37 @@ Form :: Form() {
   labelPage5.set_label("Model Metrics");
   tabControl1.set_tab_label(tabPage5, labelPage5);
   tabPage5.add(fixedTabPage5);
+  
+  chooseMetrics.set_label("Choose");
+  chooseMetrics.signal_button_release_event().connect([&](GdkEventButton * event){
+	FileChooserDialog folderBrowserDialog("", FILE_CHOOSER_ACTION_OPEN);
+    folderBrowserDialog.add_button("Cancel", RESPONSE_CANCEL);
+    folderBrowserDialog.add_button("Open", RESPONSE_OK);
+    char resolved_path[PATH_MAX];
+    realpath("../../40kAI", resolved_path);
+    strcat(resolved_path, "/models");
+    folderBrowserDialog.set_current_folder(resolved_path);
+    folderBrowserDialog.set_transient_for(*this);
+
+    auto filter_text = Gtk::FileFilter::create();
+    filter_text->set_name("Pickle Files");
+    filter_text->add_pattern("*.pickle");
+    folderBrowserDialog.add_filter(filter_text);
+
+    if (folderBrowserDialog.run() == RESPONSE_OK) {
+      path = folderBrowserDialog.get_file()->get_path();
+      changeMetrics(path);
+    }
+    return true;
+  });
 
   fixedTabPage5.add(metricBox);
   fixedTabPage5.add(metricBox2);
   fixedTabPage5.add(metricBox3);
+  fixedTabPage5.add(chooseMetrics);
   fixedTabPage5.move(metricBox2, 640/2, 0);
   fixedTabPage5.move(metricBox3, 640/4, 480/2+10);
+  fixedTabPage5.move(chooseMetrics, 620/2, 500);
   update_metrics();
 
      // Play tab
@@ -446,7 +476,6 @@ Form :: Form() {
 
     if (folderBrowserDialog.run() == RESPONSE_OK) {
       path = folderBrowserDialog.get_file()->get_path();
-      std::cout << "File selected: " <<  path << std::endl;
       setModelFile.set_text(path);
     }
     return true;
@@ -471,6 +500,24 @@ Form :: Form() {
   bar.set_title("40kAI GUI");
   resize(700, 600);
   show_all();
+}
+
+void Form :: changeMetrics(std::string path) {
+    std::string jsonID = path.substr(path.length()-16,9);
+	
+	if (jsonID[0] == '-') {
+		jsonID = path.substr(path.length()-15,8);
+	} 
+	
+	std::ifstream infile("../models/data_"+jsonID+".json");
+	json j;
+	infile >> j;
+
+	losspth = j.at("loss");
+	rewpth = j.at("reward");
+	eplenpth = j.at("epLen");
+
+	update_metrics();
 }
 
 int Form :: openPopUp() {

@@ -25,6 +25,7 @@ Warn :: Warn(std::string message, int comm) {
     cont.signal_button_release_event().connect([&](GdkEventButton*) {
         if (comm == 0) {
             system("cd .. ; rm -r models/*");
+            system("cd .. ; rm -r metrics/*");
         }
         this->hide();
         return true;

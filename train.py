@@ -103,7 +103,13 @@ pbar = tqdm(total=totLifeT)
 
 state, info = env.reset(m = model, e = enemy, Type="big")
 
-metrics = metrics()
+current_time = datetime.datetime.now()
+date = str(current_time.second)+"-"+str(current_time.microsecond)
+name = "M:"+model[0].showUnitData()["Army"]+"_vs_"+"P:"+enemy[0].showUnitData()["Army"]
+fold =  "models/"+name
+fileName = fold+"/model-"+date+".pickle"
+randNum = np.random.randint(0, 10000000)
+metrics = metrics(fold, randNum, date)
 
 rewArr = []
 
@@ -203,11 +209,9 @@ else:
 metrics.lossCurve()
 metrics.showRew()
 metrics.showEpLen()
+metrics.createJson()
 print("Generated metrics")
 
-current_time = datetime.datetime.now()
-date = str(current_time.second)+"-"+str(current_time.microsecond)
-name = "M:"+model[0].showUnitData()["Army"]+"_vs_"+"P:"+enemy[0].showUnitData()["Army"]
 if (os.path.exists("models/{}".format(name)) == False):
     os.system("mkdir models/{}".format(name))
 
@@ -219,7 +223,7 @@ torch.save({
 
 toSave = [env, model, enemy]
 
-with open("models/{}/model-{}.pickle".format(name, date), "wb") as file:
+with open(fileName, "wb") as file:
     pickle.dump(toSave, file)
 
 if os.path.isfile("gui/data.json"):

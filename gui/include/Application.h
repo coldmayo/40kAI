@@ -33,6 +33,8 @@ public :
   int openArmyView();
   int openWarnMenu(std::string mess, int comm);
   int openHelpMenu();
+  void changeMetrics(std::string path);
+  void recentMetrics();
   std::string toLower(std::string data);
 
 private:
@@ -132,6 +134,7 @@ private:
   std::vector<std::string> enemyUnits;
   HeaderBar bar;
   Button help;
+  Button chooseMetrics;
 };
 
 #endif
