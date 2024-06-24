@@ -26,7 +26,8 @@ Warn :: Warn(std::string message, int comm) {
         if (comm == 0) {
             system("cd .. ; rm -r models/*");
             system("cd .. ; rm -r metrics/*");
-        }
+            system("cd .. ; find gui/img/ -type f ! -name 'epLen.png' ! -name 'reward.png' ! -name 'loss.png' ! -name 'icon.png' -delete");
+		}
         this->hide();
         return true;
     });
