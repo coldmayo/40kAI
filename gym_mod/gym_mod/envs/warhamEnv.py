@@ -113,13 +113,7 @@ class Warhammer40kEnv(gym.Env):
         self.enemyVP = 0
         self.numTurns = 0
         self.vicCond = dice(max = 3)
-        if self.trunc == True:
-            if self.vicCond == 1:
-                print("Victory Condition rolled: Slay and Secure")
-            elif self.vicCond == 2:
-                print("Victory Condition rolled: Ancient Relic")
-            elif self.vicCond == 3:
-                print("Victory Condition rolled: Domination")
+        
         for i in range(len(self.enemy_data)):
             self.enemy_coords.append([e[i].showCoords()[0], e[i].showCoords()[1]])
             self.enemy_health.append(self.enemy_data[i]["W"]*self.enemy_data[i]["#OfModels"])
@@ -354,7 +348,7 @@ class Warhammer40kEnv(gym.Env):
                     self.unit_coords[i][1] += movement
                 elif action["move"] == 4:   # no move
                     for j in range(len(self.coordsOfOM)):
-                        if distance(self.unit_coords[i], self.coordsOfOM[i]) >= 5:
+                        if distance(self.unit_coords[i], self.coordsOfOM[i]) <= 5:
                             reward += 0.5
                         else:
                             reward -= 0.5
@@ -489,8 +483,10 @@ class Warhammer40kEnv(gym.Env):
                     self.enemyInAttack[idOfE][1] = 0
             
             elif self.unit_health[i] == 0:
+                reward -= 1
                 if self.trunc == False:
                     print("Model unit", modelName ,"is destroyed")
+
 
         if self.enemyStrat["overwatch"] != -1:
             self.enemyStrat["overwatch"] = -1
@@ -504,13 +500,13 @@ class Warhammer40kEnv(gym.Env):
             elif self.modelOnOM[i] != -1:
                 self.modelVP += 1
 
-        for i in self.unit_health:
-            if i < 0:
-                i = 0
+        for i in range(len(self.unit_health)):
+            if self.unit_health[i] < 0:
+                self.unit_health[i] = 0
         
-        for i in self.enemy_health:
-            if i < 0:
-                i = 0
+        for i in range(len(self.enemy_health)):
+            if self.enemy_health[i] < 0:
+                self.enemy_health[i] = 0
 
         # Determine winning team
 
@@ -518,11 +514,11 @@ class Warhammer40kEnv(gym.Env):
 
         if sum(self.unit_health) <= 0:
             self.game_over = True
-            reward += 2
+            reward -= 2
             res = 4
         elif sum(self.enemy_health) <= 0:
             self.game_over = True
-            reward -= 2
+            reward += 2
             res = 4
         # Other victory conditions: Slay and Secure, Ancient Relic, Domination
         if self.numTurns == 5 and self.game_over != True:
@@ -570,7 +566,17 @@ class Warhammer40kEnv(gym.Env):
     def player(self):
         self.enemyCP += 1
         self.modelCP += 1
+
+        if self.numTurns == 0:
+            if self.vicCond == 1:
+                print("Victory Condition rolled: Slay and Secure")
+            elif self.vicCond == 2:
+                print("Victory Condition rolled: Ancient Relic")
+            elif self.vicCond == 3:
+                print("Victory Condition rolled: Domination")
+
         print(self.get_info())
+
         for i in range(len(self.enemy_health)):
             playerName = i+11
             print("For unit", playerName)
@@ -613,15 +619,15 @@ class Warhammer40kEnv(gym.Env):
                 print("If you would like to end the game type 'quit' into the prompt")
                 dire = input("Enter the direction of movement (up, down, left, right, none (no move)): ")
                 
-                if dire == "quit":
+                if dire.lower() == "quit":
                     self.game_over = True
                     info = self.get_info()
                     return self.game_over, info
-                
-                print("Rolling 1 D6...")
-                roll = dice()
-                print("You rolled a", roll)
-                movement = roll+self.unit_data[i]["Movement"]
+                if dire.lower() != "none":
+                	print("Rolling 1 D6...")
+                	roll = dice()
+                	print("You rolled a", roll)
+                	movement = roll+self.unit_data[i]["Movement"]
                 response = False
                 while response == False:
                     if dire.lower() == "down":
