@@ -14,7 +14,7 @@
 
 ## Description
 
-I am new to Warhammer 40k and scared to play against others, so I decided to make a model that could play against me using Reinforcement Learning. To accomplish this, I am creating a custom 40k environment using Gymnasium and a DQN using Pytorch. 
+I was new to the Warhammer 40k tabletop game and I unfortunitly had no one to play with. So, I took matters into my own hands. I decided to make an RL model to play against, to sharpen my skills. To accomplish this, I am making a custom 40k Gymnasium environment and a DQN using PyTorch.
 
 ## Gameplay
 
@@ -33,7 +33,10 @@ Just like the tabletop game, it is played in turns, with each turn divided into 
 5. Fight Phase
     - Close combat between engaged units is resolved
 
-Before the game is played, a deployment card is drawn at random. These cards determine where the players can place their units on the board.<br>
+Before the game is played, a deployment card is drawn at random. These cards determine where the players can place their units on the board. The ones currently available are:
+- Search and Destroy
+- Hammer and Anvil
+- Dawn of War
 
 The only mission available is Only War and the Victory Conditions are described below:
 - Major Victory:
@@ -45,7 +48,15 @@ The only mission available is Only War and the Victory Conditions are described 
 - Domination:
    - At the end of each turn each objective marker is worth 1 Victory Point to the player who controls it. Keep a running score from turn to turn
 
-These victory conditions are decided by a roll of a D3 before the first turn and there will be 5 total turns in a game. (or less if one army is completely slain before then)
+These victory conditions are decided by a roll of a D3 before the first turn and there will be 5 total turns in a game. (or less if one army gets a Major Victory before then)
+
+Also, players can use Command Points on Stratagems, which are special abilities that can be activated during certian points of the game. The ones that are supported so far are:
+- Fire Overwatch
+	- This strategem allows the selected unit to act as if it's their Shooting Phase before the opponent's charge roll
+- Insane Bravery
+	- If a unit fails a Battle shock test, the player can use this strategem so the unit is not effected by it
+- Smokescreen
+	- Gives all models in unit the Benefit of Cover and the Stealth ability until the end of their opponent's next turn
 
 Current factions available are:
 - Space Marines
@@ -63,10 +74,10 @@ Current factions available are:
 
 Before proceeding make sure your device meets the below requirements:
 - Runs a Linux Distribution (Windows and Mac not supported)
-   - Confirmed to work on Arch Linux
+   - Confirmed to work on Arch Linux (working on more)
 - Has the following installed:
    - Python and pip
-   - gtk and gtkmm
+   - gtkmm
    - make
    - cmake
    - gcc
@@ -79,8 +90,14 @@ $ git clone https://github.com/coldmayo/40kAI.git
 # go into /40kAI/installation/ directory
 $ cd installation
 
-# start the install script
+# (optional) build install script
+$ make
+
+# run install script
 $ make run
+
+# or
+$ ./install
 
 # while running the script, type "install" into the prompt
 > install
