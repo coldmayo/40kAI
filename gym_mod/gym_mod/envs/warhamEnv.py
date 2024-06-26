@@ -52,6 +52,8 @@ class Warhammer40kEnv(gym.Env):
         self.coordsOfOM = np.array([[self.b_len/2 + 8, self.b_hei/2 + 12],[self.b_len/2 - 8, self.b_hei/2 + 12],[self.b_len/2 + 8, self.b_hei/2 - 12],[self.b_len/2 - 8, self.b_hei/2 - 12]])
         self.modelOnOM = np.array([-1,-1,-1,-1])
         self.enemyOnOM = np.array([-1,-1,-1,-1])
+        self.modelOC = []
+        self.enemyOC = []
         self.relic = 3
         self.vicCond = dice(max = 3)   # roll for victory condition: Slay and Secure, Ancient Relic, Domination
         if self.trunc == True:
@@ -69,6 +71,7 @@ class Warhammer40kEnv(gym.Env):
             self.enemy_coords.append([enemy[i].showCoords()[0], enemy[i].showCoords()[1]])
             self.enemy_health.append(enemy[i].showUnitData()["W"]*enemy[i].showUnitData()["#OfModels"])
             self.enemyInAttack.append([0,0])   # in attack, index of enemy attacking
+            self.enemyOC.append(enemy[i].showUnitData()["OC"])
 
         for i in range(len(model)):
             self.unit_weapon.append(model[i].showWeapon())
@@ -77,6 +80,7 @@ class Warhammer40kEnv(gym.Env):
             self.unit_coords.append([model[i].showCoords()[0], model[i].showCoords()[1]])
             self.unit_health.append(model[i].showUnitData()["W"]*model[i].showUnitData()["#OfModels"])
             self.unitInAttack.append([0,0])   # in attack, index of enemy attacking
+            self.modelOC.append(model[i].showUnitData()["OC"])
 
         obsSpace = (len(model)*3)+(len(enemy)*3)+len(self.coordsOfOM*2)+2
 
@@ -149,21 +153,24 @@ class Warhammer40kEnv(gym.Env):
             battleSh = False
             if isBelowHalfStr(self.enemy_data[i],self.enemy_health[i]) == True and self.unit_health[i] > 0:
                 if trunc == False:
-                    print("This unit is Battle-shocked, starting test...")
+                    print("This unit is Below Half Strength, starting test...")
                     print("Rolling 2D6...")
                 diceRoll = dice(num=2)
                 if trunc == False:
-                    print("Model rolled", diceRoll[0], diceRoll[1])
+                    print("Player rolled", diceRoll[0], diceRoll[1])
                 if sum(diceRoll) >= self.enemy_data[i]["Ld"]:
                     if trunc == False:
                         print("Battle-shock test passed!")
+                        self.enemyOC[i] = self.enemy_data[i]["OC"]
                 else:
                     battleSh = True
+                    self.enemyOC[i] = 0
                     if trunc == False:
                         print("Battle-shock test failed")
                     if use_cp == 1 and cp_on == i and self.enemyCP -1 >= 0:
                         battleSh = False
                         self.enemyCP -= 1
+                        self.enemyOC[i] = self.enemy_data[i]["OC"]
 
             if self.enemyInAttack[i][0] == 0 and self.enemy_health[i] > 0:
 
@@ -203,7 +210,7 @@ class Warhammer40kEnv(gym.Env):
                             self.modelStrat["overwatch"] = -1
                 
                 # set overwatch
-                if use_cp == 2 and cp_on == i and self.enemyCP - 1 >= 0:
+                if use_cp == 2 and cp_on == i and self.enemyCP - 1 >= 0 and battleSh == False:
                     self.enemyCP -= 1
                     self.enemyStrat["overwatch"] = i
 
@@ -253,7 +260,7 @@ class Warhammer40kEnv(gym.Env):
                     self.enemyInAttack[i][0] = 1
                     self.enemyInAttack[i][1] = idOfM
 
-                if use_cp == 3 and cp_on == i and self.enemyCP - 1 >= 0:
+                if use_cp == 3 and cp_on == i and self.enemyCP - 1 >= 0 and battleSh == False:
                     self.enemyCP -= 1
                     self.enemyStrat["smokescreen"] = i
 
@@ -299,7 +306,7 @@ class Warhammer40kEnv(gym.Env):
         
         for i in range(len(self.enemyOnOM)):
             if self.enemyOnOM[i] != -1 and self.modelOnOM[i] != -1:
-                if self.enemy_data[self.enemyOnOM[i]]["OC"] > self.unit_data[self.modelOnOM[i]]["OC"]:
+                if self.enemyOC[self.enemyOnOM[i]] > self.modelOC[self.modelOnOM[i]]:
                     self.enemyVP += 1
             elif self.enemyOnOM[i] != -1:
                 self.enemyVP += 1
@@ -320,18 +327,21 @@ class Warhammer40kEnv(gym.Env):
                 if self.trunc == False:
                     print("Model rolled", diceRoll[0], diceRoll[1])
                 if sum(diceRoll) >= self.unit_data[i]["Ld"]:
+                    self.modelOC[i] = self.unit_data[i]["OC"]
                     if self.trunc == False:
                         print("Battle-shock test passed!")
                 else:
                     battleSh = True
                     if self.trunc == False:
                         print("Battle-shock test failed")
+                    self.modelOC[i] = 0
                     if action["use_cp"] == 1 and action["cp_on"] == i:
                         if self.modelCP - 1 >= 0:
                             battleSh = False
                             reward += 0.5
                             self.modelCP -= 1
                             if self.trunc == False:
+                                self.model[i] = self.unit_data[i]["OC"]
                                 print("Used Insane Bravery Stratagem to pass Battle Shock test")
                         else:
                             reward -= 1
@@ -373,6 +383,9 @@ class Warhammer40kEnv(gym.Env):
                         self.modelCP -= 1
                         self.modelStrat["overwatch"] = i
                         reward += 0.5
+                    elif battleSh != False:
+                        if self.trunc == False:
+                            print("This unit is BattleShocked, no stratagems can be used on it")
                     else:
                         reward -= 1
 
@@ -439,6 +452,9 @@ class Warhammer40kEnv(gym.Env):
                         self.modelCP -= 1
                         self.modelStrat["smokescreen"] = i
                         reward += 0.5
+                    elif battleSh != False:
+                        if self.trunc == False:
+                            print("This unit is Battle shocked, stratagems can not be used")
                     else:
                         reward -= 0.5
 
@@ -495,7 +511,7 @@ class Warhammer40kEnv(gym.Env):
 
         for i in range(len(self.modelOnOM)):
             if self.enemyOnOM[i] != -1 and self.modelOnOM[i] != -1:
-                if self.enemy_data[self.enemyOnOM[i]]["OC"] < self.unit_data[self.modelOnOM[i]]["OC"]:
+                if self.enemyOC[self.enemyOnOM[i]] < self.modelOC[self.modelOnOM[i]]:
                     self.modelVP += 1
             elif self.modelOnOM[i] != -1:
                 self.modelVP += 1
@@ -529,9 +545,9 @@ class Warhammer40kEnv(gym.Env):
                 self.enemyVP = 0
                 for i in range(len(self.enemyOnOM)):
                     if self.enemyOnOM[i] != -1 and self.modelOnOM[i] != -1:
-                        if self.enemy_data[self.enemyOnOM[i]]["OC"] > self.unit_data[self.modelOnOM[i]]["OC"]:
+                        if self.enemyOC[self.enemyOnOM[i]] > self.modelOC[self.modelOnOM[i]]:
                             self.enemyVP += 1
-                        elif self.enemy_data[self.enemyOnOM[i]]["OC"] < self.unit_data[self.modelOnOM[i]]["OC"]:
+                        elif self.enemyOC[self.enemyOnOM[i]] < self.modelOC[self.modelOnOM[i]]:
                             self.modelVP += 1
                     elif self.enemyOnOM[i] != -1:
                         self.enemyVP += 1
@@ -543,9 +559,9 @@ class Warhammer40kEnv(gym.Env):
                     reward -= 2
             elif res == 2:
                 if self.enemyOnOM[self.relic] != -1 and self.modelOnOM[self.relic] != -1:
-                    if self.enemy_data[self.enemyOnOM[self.relic]]["OC"] > self.unit_data[self.modelOnOM[self.relic]]["OC"]:
+                    if self.enemyOC[self.enemyOnOM[self.relic]] > self.modelOC[self.modelOnOM[self.relic]]:
                         self.enemyVP += 6
-                    elif self.enemy_data[self.enemyOnOM[self.relic]]["OC"] < self.unit_data[self.modelOnOM[self.relic]]["OC"]:
+                    elif self.enemyOC[self.enemyOnOM[self.relic]] < self.modelOC[self.modelOnOM[self.relic]]:
                         self.modelVP += 6
                 if self.modelVP > self.enemyVP:
                     reward += 2
@@ -588,10 +604,12 @@ class Warhammer40kEnv(gym.Env):
                 print("You rolled", diceRoll[0], diceRoll[1])
                 if sum(diceRoll) >= self.enemy_data[i]["Ld"]:
                     print("Battle-shock test passed!")
+                    self.enemyOC[i] = self.enemy_data[i]["OC"]
                 else:
                     battleSh = True
                     print("Battle-shock test failed")
                     response = False
+                    self.enemyOC[i] = 0
                     if self.enemyCP -1 >= 0:
                         strat = input("Would you like to use the Insane Bravery Strategem? (y/n): ")
                         while response == False:
@@ -599,6 +617,7 @@ class Warhammer40kEnv(gym.Env):
                                 response = True
                                 battleSh = False
                                 self.enemyCP -= 1
+                                self.enemyOC[i] = self.enemy_data[i]["OC"]
                             elif strat.lower() == "n" or strat.lower() == "no":
                                 response = True
                             elif strat.lower() == "quit":
@@ -659,7 +678,7 @@ class Warhammer40kEnv(gym.Env):
                     if self.enemy_coords[i] == self.unit_coords[j]:
                         self.enemy_coords[i][0] -= 1
                 
-                if self.enemyCP - 1 >= 0:
+                if self.enemyCP - 1 >= 0 and battleSh == False:
                     response = False
                     strat = input("Would you like to use the Fire Overwatch Stratagem? (y/n)")
                     while response == False:
@@ -767,21 +786,21 @@ class Warhammer40kEnv(gym.Env):
                         else:
                             print("Not an available unit")
                 else:
-                    print("No available units to attack")  
-
-                response = False
-                strat = input("Would you like to use the Smokescreen Stratagem for this unit? (y/n): ")
-                while response == False:
-                    if strat.lower() == "y" or strat.lower() == "yes":
-                        self.enemyStrat["smokescreen"] = i 
-                        response = True
-                    elif strat.lower() == "n" or strat.lower() == "no":
-                        response = True
-                    elif strat.lower() == "?" or strat.lower() == "help":
-                                print("The Smokescreen Stratagem costs 1 Command Point and when used all models in the unit have the Benefit of Cover and the Stealth ability")
-                                strat = input("Would you like to use the Smokescreen Stratagem? (y/n): ")
-                    else:
-                        strat = input("It's a yes or no question dude")
+                    print("No available units to attack")
+                if self.enemyCP - 1 >= 0 and battleSh == False:    
+                    response = False
+                    strat = input("Would you like to use the Smokescreen Stratagem for this unit? (y/n): ")
+                    while response == False:
+                        if strat.lower() == "y" or strat.lower() == "yes":
+                            self.enemyStrat["smokescreen"] = i 
+                            response = True
+                        elif strat.lower() == "n" or strat.lower() == "no":
+                       	    response = True
+                        elif strat.lower() == "?" or strat.lower() == "help":
+                            print("The Smokescreen Stratagem costs 1 Command Point and when used all models in the unit have the Benefit of Cover and the Stealth ability")
+                            strat = input("Would you like to use the Smokescreen Stratagem? (y/n): ")
+                        else:
+                            strat = input("It's a yes or no question dude")
             
                 for j in range(len(self.coordsOfOM)):
                     if distance(self.coordsOfOM[j], self.enemy_coords[i]) <= 5:
@@ -836,7 +855,7 @@ class Warhammer40kEnv(gym.Env):
 
         for i in range(len(self.enemyOnOM)):
             if self.enemyOnOM[i] != -1 and self.modelOnOM[i] != -1:
-                if self.enemy_data[self.enemyOnOM[i]]["OC"] > self.unit_data[self.modelOnOM[i]]["OC"]:
+                if self.enemyOC[self.enemyOnOM[i]] > self.modelOC[self.modelOnOM[i]]:
                     self.enemyVP += 1
             elif self.enemyOnOM[i] != -1:
                 self.enemyVP += 1
