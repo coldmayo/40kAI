@@ -1,12 +1,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import json
+from scipy.optimize import curve_fit
 
 class metrics(object):
     def __init__(self, folder, randNum, modelName):
         self.avgRew = []
         self.loss = []
-        self.episodeLen = []
+        self.episodeLen = {"labels": [], "vals": []}
         self.folder = folder
         self.randNum = randNum
         self.modelName = modelName
@@ -18,7 +19,8 @@ class metrics(object):
         self.loss.append(add)
 
     def updateEpLen(self, add):
-        self.episodeLen.append(add)
+        self.episodeLen["vals"].append(add)
+        self.episodeLen["labels"].append(str(add))
 
     def lossCurve(self):
         plt.title("Loss Curve")
@@ -32,10 +34,16 @@ class metrics(object):
         plt.close()
 
     def showRew(self):
+        y = lambda x,a,b: a * x + b
+        x = np.arange(len(self.avgRew))
+        popt, _ = curve_fit(y, x, self.avgRew)
+        a, b = popt
+
         plt.title("Avg. Reward per Episode")
         plt.xlabel("Episodes")
         plt.ylabel("Reward")
         plt.plot(self.avgRew)
+        plt.plot(x, y(x, a, b))
 
         plt.savefig("metrics/reward_{}.png".format(self.randNum))
         plt.savefig("gui/img/reward.png")
@@ -46,7 +54,7 @@ class metrics(object):
         plt.title("Episode Length")
         plt.xlabel("Episodes")
         plt.ylabel("Episode Len")
-        plt.plot(self.episodeLen)
+        plt.bar(self.episodeLen["labels"], self.episodeLen["vals"])
 
         plt.savefig("metrics/epLen_{}.png".format(self.randNum))
         plt.savefig("gui/img/epLen.png")
