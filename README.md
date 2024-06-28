@@ -5,18 +5,25 @@
   <br>
 </h1>
 
-<p align="center">
-    <a href="#description">Description</a> •
-    <a href="#gameplay">Gameplay</a> •
-    <a href="#installation">Installation</a> •
-    <a href="#contact-me">Contact</a>
-</p>
+## Contents
+
+
+1. <a href="#description">Description</a>
+2. <a href="#gameplay">Gameplay</a>
+	- <a href="#phases">Phases</a>
+	- <a href="#victory-conditions">Victory Conditions</a>
+	- <a href="#stratagems">Stratagems</a>
+	- <a href="#factions">Factions</a>
+3. <a href="#installation">Installation</a>
+4. <a href="#contact-me">Contact</a>
 
 ## Description
 
 I was new to the Warhammer 40k tabletop game and I unfortunitly had no one to play with. So, I took matters into my own hands. I decided to make an RL model to play against, to sharpen my skills. To accomplish this, I am making a custom 40k Gymnasium environment and a DQN using PyTorch.
 
 ## Gameplay
+
+### Phases
 
 Just like the tabletop game, it is played in turns, with each turn divided into several phases:<br>
 
@@ -33,10 +40,14 @@ Just like the tabletop game, it is played in turns, with each turn divided into 
 5. Fight Phase
     - Close combat between engaged units is resolved
 
+### Deployment
+
 Before the game is played, a deployment card is drawn at random. These cards determine where the players can place their units on the board. The ones currently available are:
 - Search and Destroy
 - Hammer and Anvil
 - Dawn of War
+
+### Victory Conditions
 
 The only mission available is Only War and the Victory Conditions are described below:
 - Major Victory:
@@ -50,6 +61,8 @@ The only mission available is Only War and the Victory Conditions are described 
 
 These victory conditions are decided by a roll of a D3 before the first turn and there will be 5 total turns in a game. (or less if one army gets a Major Victory before then)
 
+### Stratagems
+
 Also, players can use Command Points on Stratagems, which are special abilities that can be activated during certian points of the game. The ones that are supported so far are:
 - Fire Overwatch
 	- This strategem allows the selected unit to act as if it's their Shooting Phase before the opponent's charge roll
@@ -57,6 +70,9 @@ Also, players can use Command Points on Stratagems, which are special abilities 
 	- If a unit fails a Battle shock test, the player can use this strategem so the unit is not effected by it
 - Smokescreen
 	- Gives all models in unit the Benefit of Cover and the Stealth ability until the end of their opponent's next turn
+- Heroic Intervention
+	- The player can select one of their units and use 2 CP to charge an enemy unit while they are in combat with another unit. So essentailly the player can switch units in combat. This only works if the unit is within 6 inches of the enemy.
+### Factions
 
 Current factions available are:
 - Space Marines
