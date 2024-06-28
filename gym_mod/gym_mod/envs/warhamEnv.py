@@ -173,7 +173,7 @@ class Warhammer40kEnv(gym.Env):
                         self.enemyOC[i] = self.enemy_data[i]["OC"]
 
             if use_cp == 4 and cp_on == i:
-                if self.enemyCP - 1 >= 0 and self.enemyInAttack[i][0] == 0: # make sure current model is not in combat
+                if self.enemyCP - 2 >= 0 and self.enemyInAttack[i][0] == 0: # make sure current model is not in combat
                     for j in range(len(self.unitInAttack)):
                         if self.unitInAttack[j][0] == 1 and distance(self.enemy_coords[i], self.unit_coords[j]) >= 6:
                             self.enemyInAttack[i][0] = 1
@@ -187,7 +187,7 @@ class Warhammer40kEnv(gym.Env):
                             self.enemy_coords[i] = bounds(self.unit_coords[i], self.b_len, self.b_hei)
 
                             self.unitInAttack[j][1] = i
-                            self.enemyCP -= 1
+                            self.enemyCP -= 2
                             break
                             
                     
@@ -368,7 +368,7 @@ class Warhammer40kEnv(gym.Env):
                             reward -= 0.5
             ## Heroic Intervention
             if action["use_cp"] == 4 and action["cp_on"] == i:
-                if self.modelCP - 1 >= 0 and self.unitInAttack[i][0] == 0: # make sure current model is not in combat
+                if self.modelCP - 2 >= 0 and self.unitInAttack[i][0] == 0: # make sure current model is not in combat
                     for j in range(len(self.enemyInAttack)):
                         if self.enemyInAttack[j][0] == 1 and distance(self.unit_coords[i], self.enemy_coords[j]) >= 6:
                             self.unitInAttack[i][0] = 1
@@ -382,7 +382,7 @@ class Warhammer40kEnv(gym.Env):
                             self.unit_coords[i] = bounds(self.unit_coords[i], self.b_len, self.b_hei)
 
                             self.enemyInAttack[j][1] = i
-                            self.modelCP -= 1
+                            self.modelCP -= 2
                             break
                             reward += 0.5
                             
@@ -671,7 +671,7 @@ class Warhammer40kEnv(gym.Env):
                                 strat = input("Would you like to use the Insane Bravery Stratagem? (y/n): ")
                             else: 
                                 strat = input("Valid answers are: y, yes, n, and no: ")
-            if self.enemyCP - 1 >= 0 and self.enemyInAttack[i][0] == 0: 
+            if self.enemyCP - 2 >= 0 and self.enemyInAttack[i][0] == 0: 
                 response = False
                 strat = input("Would you like to use the Heroic Intervention Stratagem? (y/n):")
                 while response == False:
@@ -690,7 +690,7 @@ class Warhammer40kEnv(gym.Env):
                                 self.enemy_coords[i] = bounds(self.unit_coords[i], self.b_len, self.b_hei)
 
                                 self.unitInAttack[j][1] = i
-                                self.enemyCP -= 1
+                                self.enemyCP -= 2
                                 print("Heroic Intervention Successfully used!")
                                 break
                     elif strat.lower() == "n" or strat.lower() == "no":
