@@ -17,7 +17,7 @@ class Warhammer40kEnv(gym.Env):
             'attack': spaces.Discrete(2),  # Two attack options: Engage Attack, Leave Attack/move
             'shoot': spaces.Discrete(len(enemy)),   # choose which model to attack in the shooting phase
             'charge': spaces.Discrete(len(enemy)),   # choose which model to attack in the charge phase
-            'use_cp': spaces.Discrete(4),   # choose to use cp, 0 = no stratagems, 1 = insane bravery, 2 = overwatch, 3 = smokescreen
+            'use_cp': spaces.Discrete(5),   # choose to use cp, 0 = no stratagems, 1 = insane bravery, 2 = overwatch, 3 = smokescreen, 4 = heroic intervention 
             'cp_on': spaces.Discrete(len(model))   # choose which model unit cp is used on
         })
 
@@ -144,7 +144,7 @@ class Warhammer40kEnv(gym.Env):
         self.modelCP += 1
         self.numTurns += 1
         cp_on = np.random.randint(0,len(self.enemy_health))
-        use_cp = np.random.randint(0, 4)
+        use_cp = np.random.randint(0, 5)
         for i in range(len(self.enemy_health)):
 
             # command phase
@@ -171,6 +171,26 @@ class Warhammer40kEnv(gym.Env):
                         battleSh = False
                         self.enemyCP -= 1
                         self.enemyOC[i] = self.enemy_data[i]["OC"]
+
+            if use_cp == 4 and cp_on == i:
+                if self.enemyCP - 1 >= 0 and self.enemyInAttack[i][0] == 0: # make sure current model is not in combat
+                    for j in range(len(self.unitInAttack)):
+                        if self.unitInAttack[j][0] == 1 and distance(self.enemy_coords[i], self.unit_coords[j]) >= 6:
+                            self.enemyInAttack[i][0] = 1
+                            self.enemyInAttack[i][1] = j
+
+                            self.enemyInAttack[self.enemyInAttack[j][1]][0] = 0
+                            self.enemyInAttack[self.enemyInAttack[j][1]][1] = 0
+
+                            self.enemy_coords[i][0] = self.enemy_coords[j][0] + 1
+                            self.enemy_coords[i][1] = self.enemy_coords[j][1] + 1
+                            self.enemy_coords[i] = bounds(self.unit_coords[i], self.b_len, self.b_hei)
+
+                            self.unitInAttack[j][1] = i
+                            self.enemyCP -= 1
+                            break
+                            
+                    
 
             if self.enemyInAttack[i][0] == 0 and self.enemy_health[i] > 0:
 
@@ -315,6 +335,7 @@ class Warhammer40kEnv(gym.Env):
         reward = 0
         self.enemyCP += 1
         self.modelCP += 1
+        effect = None
         res = 0
         for i in range(len(self.unit_health)):
             modelName = i+21
@@ -344,7 +365,30 @@ class Warhammer40kEnv(gym.Env):
                                 self.model[i] = self.unit_data[i]["OC"]
                                 print("Used Insane Bravery Stratagem to pass Battle Shock test")
                         else:
-                            reward -= 1
+                            reward -= 0.5
+            ## Heroic Intervention
+            if action["use_cp"] == 4 and action["cp_on"] == i:
+                if self.modelCP - 1 >= 0 and self.unitInAttack[i][0] == 0: # make sure current model is not in combat
+                    for j in range(len(self.enemyInAttack)):
+                        if self.enemyInAttack[j][0] == 1 and distance(self.unit_coords[i], self.enemy_coords[j]) >= 6:
+                            self.unitInAttack[i][0] = 1
+                            self.unitInAttack[i][1] = j
+
+                            self.unitInAttack[self.enemyInAttack[j][1]][0] = 0
+                            self.unitInAttack[self.enemyInAttack[j][1]][1] = 0
+
+                            self.unit_coords[i][0] = self.enemy_coords[j][0] + 1
+                            self.unit_coords[i][1] = self.enemy_coords[j][1] + 1
+                            self.unit_coords[i] = bounds(self.unit_coords[i], self.b_len, self.b_hei)
+
+                            self.enemyInAttack[j][1] = i
+                            self.modelCP -= 1
+                            break
+                            reward += 0.5
+                            
+                    reward += 0.5
+                else:
+                    reward -= 0.5
 
             if self.unitInAttack[i][0] == 0 and self.unit_health[i] > 0:
                 movement = dice()+self.unit_data[i]["Movement"]
@@ -400,10 +444,10 @@ class Warhammer40kEnv(gym.Env):
                     if (len(shootAbleUnits) > 0):        
                         idOfE = action["shoot"]
                         if (idOfE in shootAbleUnits):
+
                             if idOfE == self.enemyStrat["smokescreen"]:
                                 effect = "benefit of cover"
-                            else:
-                                effect = None
+                                
                             dmg, modHealth = attack(self.unit_health[i], self.unit_weapon[i], self.unit_data[i], self.enemy_health[idOfE], self.enemy_data[idOfE], effects = effect)
                             self.enemy_health[idOfE] = modHealth
                             reward += 0.2
@@ -435,7 +479,7 @@ class Warhammer40kEnv(gym.Env):
                         self.unit_coords[i][1] = self.enemy_coords[j][1] + 1
                         self.unit_coords[i] = bounds(self.unit_coords[i], self.b_len, self.b_hei)
 
-                        dmg, modHealth = attack(self.unit_health[i], self.unit_melee[i], self.unit_data[i], self.enemy_health[idOfE], self.enemy_data[idOfE], rangeOfComb="Melee")
+                        dmg, modHealth = attack(self.unit_health[i], self.unit_melee[i], self.unit_data[i], self.enemy_health[idOfE], self.enemy_data[idOfE], rangeOfComb="Melee", effects=effect)
                         self.enemy_health[idOfE] = modHealth
 
                         self.enemyInAttack[j][0] = 1
@@ -467,7 +511,7 @@ class Warhammer40kEnv(gym.Env):
                 reward = 0
                 idOfE = self.unitInAttack[i][1]
                 if action["attack"] == 1:
-                    dmg, modHealth = attack(self.unit_health[i], self.unit_melee[i], self.unit_data[i], self.enemy_health[idOfE], self.enemy_data[idOfE], rangeOfComb="Melee")
+                    dmg, modHealth = attack(self.unit_health[i], self.unit_melee[i], self.unit_data[i], self.enemy_health[idOfE], self.enemy_data[idOfE], rangeOfComb="Melee", effects=effect)
                     self.enemy_health[idOfE] = modHealth
                     reward += 0.2
                     if self.enemy_health[idOfE] <= 0:
@@ -504,10 +548,8 @@ class Warhammer40kEnv(gym.Env):
                     print("Model unit", modelName ,"is destroyed")
 
 
-        if self.enemyStrat["overwatch"] != -1:
-            self.enemyStrat["overwatch"] = -1
-        if self.enemyStrat["smokescreen"] != -1:
-            self.enemyStrat["smokescreen"] = -1
+        self.enemyStrat["overwatch"] = -1
+        self.enemyStrat["smokescreen"] = -1
 
         for i in range(len(self.modelOnOM)):
             if self.enemyOnOM[i] != -1 and self.modelOnOM[i] != -1:
@@ -629,7 +671,41 @@ class Warhammer40kEnv(gym.Env):
                                 strat = input("Would you like to use the Insane Bravery Stratagem? (y/n): ")
                             else: 
                                 strat = input("Valid answers are: y, yes, n, and no: ")
+            if self.enemyCP - 1 >= 0 and self.enemyInAttack[i][0] == 0: 
+                response = False
+                strat = input("Would you like to use the Heroic Intervention Stratagem? (y/n):")
+                while response == False:
+                    if strat.lower() == "y" or strat.lower() == "yes":
+                        response = True
+                        for j in range(len(self.unitInAttack)):
+                            if self.unitInAttack[j][0] == 1 and distance(self.enemy_coords[i], self.unit_coords[j]) >= 6:
+                                self.enemyInAttack[i][0] = 1
+                                self.enemyInAttack[i][1] = j
 
+                                self.enemyInAttack[self.enemyInAttack[j][1]][0] = 0
+                                self.enemyInAttack[self.enemyInAttack[j][1]][1] = 0
+
+                                self.enemy_coords[i][0] = self.enemy_coords[j][0] + 1
+                                self.enemy_coords[i][1] = self.enemy_coords[j][1] + 1
+                                self.enemy_coords[i] = bounds(self.unit_coords[i], self.b_len, self.b_hei)
+
+                                self.unitInAttack[j][1] = i
+                                self.enemyCP -= 1
+                                print("Heroic Intervention Successfully used!")
+                                break
+                    elif strat.lower() == "n" or strat.lower() == "no":
+                        response = True
+                    elif strat.lower() == "quit":
+                        self.game_over = True
+                        info = self.get_info
+                        return self.game_over, info
+                    elif strat.lower() == "?" or strat.lower() == "help":
+                        print("The Heroic Intervention strategem allows the player to choose an enemy unit within 6 inches and charge them")
+                        strat = input("Would you like to use the Heroic Intervention Stratagem? (y/n)")
+                    else:
+                        strat = input("Valid answers are: y, yes, n, and no: ")
+                if self.enemyInAttack[i][0] != 1:
+                    print("Heroic Intervention failed")
 
             if self.enemyInAttack[i][0] == 0 and self.enemy_health[i] > 0:
                 self.updateBoard()
