@@ -1002,7 +1002,12 @@ class Warhammer40kEnv(gym.Env):
                 ax.plot(self.enemy_coords[i][0],self.enemy_coords[i][1], 'ro')
         
         for i in range(len(self.coordsOfOM)):
-            ax.plot(self.coordsOfOM[i][0], self.coordsOfOM[i][1], 'o', color="black")
+            if i == 0:
+                ax.plot(self.coordsOfOM[i][0], self.coordsOfOM[i][1], 'o', color="black", label="Objective Marker(s)")
+            elif i == self.relic and self.vicCond == 2:
+                ax.plot(self.coordsOfOM[i][0], self.coordsOfOM[i][1], 'o', color="gold", label="Relic") 
+            else:
+                ax.plot(self.coordsOfOM[i][0], self.coordsOfOM[i][1], 'o', color="black")
 
         ax.legend(loc = "right")
         fileName = "display/"+str(self.restarts)+"_"+str(self.iter)+".png"
