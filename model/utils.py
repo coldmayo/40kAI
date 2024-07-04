@@ -28,7 +28,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 Transition = namedtuple('Transition',('state', 'action', 'next_state', 'reward'))
 
-def select_action(env, state, steps_done, policy_net):
+def select_action(env, state, steps_done, policy_net, len_model):
     sample = random.random()
     eps_threshold = EPS_END + (EPS_START - EPS_END) * \
         math.exp(-1. * steps_done / EPS_DECAY)
@@ -61,6 +61,9 @@ def select_action(env, state, steps_done, policy_net):
             sampled_action['use_cp'],
             sampled_action['cp_on']
         ]
+        for i in range(len_model):
+            label = "move_num_"+str(i)
+            action_list.append(sampled_action[label])
         action = torch.tensor([action_list])
         return action
 
@@ -74,6 +77,9 @@ def convertToDict(action):
         'use_cp': naction[4],
         'cp_on': naction[5]
     }
+    for i in range(len(naction)-6):
+        label = "move_num_"+str(i)
+        action_dict[label] = naction[i+6]
     return action_dict
 
 def optimize_model(policy_net, target_net, optimizer, memory, n_obs):

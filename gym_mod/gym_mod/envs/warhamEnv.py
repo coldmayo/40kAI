@@ -21,6 +21,9 @@ class Warhammer40kEnv(gym.Env):
             'cp_on': spaces.Discrete(len(model))   # choose which model unit cp is used on
         })
 
+        for i in range(len(model)):
+            label = "move_num_"+str(i)
+            self.action_space[label] = spaces.Discrete(12)
         # Initialize game state + board
         self.iter = 0
         self.restarts = 0
@@ -391,7 +394,14 @@ class Warhammer40kEnv(gym.Env):
                     reward -= 0.5
 
             if self.unitInAttack[i][0] == 0 and self.unit_health[i] > 0:
-                movement = dice()+self.unit_data[i]["Movement"]
+                max_move = dice()+self.unit_data[i]["Movement"]
+                # set specific movement length
+                label = "move_num_"+str(i)
+                if action[label] >= max_move:
+                    movement = max_move
+                elif action[label] < max_move:
+                    movement = action[label]
+
                 if action["move"] == 0:   # down
                     self.unit_coords[i][0] += movement
                 elif action["move"] == 1:   # up
@@ -406,8 +416,18 @@ class Warhammer40kEnv(gym.Env):
                             reward += 0.5
                         else:
                             reward -= 0.5
-
-            # staying in bounds
+                if self.trunc == False:
+                    if action["move"] == 0:
+                        print("Model unit", modelName, "moved", movement, "inches downward")
+                    elif action["move"] == 1:
+                        print("Model unit", modelName, "moved", movement, "inches upward")
+                    elif action["move"] == 2:
+                        print("Model unit", modelName, "moved", movement, "inches left")
+                    elif action["move"] == 3:
+                        print("Model unit", modelName, "moved", movement, "inches right")
+                    elif action["move"] == 4:
+                        print("Model unit", modelName, "did not move")
+                # staying in bounds
 
                 self.unit_coords[i] = bounds(self.unit_coords[i], self.b_len, self.b_hei)
                 for j in range(len(self.enemy_health)):
