@@ -77,6 +77,8 @@ for e in enemy:
 env = gym.make("40kAI-v0", disable_env_checker=True, enemy = enemy, model = model, b_len = b_len, b_hei = b_hei)
 
 n_actions = [5,2,len(enemy), len(enemy), 5, len(model)]
+for i in range(len(model)):
+    n_actions.append(12)
 state, info = env.reset(m=model, e=enemy)
 n_observations = len(state)
 
@@ -119,7 +121,7 @@ while end == False:
     epLen += 1
     state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
     
-    action = select_action(env, state, i, policy_net)
+    action = select_action(env, state, i, policy_net, len(model))
     action_dict = convertToDict(action)
     if trunc == False:
         print(env.get_info())

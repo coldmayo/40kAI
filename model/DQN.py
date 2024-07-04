@@ -15,6 +15,9 @@ class DQN(nn.Module):
         self.charge_head = nn.Linear(128, n_actions[3])
         self.use_cp = nn.Linear(128, n_actions[4])
         self.cp_on = nn.Linear(128, n_actions[5])
+        self.move_len = []
+        for i in range(len(n_actions)-6):
+            self.move_len.append(nn.Linear(128, n_actions[i+6]))
 
     def forward(self, x):
         x = F.relu(self.layer1(x))
@@ -25,4 +28,7 @@ class DQN(nn.Module):
         charge_action = self.charge_head(x)
         use_cp_action = self.use_cp(x)
         cp_on_action = self.cp_on(x)
-        return [move_action, attack_action, shoot_action, charge_action, use_cp_action, cp_on_action]
+        decs = [move_action, attack_action, shoot_action, charge_action, use_cp_action, cp_on_action]
+        for i in range(len(self.move_len)):
+            decs.append(self.move_len[i](x))
+        return decs

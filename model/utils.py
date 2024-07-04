@@ -28,7 +28,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 Transition = namedtuple('Transition',('state', 'action', 'next_state', 'reward'))
 
-def select_action(env, state, steps_done, policy_net):
+def select_action(env, state, steps_done, policy_net, len_model):
     sample = random.random()
     eps_threshold = EPS_END + (EPS_START - EPS_END) * \
         math.exp(-1. * steps_done / EPS_DECAY)
@@ -61,6 +61,9 @@ def select_action(env, state, steps_done, policy_net):
             sampled_action['use_cp'],
             sampled_action['cp_on']
         ]
+        for i in range(len_model):
+            label = "move_num_"+str(i)
+            action_list.append(sampled_action[label])
         action = torch.tensor([action_list])
         return action
 
@@ -74,6 +77,9 @@ def convertToDict(action):
         'use_cp': naction[4],
         'cp_on': naction[5]
     }
+    for i in range(len(naction)-6):
+        label = "move_num_"+str(i)
+        action_dict[label] = naction[i+6]
     return action_dict
 
 def optimize_model(policy_net, target_net, optimizer, memory, n_obs):
@@ -93,17 +99,22 @@ def optimize_model(policy_net, target_net, optimizer, memory, n_obs):
     reward_batch = torch.cat(batch.reward)
 
     state_action_values = policy_net(state_batch)
-    move_action, attack_action, shoot_action, charge_action, use_cp_action, cp_on_action = state_action_values
-    selected_action_values = torch.cat([
+    move_action, attack_action, shoot_action, charge_action, use_cp_action, cp_on_action, *move_actions = state_action_values
+    arr = [
         move_action.gather(1, action_batch[:, 0].unsqueeze(1)),
         attack_action.gather(1, action_batch[:, 1].unsqueeze(1)),
         shoot_action.gather(1, action_batch[:, 2].unsqueeze(1)),
         charge_action.gather(1, action_batch[:, 3].unsqueeze(1)),
         use_cp_action.gather(1, action_batch[:, 4].unsqueeze(1)),
         cp_on_action.gather(1, action_batch[:, 5].unsqueeze(1))
-    ], dim=1)
+    ] 
+    
 
-    next_state_values = torch.zeros((BATCH_SIZE,6), device=device)
+    for i in range(len(move_actions)):
+        arr.append(move_actions[i].gather(1, action_batch[:, i+6].unsqueeze(1)))
+    selected_action_values = torch.cat(arr, dim=1)
+
+    next_state_values = torch.zeros((BATCH_SIZE,6+len(move_actions)), device=device)
     with torch.no_grad():
         decision = target_net(non_final_next_states)
         action = []

@@ -21,6 +21,9 @@ class Warhammer40kEnv(gym.Env):
             'cp_on': spaces.Discrete(len(model))   # choose which model unit cp is used on
         })
 
+        for i in range(len(model)):
+            label = "move_num_"+str(i)
+            self.action_space[label] = spaces.Discrete(12)
         # Initialize game state + board
         self.iter = 0
         self.restarts = 0
@@ -391,7 +394,14 @@ class Warhammer40kEnv(gym.Env):
                     reward -= 0.5
 
             if self.unitInAttack[i][0] == 0 and self.unit_health[i] > 0:
-                movement = dice()+self.unit_data[i]["Movement"]
+                max_move = dice()+self.unit_data[i]["Movement"]
+                # set specific movement length
+                label = "move_num_"+str(i)
+                if action[label] >= max_move:
+                    movement = max_move
+                elif action[label] < max_move:
+                    movement = action[label]
+
                 if action["move"] == 0:   # down
                     self.unit_coords[i][0] += movement
                 elif action["move"] == 1:   # up
@@ -406,8 +416,18 @@ class Warhammer40kEnv(gym.Env):
                             reward += 0.5
                         else:
                             reward -= 0.5
-
-            # staying in bounds
+                if self.trunc == False:
+                    if action["move"] == 0:
+                        print("Model unit", modelName, "moved", movement, "inches downward")
+                    elif action["move"] == 1:
+                        print("Model unit", modelName, "moved", movement, "inches upward")
+                    elif action["move"] == 2:
+                        print("Model unit", modelName, "moved", movement, "inches left")
+                    elif action["move"] == 3:
+                        print("Model unit", modelName, "moved", movement, "inches right")
+                    elif action["move"] == 4:
+                        print("Model unit", modelName, "did not move")
+                # staying in bounds
 
                 self.unit_coords[i] = bounds(self.unit_coords[i], self.b_len, self.b_hei)
                 for j in range(len(self.enemy_health)):
@@ -673,7 +693,7 @@ class Warhammer40kEnv(gym.Env):
                                 strat = input("Valid answers are: y, yes, n, and no: ")
             if self.enemyCP - 2 >= 0 and self.enemyInAttack[i][0] == 0: 
                 response = False
-                strat = input("Would you like to use the Heroic Intervention Stratagem? (y/n):")
+                strat = input("Would you like to use the Heroic Intervention Stratagem? (y/n): ")
                 while response == False:
                     if strat.lower() == "y" or strat.lower() == "yes":
                         response = True
@@ -701,7 +721,7 @@ class Warhammer40kEnv(gym.Env):
                         return self.game_over, info
                     elif strat.lower() == "?" or strat.lower() == "help":
                         print("The Heroic Intervention strategem allows the player to choose an enemy unit within 6 inches and charge them")
-                        strat = input("Would you like to use the Heroic Intervention Stratagem? (y/n)")
+                        strat = input("Would you like to use the Heroic Intervention Stratagem? (y/n): ")
                     else:
                         strat = input("Valid answers are: y, yes, n, and no: ")
                 if self.enemyInAttack[i][0] != 1:
@@ -719,12 +739,28 @@ class Warhammer40kEnv(gym.Env):
                     info = self.get_info()
                     return self.game_over, info
                 if dire.lower() != "none":
-                	print("Rolling 1 D6...")
-                	roll = dice()
-                	print("You rolled a", roll)
-                	movement = roll+self.unit_data[i]["Movement"]
+                    print("Rolling 1 D6...")
+                    roll = dice()
+                    print("You rolled a", roll)
+                    movement = roll+self.unit_data[i]["Movement"]
+                    move_len = input("What how many inches would you like to move your unit: ")
+                    response = False
+                    while response == False:
+                        if is_num(move_len) == True:
+                            if int(move_len) <= movement:
+                                move_num = int(move_len)
+                                response = True
+                            else:
+                                move_len = input("Not in range, try again: ")
+                        elif move_len.lower() == "quit" or move_len.lower() == "q":
+                            self.game_over = True
+                            info = self.get_info()
+                            return self.game_over, info
+                        else:
+                            move_len = input("Not a number, try again: ")
                 response = False
                 while response == False:
+                    
                     if dire.lower() == "down":
                         self.enemy_coords[i][0] += movement
                         response = True
@@ -746,6 +782,7 @@ class Warhammer40kEnv(gym.Env):
                     else:
                         dire = input("Not a valid response (up, down, left, right):")
                         response = False
+                    
 
             # staying in bounds
 
@@ -756,7 +793,7 @@ class Warhammer40kEnv(gym.Env):
                 
                 if self.enemyCP - 1 >= 0 and battleSh == False:
                     response = False
-                    strat = input("Would you like to use the Fire Overwatch Stratagem? (y/n)")
+                    strat = input("Would you like to use the Fire Overwatch Stratagem? (y/n): ")
                     while response == False:
                         if strat.lower() == "y" or strat.lower() == "yes":
                             response = True

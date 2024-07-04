@@ -58,6 +58,8 @@ for e in enemy:
 
 state, info = env.reset(m=model, e=enemy)
 n_actions = [5,2,len(info["player health"]), len(info["player health"]), 5, len(info["model health"])]
+for i in range(len(model)):
+    n_actions.append(12)
 n_observations = len(state)
 
 policy_net = DQN(n_observations, n_actions).to(device)
@@ -87,7 +89,7 @@ print("The model controls units starting with 2 (i.e. 21, 22, etc)\n")
 while isdone == False:
     done, info = env.player()
     state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
-    action = select_action(env, state, i, policy_net)
+    action = select_action(env, state, i, policy_net, len(model))
     action_dict = convertToDict(action)
     if done != True:
         next_observation, reward, done, _, info = env.step(action_dict)
