@@ -418,6 +418,7 @@ Form :: Form() {
 	FileChooserDialog folderBrowserDialog("", FILE_CHOOSER_ACTION_OPEN);
     folderBrowserDialog.add_button("Cancel", RESPONSE_CANCEL);
     folderBrowserDialog.add_button("Open", RESPONSE_OK);
+	system("clear");
     char resolved_path[PATH_MAX];
     realpath("../../40kAI", resolved_path);
     strcat(resolved_path, "/models");
@@ -463,6 +464,7 @@ Form :: Form() {
     FileChooserDialog folderBrowserDialog("", FILE_CHOOSER_ACTION_OPEN);
     folderBrowserDialog.add_button("Cancel", RESPONSE_CANCEL);
     folderBrowserDialog.add_button("Open", RESPONSE_OK);
+    system("clear");
     char resolved_path[PATH_MAX];
     realpath("../../40kAI", resolved_path);
     strcat(resolved_path, "/models");
