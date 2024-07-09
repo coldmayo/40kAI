@@ -5,6 +5,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 void showIcon() {
     FILE *fptr;
@@ -34,6 +35,7 @@ int parseInput(char *comm) {
     char buffer[50];
     int running = 0;
     if (strcmp(comm, "install") == 0) {
+		system("cd .. ; cd gui/build ; cmake --build . --config Debug");
         char buffer2[50];
         printf("\nStarting installation...\n");
         printf("Installing Application...\n");
@@ -151,50 +153,68 @@ int parseInput(char *comm) {
         printf("Installation Complete!\n");
         
     } else if (strcmp(comm, "uninstall") == 0) {
-        printf("Sad to see you go\n");
-        printf("Starting uninstallation...");
-        char actualpath[PATH_MAX];
-        char user[50];
-        if (realpath("../../40kAI/", actualpath) != NULL) {
-            int len = strlen(actualpath);
-            for (int i = 0; i < len; i++) {
-                if (i > 4) {
-                    slice_str(actualpath, buffer, i - 5, i);
-                    if (strcmp(buffer, "/home/") == 0) {
-                        for (int j = i+1; j<len; j++) {
-                            if (actualpath[j] == '/') {
-                                slice_str(actualpath, user, i+1, j-1);
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
+        char yaOrna[100];
+        printf("Are you sure? (y/n)> ");
+        scanf("%s", yaOrna);
+		bool ans = false;
+        while (ans == false) {
+			if (strcmp(yaOrna, "n") == 0 || strcmp(yaOrna, "no") == 0) {
+				ans = true;
+				printf("Whew, thought we lost you there\n");
+				return running;
+			} else if (strcmp(yaOrna, "y") == 0 || strcmp(yaOrna, "yes") == 0) {
+				ans = true;
+				printf("Sad to see you go\n");
+        		printf("Starting uninstallation...");
+        		system("cd .. ; cd gui/build ; rm Application");
+        		char actualpath[PATH_MAX];
+        		char user[50];
+        		if (realpath("../../40kAI/", actualpath) != NULL) {
+            		int len = strlen(actualpath);
+            		for (int i = 0; i < len; i++) {
+                		if (i > 4) {
+                    		slice_str(actualpath, buffer, i - 5, i);
+                    		if (strcmp(buffer, "/home/") == 0) {
+                        		for (int j = i+1; j<len; j++) {
+                            		if (actualpath[j] == '/') {
+                                		slice_str(actualpath, user, i+1, j-1);
+                                		break;
+                            		}
+                        		}
+                    		}
+               			}
+            		}
+        		}
+
+        		char desktopFile[100];
+        		char command[50];
+        		strcpy(desktopFile, "/home/");
+        		strcat(desktopFile, user);
+        		strcat(desktopFile, "/.local/share/applications/org.kde.40kAI.desktop");
+        		strcpy(command, "rm ");
+        		strcat(command, desktopFile);
+        		system(command);
+
+        		char desktopDir[PATH_MAX] = "/home/";
+        		strcat(desktopDir, user);
+        		strcat(desktopDir, "/Desktop/org.kde.40kAI.desktop");
+
+        		if (access(desktopDir, F_OK) == 0) {
+            		char command[50];
+            		strcpy(command, "rm ");
+            		strcat(command, desktopDir);
+            		system(command);
+        		}
+
+        		system("cd .. ; source .venv/bin/activate ; cd gym_mod ; pip uninstall Warhammer40kAI");
+        		printf("\nUninstallation Complete :(\n");
+
+    		} else {
+				printf("\nCommand not recognized, yes or no> ");
+				scanf("%s", yaOrna);
+			}
         }
-
-        char desktopFile[100];
-        char command[50];
-        strcpy(desktopFile, "/home/");
-        strcat(desktopFile, user);
-        strcat(desktopFile, "/.local/share/applications/org.kde.40kAI.desktop");
-        strcpy(command, "rm ");
-        strcat(command, desktopFile);
-        system(command);
-
-        char desktopDir[PATH_MAX] = "/home/";
-        strcat(desktopDir, user);
-        strcat(desktopDir, "/Desktop/org.kde.40kAI.desktop");
-
-        if (access(desktopDir, F_OK) == 0) {
-            char command[50];
-            strcpy(command, "rm ");
-            strcat(command, desktopDir);
-            system(command);
-        }
-
-        system("cd .. ; source .venv/bin/activate ; cd gym_mod ; pip uninstall Warhammer40kAI");
-        printf("\nUninstallation Complete :(\n");
-
+        return running;
     } else if (strcmp(comm, "help") == 0) {
 
         printf("Commands:\ninstall: Installs the 40kAI app\nuninstall: Uninstalls the 40kAI app (why would you do this)\nexit: leave the installation prompt\n");
