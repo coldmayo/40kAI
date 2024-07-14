@@ -16,6 +16,7 @@
 #include "include/units.h"
 #include "include/warn.h"
 #include "include/help.h"
+#include "include/play.h"
 
 using namespace Glib;
 using namespace Gtk;
@@ -450,8 +451,8 @@ Form :: Form() {
   labelPage4.set_label("Play");
   tabControl1.set_tab_label(tabPage4, labelPage4);
   tabPage4.add(fixedTabPage4);
-  button2.set_label("Play");
-  textbox2.set_text("Play Against Model in Terminal:");
+  button2.set_label("Play in Terminal");
+  textbox2.set_text("Play Against Model:");
   button2.signal_button_release_event().connect([&](GdkEventButton*) {
     if (playing == false) {
       runPlayAgainstModelInBackground();
@@ -488,13 +489,21 @@ Form :: Form() {
     return true;
   });
 
+  playGUI.set_label("Play in GUI");
+  playGUI.signal_button_release_event().connect([&](GdkEventButton* event) {
+	openPlayGUI();
+	return true;
+  });
+
   fixedTabPage4.add(textbox2);
   fixedTabPage4.add(button2);
   fixedTabPage4.add(showBoard);
+  fixedTabPage4.add(playGUI);
   fixedTabPage4.add(button5);
   fixedTabPage4.add(setModelFile);
   fixedTabPage4.move(textbox2, 10, 10);
-  fixedTabPage4.move(showBoard, 60, 80);
+  fixedTabPage4.move(playGUI, 130, 80);
+  fixedTabPage4.move(showBoard, 220, 80);
   fixedTabPage4.move(button2, 10, 80);
   fixedTabPage4.move(button5, 10, 40);
   fixedTabPage4.move(setModelFile, 80, 40);
@@ -525,6 +534,12 @@ void Form :: changeMetrics(std::string path) {
 int Form :: openPopUp() {
   boardShow = new PopUp;
   boardShow->show();
+  return 0;
+}
+
+int Form :: openPlayGUI() {
+  play = new Play;
+  play->show();
   return 0;
 }
 

@@ -33,6 +33,7 @@ public :
   int openArmyView();
   int openWarnMenu(std::string mess, int comm);
   int openHelpMenu();
+  int openPlayGUI();
   void changeMetrics(std::string path);
   void recentMetrics();
   std::string toLower(std::string data);
@@ -41,6 +42,7 @@ private:
   Window* boardShow;
   Window* armyView;
   Window* warn;
+  Window* play;
   Window* helpMenu;
   Image pictureBox1;
   Image metricBox;
@@ -135,6 +137,7 @@ private:
   HeaderBar bar;
   Button help;
   Button chooseMetrics;
+  Button playGUI;
 };
 
 #endif
