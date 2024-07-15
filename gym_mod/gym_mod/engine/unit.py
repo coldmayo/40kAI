@@ -50,7 +50,7 @@ class Unit:
                     if self.playInGUI == False:
                         coords = input("Not in bounds, try again: ")
                     else:
-                        sendToGUI("Not in bounds, try again:")
+                        sendToGUI("Not in bounds (xmin: {}, xmax: {}, ymin: {}, ymax: {}), try again:".format(xmin, xmax, ymin, ymax))
                         coords = recieveGUI()
                         
     def deployUnit(self, deployment, unitType, GUI = False, choose=False):
@@ -63,7 +63,6 @@ class Unit:
                 sendToGUI("Would you like to choose where to deploy this unit? (y/n): ")
                 contChoose = recieveGUI()
             while run:
-                print(contChoose)
                 if contChoose.lower() == "y" or contChoose.lower() == "yes":
                     choose = True
                     run = False
@@ -87,7 +86,10 @@ class Unit:
                     self.unit_coords[1] = np.random.randint(self.b_len/2, self.b_len)
             elif choose == True:
                 if unitType == "player":
-                    print("The bounds for x axis: {} to {}\nThe bounds for y axis: {} to {}".format(self.b_hei/2, self.b_hei, self.b_len/2, self.b_len))
+                    if self.playInGUI == False:
+                        print("The bounds for x axis: {} to {}\nThe bounds for y axis: {} to {}".format(self.b_hei/2, self.b_hei, self.b_len/2, self.b_len))
+                    else:
+                        sendToGUI("The bounds for x axis: {} to {}\nThe bounds for y axis: {} to {}".format(self.b_hei/2, self.b_hei, self.b_len/2, self.b_len))
                     self.selectUnitPos(self.b_hei/2, self.b_hei, self.b_len/2, self.b_len)
         elif deployment == "Hammer and Anvil":
             if choose == False:
@@ -99,7 +101,10 @@ class Unit:
                     self.unit_coords[1] = np.random.randint(self.b_len*3/4, self.b_len)
             elif choose == True:
                 if unitType == "player":
-                    print("The bounds for x axis: {} to {}\nThe bounds for y axis: {} to {}".format(0, self.b_hei, self.b_len*3/4, self.b_len))
+                    if self.playInGUI == False:
+                        print("The bounds for x axis: {} to {}\nThe bounds for y axis: {} to {}".format(0, self.b_hei, self.b_len*3/4, self.b_len))
+                    else:
+                        sendToGUI("The bounds for x axis: {} to {}\nThe bounds for y axis: {} to {}".format(0, self.b_hei, self.b_len*3/4, self.b_len))
                     self.selectUnitPos(0, self.b_hei, self.b_len*3/4, self.b_len)
 
         elif deployment == "Dawn of War":
@@ -112,7 +117,10 @@ class Unit:
                     self.unit_coords[1] = np.random.randint(0, self.b_len)
             elif choose == True:
                 if unitType == "player":
-                    print("The bounds for x axis: {} to {}\nThe bounds for y axis: {} to {}".format(0, self.b_hei, self.b_len*3/4, self.b_len))
+                    if self.playInGUI == False:
+                        print("The bounds for x axis: {} to {}\nThe bounds for y axis: {} to {}".format(0, self.b_hei, self.b_len*3/4, self.b_len))
+                    else:
+                        sendToGUI("The bounds for x axis: {} to {}\nThe bounds for y axis: {} to {}".format(0, self.b_hei, self.b_len*3/4, self.b_len))
                     self.selectUnitPos(self.b_hei*3/4, self.b_hei, 0, self.b_len)
 
     def showUnitData(self):

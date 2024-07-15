@@ -18,5 +18,3 @@ def recieveGUI():
                 response = f.read()
             os.remove(file_path)
             return response
-        else:
-            time.sleep(0.1)

@@ -9,6 +9,7 @@ warnings.filterwarnings("ignore")
 
 from model.DQN import *
 from model.utils import *
+from gym_mod.engine.GUIinteract import *
 
 import torch
 import torch.nn as nn
@@ -39,11 +40,11 @@ if sys.argv[1] == "None":
 
     checkpoint = torch.load(modelpth[-1])
 
-    print("Playing with environment saved here: ", envs[-1])
+    #print("Playing with environment saved here: ", envs[-1])
     with open(envs[-1], 'rb') as f:
         env, model, enemy = pickle.load(f)
 else: 
-    print("Playing with model saved here: ", sys.argv[1])
+    #print("Playing with model saved here: ", sys.argv[1])
     with open(sys.argv[1], 'rb') as f:
         env, model, enemy = pickle.load(f)
     f = str(sys.argv[1])
@@ -56,11 +57,19 @@ if sys.argv[2] == "True":
 
 deployType = ["Search and Destroy", "Hammer and Anvil", "Dawn of War"]
 deployChang = np.random.choice(deployType)
-print("Deployment Type: ", deployChang)
+
+if playInGUI == False:
+    print("Deployment Type: ", deployChang)
+else:
+    sendToGUI("Deployment Type: {}".format(deployChang))
+
 for m in model:
     m.deployUnit(deployChang, "model")
+i = 0
 for e in enemy:
+    sendToGUI("Deploying Unit {} or {}".format(i, e.showUnitData()["Name"]))
     e.deployUnit(deployChang, "player", GUI=playInGUI, choose = True)
+    i += 1
 
 state, info = env.reset(m=model, e=enemy)
 n_actions = [5,2,len(info["player health"]), len(info["player health"]), 5, len(info["model health"])]
@@ -82,15 +91,20 @@ target_net.eval()
 isdone = False
 i = 0
 
-env.reset(m=model, e=enemy, playType = playInGUI, Type="big")
+if playInGUI == True:
+    env.reset(m=model, e=enemy, playType = playInGUI, Type="big", trunc=True)
+else:
+    env.reset(m=model, e=enemy, playType = playInGUI, Type="big", trunc=False)
 
 reward = 0
-
-print("\nInstructions:\n")
-print("Observe board at board.txt or click the 'Show Board' button")
-print("The popup from the button automatically updates, so you won't need to keep pressing it")
-print("The player (you) controls units starting with 1 (i.e. 11, 12, etc)")
-print("The model controls units starting with 2 (i.e. 21, 22, etc)\n")
+if playInGUI == False:
+    print("\nInstructions:\n")
+    print("Observe board at board.txt or click the 'Show Board' button")
+    print("The popup from the button automatically updates, so you won't need to keep pressing it")
+    print("The player (you) controls units starting with 1 (i.e. 11, 12, etc)")
+    print("The model controls units starting with 2 (i.e. 21, 22, etc)\n")
+else:
+    sendToGUI("\nInstructions:\nObserve board at board.txt or click the 'Show Board' button\nThe popup from the button automatically updates, so you won't need to keep pressing it\nThe player (you) controls units starting with 1 (i.e. 11, 12, etc)\nThe model controls units starting with 2 (i.e. 21, 22, etc)\n")
 
 while isdone == False:
     done, info = env.player()
@@ -104,18 +118,24 @@ while isdone == False:
         enemy_health = info["player health"]
         inAttack = info["in attack"]
 
-        if inAttack == 1:
-            print("The units are fighting")
-
         board = env.render()
         message = "Iteration {} ended with reward {}, Player health {}, Model health {}".format(i, reward, enemy_health, unit_health)
-        print(message)
+        if playInGUI == False:
+            print(message)
+        else:
+            sendToGUI(message)
         next_state = torch.tensor(next_observation, dtype=torch.float32, device=device).unsqueeze(0)
         state = next_state
     if done == True:
         if reward > 0:
-            print("model won!")
+            if playInGUI == False:
+                print("model won!")
+            else:
+                sendToGUI("model won!")
         else:
-            print("you won!")
+            if playInGUI == False:
+                print("you won!")
+            else:
+                sendToGUI("you won!")
         isdone = True
     i+=1
