@@ -72,15 +72,15 @@ Play :: Play() {
 	dispatcher.connect(sigc::mem_fun(*this, &Play::update_text_view));
 	backgroundUpdate();
 	innerWindow.add(text);
-	innerWindow.set_size_request(300,100);
+	innerWindow.set_size_request(350,100);
 	
 	
 	fixed.add(numBox);
 	fixed.add(enter);
 	fixed.add(innerWindow);
 	fixed.move(innerWindow, 10, 10);
-	fixed.move(numBox, 10, 100);
-	fixed.move(enter, 10, 150);
+	fixed.move(numBox, 10, 120);
+	fixed.move(enter, 10, 170);
 
     resize(400,400);
     show_all();
