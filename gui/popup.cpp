@@ -7,23 +7,10 @@
 #include <thread>
 #include <chrono>
 
+#include "include/popup.h"
+
 using namespace Glib;
 using namespace Gtk;
-
-class PopUp : public Gtk::Window {
-  public : 
-    PopUp();
-    std::string openFile(std::string);
-    bool isNum(char num);
-    void update();
-    void keepUpdating();
-    void backgroudUpdate();
-  private:
-    Label contents;
-    Fixed fixed;
-    ScrolledWindow scrolledWindow;
-    HeaderBar bar;
-};
 
 bool PopUp :: isNum(char num) {
   std::string nums= "0123456789";
@@ -84,9 +71,25 @@ void PopUp :: keepUpdating() {
   }
 }
 
-void PopUp :: backgroudUpdate() {
-  std::thread t(&PopUp::keepUpdating, this);
-  t.detach();
+void PopUp :: updateImage() {
+	pictureBox.set("img/board.png");
+}
+
+void PopUp :: keepUpdatingElecBoogaloo() {
+	while (true) {
+		updateImage();
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
+}
+
+void PopUp :: backgroundUpdate(bool textMode) {
+  if (textMode == true) {
+	std::thread t(&PopUp::keepUpdating, this);
+	t.detach();
+  } else {
+	std::thread t(&PopUp::keepUpdatingElecBoogaloo, this);
+	t.detach();
+  }  
 }
 
 PopUp :: PopUp() {
@@ -97,12 +100,14 @@ PopUp :: PopUp() {
   add(scrolledWindow);
   scrolledWindow.add(fixed);
   
-  bar.set_title("board.txt");
+  bar.set_title("Game Board");
 
-  backgroudUpdate();
+  backgroundUpdate(false);
   
   fixed.add(contents);
   fixed.move(contents, 0, 0);
+  fixed.add(pictureBox);
+  fixed.move(pictureBox, 0, 0);
 
   resize(800,500);
   show_all();

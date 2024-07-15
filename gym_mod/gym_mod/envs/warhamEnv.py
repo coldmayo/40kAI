@@ -698,6 +698,8 @@ class Warhammer40kEnv(gym.Env):
                     ans = recieveGUI()
 
         for i in range(len(self.enemy_health)):
+            self.updateBoard()
+            self.showBoard()
             playerName = i+11
             if self.playType == False:
                 print("For unit", playerName)
@@ -782,6 +784,10 @@ class Warhammer40kEnv(gym.Env):
 
                                 self.unitInAttack[j][1] = i
                                 self.enemyCP -= 2
+
+                                self.updateBoard()
+                                self.showBoard()
+
                                 if self.playType == False:
                                     print("Heroic Intervention Successfully used!")
                                 else:
@@ -895,7 +901,10 @@ class Warhammer40kEnv(gym.Env):
                 for j in range(len(self.enemy_health)):
                     if self.enemy_coords[i] == self.unit_coords[j]:
                         self.enemy_coords[i][0] -= 1
-                
+
+                self.updateBoard()
+                self.showBoard()
+
                 if self.enemyCP - 1 >= 0 and battleSh == False:
                     response = False
                     if self.playType == False:
@@ -1200,7 +1209,7 @@ class Warhammer40kEnv(gym.Env):
     def returnBoard(self):
         return self.board
 
-    def render(self, mode='human'):
+    def render(self, mode='train'):
         self.updateBoard()
         
         fig = plt.figure()
@@ -1244,7 +1253,11 @@ class Warhammer40kEnv(gym.Env):
                 ax.plot(self.coordsOfOM[i][0], self.coordsOfOM[i][1], 'o', color="black")
 
         ax.legend(loc = "right")
-        fileName = "display/"+str(self.restarts)+"_"+str(self.iter)+".png"
+        if mode == "train":
+            fileName = "display/"+str(self.restarts)+"_"+str(self.iter)+".png"
+        else:
+            fileName = "gui/build/img/board.png"
+            fig.savefig("gui/img/board.png")
         fig.savefig(fileName)
         ax.cla()
         plt.close()
@@ -1254,6 +1267,7 @@ class Warhammer40kEnv(gym.Env):
     def showBoard(self):
         board = self.returnBoard()
         np.savetxt("board.txt", board.astype(int), fmt="%i", delimiter=",")
+        self.render(mode="play")
 
     def close(self):
         pass
