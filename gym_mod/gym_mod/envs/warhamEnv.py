@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from gym_mod.engine.utils import *
+from gym_mod.engine.GUIinteract import *
 
 class Warhammer40kEnv(gym.Env):
     def __init__(self, enemy, model, b_len, b_hei):
@@ -27,6 +28,7 @@ class Warhammer40kEnv(gym.Env):
         # Initialize game state + board
         self.iter = 0
         self.restarts = 0
+        self.playType = False
         self.b_len = b_len
         self.b_hei = b_hei
         self.board = np.zeros((self.b_len,self.b_hei))
@@ -59,6 +61,7 @@ class Warhammer40kEnv(gym.Env):
         self.enemyOC = []
         self.relic = 3
         self.vicCond = dice(max = 3)   # roll for victory condition: Slay and Secure, Ancient Relic, Domination
+        self.modelUpdates = ""
         if self.trunc == True:
             if self.vicCond == 1:
                 print("Victory Condition rolled: Slay and Secure")
@@ -96,9 +99,11 @@ class Warhammer40kEnv(gym.Env):
     # small reset = used in training
     # big reset reset env completely for testing/validation
 
-    def reset(self, m, e, Type = "small"):
+    def reset(self, m, e, playType=False, Type = "small", trunc = False):
         self.iter = 0
-        self.trunc = False
+        self.trunc = trunc
+        self.playType=playType
+
         if Type == "small":
             self.restarts += 1
         elif Type == "big":
@@ -120,6 +125,7 @@ class Warhammer40kEnv(gym.Env):
         self.enemyVP = 0
         self.numTurns = 0
         self.vicCond = dice(max = 3)
+        self.modelUpdates = ""
         
         for i in range(len(self.enemy_data)):
             self.enemy_coords.append([e[i].showCoords()[0], e[i].showCoords()[1]])
@@ -473,6 +479,8 @@ class Warhammer40kEnv(gym.Env):
                             reward += 0.2
                             if self.trunc == False:
                                 print("Model Unit",modelName,"shoots Enemy Unit",idOfE+11,sum(dmg),"times")
+                            else:
+                                self.modelUpdates+="Model Unit {} shoots Enemy Unit {} {} times\n".format(modelName, idOfE+11, sum(dmg))
                         else:
                             reward -= 0.5
                             if self.trunc == False:
@@ -492,6 +500,8 @@ class Warhammer40kEnv(gym.Env):
                     if idOfE in chargeAble:
                         if self.trunc == False:
                             print("Model unit", modelName,"started attack with Enemy unit", j+11)
+                        else:
+                            self.modelUpdates+="Model unit {} started attack with Enemy Unit {}\n".format(modelName, j+11)
                         self.unitInAttack[i][0] = 1
                         self.unitInAttack[i][1] = j
 
@@ -549,6 +559,8 @@ class Warhammer40kEnv(gym.Env):
                         reward -= 0.5
                     if self.trunc == False:
                         print("Model unit", modelName,"pulled out of fight with Enemy unit", idOfE+11)
+                    else:
+                        self.modelUpdates+="Model Unit {} pulled out of fight with Enemy unit {}\n".format(modelName, idOfE+11)
                     
                     if battleSh == True:
                             diceRoll = dice()
@@ -646,34 +658,81 @@ class Warhammer40kEnv(gym.Env):
         self.modelCP += 1
 
         if self.numTurns == 0:
-            if self.vicCond == 1:
-                print("Victory Condition rolled: Slay and Secure")
-            elif self.vicCond == 2:
-                print("Victory Condition rolled: Ancient Relic")
-            elif self.vicCond == 3:
-                print("Victory Condition rolled: Domination")
+            if self.playType == False:
+                if self.vicCond == 1:
+                    print("Victory Condition rolled: Slay and Secure")
+                elif self.vicCond == 2:
+                    print("Victory Condition rolled: Ancient Relic")
+                elif self.vicCond == 3:
+                    print("Victory Condition rolled: Domination")
+            else:
+                if self.vicCond == 1:
+                    sendToGUI("Victory Condition rolled: Slay and Secure")
+                elif self.vicCond == 2:
+                    sendToGUI("Victory Condition rolled: Ancient Relic")
+                elif self.vicCond == 3:
+                    sendToGUI("Victory Condition rolled: Domination")
+        if self.playType == False:
+            print(self.get_info())
+        else:
+            info = self.get_info()
+            moreInfo = "Model Unit Health: {}, Player Unit Health: {}\nModel CP: {}, Player CP: {}\nModel VP: {}, Player VP: {}\n".format(info["model health"], info["player health"], info["modelCP"], info["playerCP"], info["model VP"], info["player VP"])
 
-        print(self.get_info())
+        if self.playType != False:
+            if self.modelUpdates != "":
+                sendToGUI(moreInfo+self.modelUpdates+"\nWould you like to continue: ")
+            else:
+                sendToGUI(moreInfo+"\nWould you like to continue: ")
+            ans = recieveGUI()
+            response = False
+            while response == False:
+                if ans.lower() == "y" or ans.lower() == "yes":
+                    response = True
+                    self.modelUpdates = ""
+                elif ans.lower() == "n" or ans.lower() == "no":
+                    self.game_over = True
+                    info = self.get_info
+                    return self.game_over, info
+                else:
+                    sendToGUI("Its a yes or no question dude...: ")
+                    ans = recieveGUI()
 
         for i in range(len(self.enemy_health)):
             playerName = i+11
-            print("For unit", playerName)
+            if self.playType == False:
+                print("For unit", playerName)
+            else:
+                sendToGUI("For unit {}".format(playerName))
             battleSh = False
             if isBelowHalfStr(self.enemy_data[i],self.enemy_health[i]) == True and self.unit_health[i] > 0:
-                print("This unit is Battle-shocked, starting test...")
-                print("Rolling 2D6...")
-                diceRoll = dice(num=2)
-                print("You rolled", diceRoll[0], diceRoll[1])
+                if self.playType == False:
+                    print("This unit is Battle-shocked, starting test...")
+                    print("Rolling 2D6...")
+                    diceRoll = dice(num=2)
+                    print("You rolled", diceRoll[0], diceRoll[1])
+                else:
+                    diceRoll = dice(num=2)
+                    sendToGUI("This unit is Battle-shocked, starting test...\nRolling 2D6...\nYou rolled: {} and {}".format(diceRoll[0], diceRoll[1]))
                 if sum(diceRoll) >= self.enemy_data[i]["Ld"]:
-                    print("Battle-shock test passed!")
+                    if self.playType == False:
+                        print("Battle-shock test passed!")
+                    else:
+                        sendToGUI("Battle-shock test passed!")
                     self.enemyOC[i] = self.enemy_data[i]["OC"]
                 else:
                     battleSh = True
-                    print("Battle-shock test failed")
+                    if self.playType == False:
+                        print("Battle-shock test failed")
+                    else:
+                        sendToGUI("Battle-shock test failed")
                     response = False
                     self.enemyOC[i] = 0
                     if self.enemyCP -1 >= 0:
-                        strat = input("Would you like to use the Insane Bravery Strategem? (y/n): ")
+                        if self.playType == False:
+                            strat = input("Would you like to use the Insane Bravery Strategem? (y/n): ")
+                        else:
+                            sendToGUI("Would you like to use the Insane Bravery Strategem for Unit {}? (y/n): ".format(playerName))
+                            strat = recieveGUI()
                         while response == False:
                             if strat.lower() == "y" or strat.lower() == "yes":
                                 response = True
@@ -687,13 +746,25 @@ class Warhammer40kEnv(gym.Env):
                                 info = self.get_info()
                                 return self.game_over, info
                             elif strat.lower() == "?" or strat.lower() == "help":
-                                print("The Insane Bravery Stratagem costs 1 Command Point and is used when a unit fails a Battle-Shock Test. If used it treats the unit as if it passed.")
-                                strat = input("Would you like to use the Insane Bravery Stratagem? (y/n): ")
-                            else: 
-                                strat = input("Valid answers are: y, yes, n, and no: ")
+                                if self.playType == False:
+                                    print("The Insane Bravery Stratagem costs 1 Command Point and is used when a unit fails a Battle-Shock Test. If used it treats the unit as if it passed.")
+                                    strat = input("Would you like to use the Insane Bravery Stratagem? (y/n): ")
+                                else:
+                                    sendToGUI("The Insane Bravery Stratagem costs 1 Command Point and is used when a unit fails a Battle-Shock Test. If used it treats the unit as if it passed.\nWould you like to use the Insane Bravery Stratagem? (y/n): ")
+                                    strat = recieveGUI()
+                            else:
+                                if self.playType == False:
+                                    strat = input("Valid answers are: y, yes, n, and no: ")
+                                else:
+                                    sendToGUI("Valid answers are: y, yes, n, and no: ")
+                                    strat = recieveGUI()
             if self.enemyCP - 2 >= 0 and self.enemyInAttack[i][0] == 0: 
                 response = False
-                strat = input("Would you like to use the Heroic Intervention Stratagem? (y/n): ")
+                if self.playType == False:
+                    strat = input("Would you like to use the Heroic Intervention Stratagem? (y/n): ")
+                else:
+                    sendToGUI("Would you like to use the Heroic Intervention Stratagem for Unit {}? (y/n): ".format(playerName))
+                    strat = recieveGUI()
                 while response == False:
                     if strat.lower() == "y" or strat.lower() == "yes":
                         response = True
@@ -711,7 +782,10 @@ class Warhammer40kEnv(gym.Env):
 
                                 self.unitInAttack[j][1] = i
                                 self.enemyCP -= 2
-                                print("Heroic Intervention Successfully used!")
+                                if self.playType == False:
+                                    print("Heroic Intervention Successfully used!")
+                                else:
+                                    sendToGUI("Heroic Intervention Successfully used!")
                                 break
                     elif strat.lower() == "n" or strat.lower() == "no":
                         response = True
@@ -720,30 +794,49 @@ class Warhammer40kEnv(gym.Env):
                         info = self.get_info
                         return self.game_over, info
                     elif strat.lower() == "?" or strat.lower() == "help":
-                        print("The Heroic Intervention strategem allows the player to choose an enemy unit within 6 inches and charge them")
-                        strat = input("Would you like to use the Heroic Intervention Stratagem? (y/n): ")
+                        if self.playType == False:
+                            print("The Heroic Intervention strategem allows the player to choose an enemy unit within 6 inches and charge them")
+                            strat = input("Would you like to use the Heroic Intervention Stratagem? (y/n): ")
+                        else:
+                            sendToGUI("The Heroic Intervention strategem allows the player to choose an enemy unit within 6 inches and charge them\nWould you like to use the Heroic Intervention Stratagem? (y/n): ")
+                            strat = recieveGUI()
                     else:
-                        strat = input("Valid answers are: y, yes, n, and no: ")
+                        if self.playType == False:
+                            strat = input("Valid answers are: y, yes, n, and no: ")
                 if self.enemyInAttack[i][0] != 1:
-                    print("Heroic Intervention failed")
+                    if self.playType == False:
+                        print("Heroic Intervention failed")
+                    else:
+                        sendToGUI("Heroic Intervention failed")
 
             if self.enemyInAttack[i][0] == 0 and self.enemy_health[i] > 0:
                 self.updateBoard()
                 self.showBoard()
-                print("Take a look at board.txt or click the Show Board button to view the current board")
-                print("If you would like to end the game type 'quit' into the prompt")
-                dire = input("Enter the direction of movement (up, down, left, right, none (no move)): ")
-                
+                if self.playType == False:
+                    print("Take a look at board.txt or click the Show Board button in the GUI to view the current board")
+                    print("If you would like to end the game type 'quit' into the prompt")
+                    dire = input("Enter the direction of movement (up, down, left, right, none (no move)): ")
+                else:
+                    sendToGUI("Take a look at board.txt or click the Show Board button in the GUI to view the current board\nIf you would like to end the game type 'quit' into the prompt\nEnter the direction of movement for Unit {} (up, down, left, right, none (no move)): ".format(playerName))
+                    dire = recieveGUI()
                 if dire.lower() == "quit":
                     self.game_over = True
                     info = self.get_info()
                     return self.game_over, info
                 if dire.lower() != "none":
-                    print("Rolling 1 D6...")
-                    roll = dice()
-                    print("You rolled a", roll)
+                    if self.playType == False:
+                        print("Rolling 1 D6...")
+                        roll = dice()
+                        print("You rolled a", roll)
+                    else:
+                        roll = dice()
+                        sendToGUI("Rolling 1 D6...\nYou rolled a {}".format(dice))
                     movement = roll+self.unit_data[i]["Movement"]
-                    move_len = input("What how many inches would you like to move your unit: ")
+                    if self.playType == False:
+                        move_len = input("What how many inches would you like to move your unit: ")
+                    else:
+                        sendToGUI("What how many inches would you like to move your unit: ")
+                        move_len = recieveGUI()
                     response = False
                     while response == False:
                         if is_num(move_len) == True:
@@ -751,13 +844,21 @@ class Warhammer40kEnv(gym.Env):
                                 move_num = int(move_len)
                                 response = True
                             else:
-                                move_len = input("Not in range, try again: ")
+                                if self.playType == False:
+                                    move_len = input("Not in range, try again: ")
+                                else:
+                                    sendToGUI("Not in range, try again: ")
+                                    move_len = recieveGUI()
                         elif move_len.lower() == "quit" or move_len.lower() == "q":
                             self.game_over = True
                             info = self.get_info()
                             return self.game_over, info
                         else:
-                            move_len = input("Not a number, try again: ")
+                            if self.playType == False:
+                                move_len = input("Not a number, try again: ")
+                            else:
+                                sendToGUI("Not a number, try again: ")
+                                move_len = recieveGUI()
                 response = False
                 while response == False:
                     
@@ -780,7 +881,11 @@ class Warhammer40kEnv(gym.Env):
                         info = self.get_info()
                         return self.game_over, info
                     else:
-                        dire = input("Not a valid response (up, down, left, right):")
+                        if self.playType == False:
+                            dire = input("Not a valid response (up, down, left, right):")
+                        else:
+                            sendToGUI("Not a valid response (up, down, left, right):")
+                            dire = recieveGUI()
                         response = False
                     
 
@@ -793,7 +898,11 @@ class Warhammer40kEnv(gym.Env):
                 
                 if self.enemyCP - 1 >= 0 and battleSh == False:
                     response = False
-                    strat = input("Would you like to use the Fire Overwatch Stratagem? (y/n): ")
+                    if self.playType == False:
+                        strat = input("Would you like to use the Fire Overwatch Stratagem? (y/n): ")
+                    else:
+                        sendToGUI("Would you like to use the Fire Overwatch Stratagem? (y/n): ")
+                        strat = recieveGUI()
                     while response == False:
                         if strat.lower() == "y" or strat.lower() == "yes":
                             response = True
@@ -802,28 +911,42 @@ class Warhammer40kEnv(gym.Env):
                         elif strat.lower() == "n" or strat.lower() == "no":
                             response = True
                         elif strat.lower() == "?" or strat.lower() == "help":
+                            if self.playType == False:
                                 print("The Fire Overwatch Stratagem costs 1 Command Point and if your unit and the opposing unit are 21 inches from each other during their Movement/Charge Phase then your unit can shoot that enemy unit as if it were your Shooting phase")
                                 strat = input("Would you like to use the Fire Overwatch Stratagem? (y/n): ")
+                            else:
+                                sendToGUI("The Fire Overwatch Stratagem costs 1 Command Point and if your unit and the opposing unit are 21 inches from each other during their Movement/Charge Phase then your unit can shoot that enemy unit as if it were your Shooting phase\nWould you like to use the Fire Overwatch Stratagem? (y/n): ")
+                                strat = recieveGUI()
                         elif strat.lower() == "quit":
                             self.game_over = True
                             info = self.get_info()
                             return self.game_over, info
-                        else: 
-                            strat = input("Valid answers are: y, yes, n, and no: ")
+                        else:
+                            if self.playType == False:
+                                strat = input("Valid answers are: y, yes, n, and no: ")
+                            else:
+                                sendToGUI("Valid answers are: y, yes, n, and no: ")
+                                strat = recieveGUI()
 
                 if self.modelStrat["overwatch"] != -1 and self.unit_weapon[self.modelStrat["overwatch"]] != "None":
                     if distance(self.enemy_coords[i], self.unit_coords[self.modelStrat["overwatch"]]) <= self.unit_weapon[self.modelStrat["overwatch"]]["Range"]:
                         dmg, modHealth = attack(self.unit_health[self.modelStrat["overwatch"]], self.unit_weapon[self.modelStrat["overwatch"]], self.unit_data[self.modelStrat["overwatch"]], self.enemy_health[i], self.enemy_data[i])
                         self.enemy_health[i] = modHealth
-                        print("Model unit", self.modelStrat["overwatch"]+21, "successfully hit player unit", i+11, "for", sum(dmg), "damage using the overwatch strategem")
+                        if self.playType == False:
+                            print("Model unit", self.modelStrat["overwatch"]+21, "successfully hit player unit", i+11, "for", sum(dmg), "damage using the overwatch strategem")
+                        else:
+                            sendToGUI("Model unit {} successfully hit player unit {} for {} damage using the overwatch stratagem".format(self.modelStrat["overwatch"]+21, i+11, sum(dmg)))
                         self.modelStrat["overwatch"] = -1
+
                 self.updateBoard()
                 self.showBoard()
-                print("Take a look at board.txt to view the updated board")
                 
                 # shooting phase (if eligible)
                 if self.enemy_weapon[i] != "None":
-                    print("Beginning shooting phase!")
+                    if self.playType == False:
+                        print("Beginning shooting phase!")
+                    else:
+                        sendToGUI("Beginning shooting phase!")
                     shootAble = np.array([])
                     for j in range(len(self.unit_health)):
                         if distance(self.enemy_coords[i], self.unit_coords[j]) <= self.enemy_weapon[i]["Range"] and self.unit_health[j] > 0 and self.unitInAttack[j][0] == 0:
@@ -833,32 +956,51 @@ class Warhammer40kEnv(gym.Env):
                     if len(shootAble) > 0 and self.enemy_weapon[i] != "None":
                         response = False
                         while response == False:
-                            shoot = input("Select which enemy unit you would like to shoot ({}): ".format(shootAble+21))
+                            if self.playType == False:
+                                shoot = input("Select which enemy unit you would like to shoot ({}): ".format(shootAble+21))
+                            else:
+                                sendToGUI("Select which enemy unit you would like to shoot ({}) with Unit {}: ".format(shootAble+21, playerName))
+                                shoot = recieveGUI()
                             if is_num(shoot) == True and int(shoot)-21 in shootAble:
                                 idOfE = int(shoot)-21
                                 if self.modelStrat["smokescreen"] != -1 and self.modelStrat["smokescreen"] == idOfE:
-                                    print("Model unit", self.modelStrat["smokescreen"]+21, "used the Smokescreen Strategem")
+                                    if self.playType == False:
+                                        print("Model unit", self.modelStrat["smokescreen"]+21, "used the Smokescreen Strategem")
+                                    else:
+                                        sendToGUI("Model unit {} used the Smokescreen Stratagem".format(self.modelStrat["smokescreen"]+21))
                                     self.modelStrat["smokescreen"] = -1
                                     effect = "benefit of cover"
                                 else:
                                     effect = None
                                 dmg, modHealth = attack(self.enemy_health[i], self.enemy_weapon[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE], effects = effect)
                                 self.unit_health[idOfE] = modHealth
-                                print("Player Unit",playerName,"shoots Model Unit",idOfE+21,sum(dmg),"times")
+                                if self.playType == False:
+                                    print("Player Unit",playerName,"shoots Model Unit",idOfE+21,sum(dmg),"times")
+                                else:
+                                    sendToGUI("Player Unit {} shoots Model Unit {} {} times".format(playerName, idOfE+21, sum(dmg)))
                                 response = True
                             elif shoot == "quit":
                                 self.game_over = True
                                 info = self.get_info()
                                 return self.game_over, info
                             else:
-                                print("Not an available unit")
+                                if self.playType == False:
+                                    print("Not an available unit")
+                                else:
+                                    sendToGUI("Not an available unit")
                     
                 else:
-                    print("No available units to attack")
+                    if self.playType == False:
+                        print("No available units to attack")
+                    else:
+                        sendToGUI("No available units to attack")
 
 
                 # Charge (if applicable)
-                print("Beginning Charge phase!")
+                if self.playType == False:
+                    print("Beginning Charge phase!")
+                else:
+                    sendToGUI("Beginning Charge phase!")
                 charg = np.array([])
                 for j in range(len(self.unit_health)):
                     if distance(self.unit_coords[j], self.enemy_coords[i]) <= 12 and self.unitInAttack[j][0] == 0 and self.unit_health[j] > 0:
@@ -867,15 +1009,29 @@ class Warhammer40kEnv(gym.Env):
                 if len(charg) > 0:
                     response = False
                     while response == False:
-                        attk = input("Select while enemy you would like to charge ({}): ".format(charg+21))
+                        if self.playType == False:
+                            attk = input("Select while enemy you would like to charge ({}): ".format(charg+21))
+                        else:
+                            sendToGUI("Select while enemy you would like to charge ({}) with Unit {}: ".format(charg+21, playerName))
+                            attk = recieveGUI()
+                            
                         if is_num(attk) == True and int(attk)-21 in charg:
                             response = True
                             j = int(attk)-21
-                            print("Rolling 2 D6...")
-                            roll = dice(num=2)
-                            print("You rolled a", roll[0], "and", roll[1])
+                            if self.playType == False:
+                                print("Rolling 2 D6...")
+                                roll = dice(num=2)
+                                print("You rolled a", roll[0], "and", roll[1])
+                            else:
+                                sendToGUI("Rolling 2 D6...")
+                                roll = dice(num=2)
+                                sendToGUI("You rolled a {} and {}".format(roll[0], roll[1]))
+                                
                             if distance(self.enemy_coords[i], self.unit_coords[j]) - sum(roll) <= 5:
-                                print("Player Unit", playerName, "Successfully charged Model Unit", j+21)
+                                if self.playType == False:
+                                    print("Player Unit", playerName, "Successfully charged Model Unit", j+21)
+                                else:
+                                    sendToGUI("Player Unit {} Successfully charged Model Unit {}".format(playerName, j+21))
                                 self.enemyInAttack[i][0] = 1
                                 self.enemyInAttack[i][1] = j
 
@@ -890,19 +1046,32 @@ class Warhammer40kEnv(gym.Env):
                                 self.unitInAttack[j][0] = 1
                                 self.unitInAttack[j][1] = i
                             else:
-                                print("Player Unit", playerName, "Failed to charge Model Unit", j+21)
+                                if self.playType == False:
+                                    print("Player Unit {} Failed to charge Model Unit {}".format(playerName, j+21))
+                                else:
+                                    sendToGUI("Player Unit {} Failed to charge Model Unit {}".format(playerName, j+21))
                         
                         elif attack == "quit":
                             self.game_over = True
                             info = self.get_info()
                             return self.game_over, info
                         else:
-                            print("Not an available unit")
+                            if self.playType == False:
+                                print("Not an available unit")
+                            else:
+                                sendToGUI("Not an available unit")
                 else:
-                    print("No available units to attack")
+                    if self.playType == False:
+                        print("No available units to attack")
+                    else:
+                        sendToGUI("No available units to attack")
                 if self.enemyCP - 1 >= 0 and battleSh == False:    
                     response = False
-                    strat = input("Would you like to use the Smokescreen Stratagem for this unit? (y/n): ")
+                    if self.playType == False:
+                        strat = input("Would you like to use the Smokescreen Stratagem for this unit? (y/n): ")
+                    else:
+                        sendToGUI("Would you like to use the Smokescreen Stratagem for this unit? (y/n): ")
+                        strat = recieveGUI()
                     while response == False:
                         if strat.lower() == "y" or strat.lower() == "yes":
                             self.enemyStrat["smokescreen"] = i 
@@ -910,10 +1079,18 @@ class Warhammer40kEnv(gym.Env):
                         elif strat.lower() == "n" or strat.lower() == "no":
                        	    response = True
                         elif strat.lower() == "?" or strat.lower() == "help":
-                            print("The Smokescreen Stratagem costs 1 Command Point and when used all models in the unit have the Benefit of Cover and the Stealth ability")
-                            strat = input("Would you like to use the Smokescreen Stratagem? (y/n): ")
+                            if self.playType == False:
+                                print("The Smokescreen Stratagem costs 1 Command Point and when used all models in the unit have the Benefit of Cover and the Stealth ability")
+                                strat = input("Would you like to use the Smokescreen Stratagem? (y/n): ")
+                            else:
+                                sendToGUI("The Smokescreen Stratagem costs 1 Command Point and when used all models in the unit have the Benefit of Cover and the Stealth ability\nWould you like to use the Smokescreen Stratagem? (y/n): ")
+                                strat = recieveGUI()
                         else:
-                            strat = input("It's a yes or no question dude")
+                            if self.playType == False:
+                                strat = input("It's a yes or no question dude")
+                            else:
+                                sendToGUI("It's a yes or no question dude")
+                                strat = recieveGUI()
             
                 for j in range(len(self.coordsOfOM)):
                     if distance(self.coordsOfOM[j], self.enemy_coords[i]) <= 5:
@@ -923,14 +1100,24 @@ class Warhammer40kEnv(gym.Env):
                 idOfE = self.enemyInAttack[i][1]
                 response = False
                 while response == False:
-                    fallB = input("Would you like to fallback? (y/n): ")
+                    if self.playType == False:
+                        fallB = input("Would you like Unit {} to fallback? (y/n): ".format(playerName))
+                    else:
+                        sendToGUI("Would you like Unit {} to fallback? (y/n): ".format(playerName))
+                        fallB = recieveGUI()
                     if fallB.lower() == "n" or fallB.lower() == "no":
                         response = True
-                        print("Player Unit", playerName, "Is attacking Model Unit", idOfE+21)
+                        if self.playType == False:
+                            print("Player Unit", playerName, "Is attacking Model Unit", idOfE+21)
+                        else:
+                            sendToGUI("Player Unit {} Is attacking Model Unit {}".format(playerName, idOfE+21))
                         dmg, modHealth = attack(self.enemy_health[i], self.enemy_melee[i], self.enemy_data[i], self.unit_health[idOfE], self.unit_data[idOfE], rangeOfComb="Melee")
                         self.unit_health[idOfE] = modHealth
                         if self.unit_health[idOfE] <= 0:
-                            print("Model Unit", idOfE+21, "has been killed")
+                            if self.playType == False:
+                                print("Model Unit", idOfE+21, "has been killed")
+                            else:
+                                sendToGUI("Model Unit {} has been killed".format(idOfE+21))
                             self.enemyInAttack[i][0] = 0
                             self.enemyInAttack[i][1] = 0
 
@@ -938,7 +1125,10 @@ class Warhammer40kEnv(gym.Env):
                             self.unitInAttack[idOfE][1] = 0
                     elif fallB.lower() == "y" or fallB.lower() == "yes":
                         response = True
-                        print("Player Unit", playerName,"fell back from Enemy unit", idOfE+21)
+                        if self.playType == False:
+                            print("Player Unit", playerName,"fell back from Enemy unit", idOfE+21)
+                        else:
+                            sendToGUI("Player Unit {} fell back from Enemy unit {}".format(playerName, idOfE+21))
                         
                         if battleSh == True:
                             diceRoll = dice()
@@ -956,10 +1146,17 @@ class Warhammer40kEnv(gym.Env):
                         info = self.get_info()
                         return self.game_over, info
                     else:
-                        print("It's a yes or no question dude")
+                        if self.playType == False:
+                            fallB = input("It's a yes or no question dude")
+                        else:
+                            sendToGUI("It's a yes or no question dude")
+                            fallB = recieveGUI()
             
             elif self.enemy_health[i] == 0:
-                print("Unit", playerName, "is dead")
+                if self.playType == False:
+                    print("Unit", playerName, "is dead")
+                else:
+                    sendToGUI("Unit {} is dead".format(playerName))
 
         if self.modelStrat["overwatch"] != -1:
             self.modelStrat["overwatch"] = -1
