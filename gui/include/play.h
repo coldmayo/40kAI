@@ -9,10 +9,16 @@
 
 using namespace Glib;
 using namespace Gtk;
+using namespace std;
 
 class Play : public Gtk::Window {
     public:
         Play();
+        void update();
+        void keepUpdating();
+        void backgroundUpdate();
+        void update_text_view();
+        bool file_exists(char * fileName);
     private:
         Fixed fixed;
         ScrolledWindow scrolledWindow;
@@ -26,6 +32,9 @@ class Play : public Gtk::Window {
   		RadioButton radioNo;
   		Entry numBox;
   		Label text;
+  		bool takeInput;
+  		std::string response;
+  		Dispatcher dispatcher;
 };
 
 #endif

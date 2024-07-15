@@ -455,6 +455,7 @@ Form :: Form() {
   textbox2.set_text("Play Against Model:");
   button2.signal_button_release_event().connect([&](GdkEventButton*) {
     if (playing == false) {
+      playInGUI = "False";
       runPlayAgainstModelInBackground();
     }
     return true;
@@ -491,7 +492,11 @@ Form :: Form() {
 
   playGUI.set_label("Play in GUI");
   playGUI.signal_button_release_event().connect([&](GdkEventButton* event) {
-	openPlayGUI();
+	if (playing == false) {
+		openPlayGUI();
+		playInGUI = "True";
+		runPlayAgainstModelInBackground();
+	}
 	return true;
   });
 
@@ -660,6 +665,11 @@ void Form :: playAgainstModel() {
     command.append("None");
   } else {
     command.append(path);
+  }
+  if (playInGUI == "True") {
+	command.append(" True");
+  } else {
+	command.append(" False");
   }
   playing = true;
   system("clear");

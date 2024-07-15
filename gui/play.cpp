@@ -4,11 +4,49 @@
 #include <stdlib.h>
 #include <string>
 #include <fstream>
+#include <thread>
 #include "include/play.h"
 
 using namespace Glib;
 using namespace Gtk;
 using namespace std;
+
+bool Play :: file_exists(char * fileName) {
+	ifstream infile(fileName);
+	return infile.good();
+}
+
+void Play :: update() {
+	if (file_exists("response.txt")) {
+		ifstream file("response.txt");
+		string line;
+		while(getline(file, line)) {
+			for (int i = 0; line.length() > i; i++) {
+				response += line[i];
+			}
+			response += "\n";
+		}
+		file.close();
+		dispatcher.emit();
+	}
+}
+
+void Play :: update_text_view() {
+	text.set_text(response);
+	system("rm response.txt");
+}
+
+void Play :: keepUpdating() {
+	while (true) {
+    	update();
+    	std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
+}
+
+void Play :: backgroundUpdate() {
+	std::thread t(&Play::keepUpdating, this);
+	t.detach();
+}
 
 Play :: Play() {
 	bar.set_show_close_button(true);
@@ -23,12 +61,7 @@ Play :: Play() {
 
 	enter.set_label("Enter");
 	enter.signal_button_release_event().connect([&](GdkEventButton*) {
-		system("touch response.txt");
-		system("truncate -s 0 response.txt");
-
-		fstream file;
-		file.open("response.txt", ios::out);
-		cout << file.is_open() << endl;
+		ofstream file("response.txt", ios::out | ios::trunc);
 		file << numBox.get_text();
 		file.close();
 
@@ -36,6 +69,8 @@ Play :: Play() {
 	});
 
 	text.set_text("When the game starts, text will appear here");
+	dispatcher.connect(sigc::mem_fun(*this, &Play::update_text_view));
+	backgroundUpdate();
 	innerWindow.add(text);
 	innerWindow.set_size_request(300,100);
 	

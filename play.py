@@ -22,24 +22,26 @@ if sys.argv[1] == "None":
     folders = os.listdir(savePath)
 
     envs = []
-    model = []
+    modelpth = []
 
     for i in folders:
-        fs = os.listdir(savePath+i+"/")
-        for j in fs:
-            if j[-len(".pickle"):] == ".pickle":
-                envs.append(savePath+i+"/"+j)
-            elif j[-len(".pth"):] == ".pth":
-                model.append(savePath+i+"/"+j)
+        
+        if os.path.isdir(savePath+i):
+            fs = os.listdir(savePath+i)
+            for j in fs:
+                if j[-len(".pickle"):] == ".pickle":
+                    envs.append(savePath+i+"/"+j)
+                elif j[-len(".pth"):] == ".pth":
+                    modelpth.append(savePath+i+"/"+j)
 
     envs.sort(key=lambda x: os.path.getmtime(x))
-    model.sort()
+    modelpth.sort()
 
-    checkpoint = torch.load(model[-1])
+    checkpoint = torch.load(modelpth[-1])
 
     print("Playing with environment saved here: ", envs[-1])
     with open(envs[-1], 'rb') as f:
-        env = pickle.load(f)
+        env, model, enemy = pickle.load(f)
 else: 
     print("Playing with model saved here: ", sys.argv[1])
     with open(sys.argv[1], 'rb') as f:
@@ -48,13 +50,17 @@ else:
     modelpth = f[:-len("pickle")]+"pth"
     checkpoint = torch.load(modelpth)
 
+playInGUI = False
+if sys.argv[2] == "True":
+    playInGUI = True
+
 deployType = ["Search and Destroy", "Hammer and Anvil", "Dawn of War"]
 deployChang = np.random.choice(deployType)
 print("Deployment Type: ", deployChang)
 for m in model:
     m.deployUnit(deployChang, "model")
 for e in enemy:
-    e.deployUnit(deployChang, "player", choose = True)
+    e.deployUnit(deployChang, "player", GUI=playInGUI, choose = True)
 
 state, info = env.reset(m=model, e=enemy)
 n_actions = [5,2,len(info["player health"]), len(info["player health"]), 5, len(info["model health"])]
@@ -76,7 +82,7 @@ target_net.eval()
 isdone = False
 i = 0
 
-env.reset(m=model, e=enemy, Type="big")
+env.reset(m=model, e=enemy, playType = playInGUI, Type="big")
 
 reward = 0
 

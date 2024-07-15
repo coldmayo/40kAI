@@ -27,6 +27,7 @@ class Warhammer40kEnv(gym.Env):
         # Initialize game state + board
         self.iter = 0
         self.restarts = 0
+        self.playType = False
         self.b_len = b_len
         self.b_hei = b_hei
         self.board = np.zeros((self.b_len,self.b_hei))
@@ -96,9 +97,11 @@ class Warhammer40kEnv(gym.Env):
     # small reset = used in training
     # big reset reset env completely for testing/validation
 
-    def reset(self, m, e, Type = "small"):
+    def reset(self, m, e, playType=False, Type = "small"):
         self.iter = 0
         self.trunc = False
+        self.playType=playType
+
         if Type == "small":
             self.restarts += 1
         elif Type == "big":

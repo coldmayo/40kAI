@@ -138,6 +138,7 @@ private:
   Button help;
   Button chooseMetrics;
   Button playGUI;
+  std::string playInGUI;
 };
 
 #endif

@@ -1,13 +1,16 @@
 import numpy as np 
+from gym_mod.engine.GUIinteract import *
+import time
 
 class Unit:
-    def __init__(self, data, weapon, melee = None, b_len=0, b_hei=0):
+    def __init__(self, data, weapon, melee = None, GUI=False, b_len=0, b_hei=0):
         self.unit_data = data
         self.unit_weapon = weapon
         self.unit_melee = melee
         self.b_len = b_len
         self.b_hei = b_hei
         self.unit_coords = np.array([0,0])
+        self.playInGUI = GUI
     def updateUnitData(self, dicto):
         self.unit_weapon.update(dicto)
     def updateWeapon(self, dicto):
@@ -15,11 +18,19 @@ class Unit:
     def updateMelee(self, dicto):
         self.unit_melee.update(dicto)
     def selectUnitPos(self, xmin, xmax, ymin, ymax):
-        coords = input("Enter the coordinates (example: 10,10): ")
+        if self.playInGUI == False:
+            coords = input("Enter the coordinates (example: 10,10): ")
+        else:
+            sendToGUI("Enter the coordinates (example: 10,10): ")
+            coords = recieveGUI()
         run = True
         while run:
             if coords[0].isnumeric() != True:
-                coords = input("Use the format: x,y: ")
+                if self.playInGUI == False:
+                    coords = input("Use the format: x,y: ")
+                else:
+                    sendToGUI("Use the format: x,y: ")
+                    coords = recieveGUI()
             else:
                 x = ""
                 y = ""
@@ -36,13 +47,23 @@ class Unit:
                     self.unit_coords[0] = int(x)
                     self.unit_coords[1] = int(y)
                 else:
-                    coords = input("Not in bounds, try again: ")
+                    if self.playInGUI == False:
+                        coords = input("Not in bounds, try again: ")
+                    else:
+                        sendToGUI("Not in bounds, try again:")
+                        coords = recieveGUI()
                         
-    def deployUnit(self, deployment, unitType, choose=False):
+    def deployUnit(self, deployment, unitType, GUI = False, choose=False):
+        self.playInGUI = GUI
         if choose == True:
             run = True
-            contChoose = input("Would you like to choose where to deploy this unit? (y/n): ")
+            if self.playInGUI == False:
+                contChoose = input("Would you like to choose where to deploy this unit? (y/n): ")
+            else:
+                sendToGUI("Would you like to choose where to deploy this unit? (y/n): ")
+                contChoose = recieveGUI()
             while run:
+                print(contChoose)
                 if contChoose.lower() == "y" or contChoose.lower() == "yes":
                     choose = True
                     run = False
@@ -50,7 +71,11 @@ class Unit:
                     choose = False
                     run = False
                 else:
-                    contChoose = input("Valid answers are: y, yes, n, and no: ")
+                    if self.playInGUI == False:
+                        contChoose = input("Valid answers are: y, yes, n, and no: ")
+                    else:
+                        sendToGUI("Valid answers are: y, yes, n, and no: ")
+                        contChoose = recieveGUI()
         
         if deployment == "Search and Destroy":
             if choose == False:
