@@ -215,10 +215,19 @@ int parseInput(char *comm) {
 			}
         }
         return running;
+    } else if (strcmp(comm, "update") == 0) {
+		system("cd .. ; git fetch origin ; git pull");   // most recent from main
+		printf("Reinstallation starting...\n");
+		system("cd .. ; cd gui/build ; cmake --build . --config Debug");
+		printf("GUI Updated\n");
+		system("cd .. ; source .venv/bin/activate ; cd gym_mod ; pip install .");
+        printf("Packages Installed!\n");
+        printf("Installing Unit and Weapon Data...\n");
+        system("cd .. ; cd data_collector/unit_data ; touch links.json ; ./scrape.sh");
+        printf("Data Installed!\n");
+        		
     } else if (strcmp(comm, "help") == 0) {
-
-        printf("Commands:\ninstall: Installs the 40kAI app\nuninstall: Uninstalls the 40kAI app (why would you do this)\nexit: leave the installation prompt\n");
-
+        printf("Commands:\ninstall: Installs the 40kAI app\nupdate: Updates the application\nuninstall: Uninstalls the 40kAI app (why would you do this)\nexit: leave the installation prompt\n");
     } else if (strcmp(comm, "exit") == 0 || strcmp(comm, "quit") == 0) {
         running = 1;
         return running;
@@ -233,7 +242,7 @@ int main() {
     int running = 0;
 
     showIcon();
-    printf("\nWelcome to the 40kAI Install\n");
+    printf("\nWelcome to the 40kAI Install Medium\n");
     printf("Use the 'help' command to see the available commands\n");
     while (running == 0) {
         printf("\n> ");

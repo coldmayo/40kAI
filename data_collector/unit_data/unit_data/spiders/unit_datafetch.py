@@ -260,7 +260,7 @@ class DataSpider(scrapy.Spider):
             equ.append(["slugga", "choppa"])
 
         # check lens
-        print(curr_url, len(names), len(numOfModels), len(weapons), len(equ), len(M))
+        #print(curr_url, len(names), len(numOfModels), len(weapons), len(equ), len(M))
 
         armies = ["Sisters_of_Battle", "Orks", "Custodes", "Tyranids", "Mechanicus", "Militarum", "Tau"]
 
