@@ -92,8 +92,9 @@ void PopUp :: backgroundUpdate(bool textMode) {
   }  
 }
 
-PopUp :: PopUp() {
+PopUp :: PopUp(bool textMode) {
 
+  system("cp img/boardINIT.png img/board.png");
   bar.set_show_close_button(true);
   set_titlebar(bar);
 
@@ -101,8 +102,11 @@ PopUp :: PopUp() {
   scrolledWindow.add(fixed);
   
   bar.set_title("Game Board");
-
-  backgroundUpdate(false);
+  if (textMode == false) {
+	backgroundUpdate(false);
+  } else {
+	backgroundUpdate(true);
+  } 
   
   fixed.add(contents);
   fixed.move(contents, 0, 0);
@@ -111,4 +115,9 @@ PopUp :: PopUp() {
 
   resize(800,500);
   show_all();
+}
+
+PopUp :: ~PopUp() {
+	std::cout << "closed" << std::endl;
+	system("cp img/boardINIT.png img/board.png");
 }

@@ -12,7 +12,8 @@ using namespace Gtk;
 
 class PopUp : public Gtk::Window {
   public : 
-    PopUp();
+    PopUp(bool textMode);
+    ~PopUp();
     std::string openFile(std::string board);
     bool isNum(char num);
     void update();

@@ -484,10 +484,17 @@ Form :: Form() {
     }
     return true;
   });
-  showBoard.set_label("Show Board");
+  
+  showBoard.set_label("Show Board (Ascii Mode)");
   showBoard.signal_button_release_event().connect([&](GdkEventButton* event) {
-    openPopUp();
+    openPopUp(true);
     return true;
+  });
+
+  showBoardImg.set_label("Show Board (Image Mode)");
+  showBoardImg.signal_button_release_event().connect([&](GdkEventButton* event) {
+	openPopUp(false);
+	return true;
   });
 
   playGUI.set_label("Play in GUI");
@@ -503,12 +510,14 @@ Form :: Form() {
   fixedTabPage4.add(textbox2);
   fixedTabPage4.add(button2);
   fixedTabPage4.add(showBoard);
+  fixedTabPage4.add(showBoardImg);
   fixedTabPage4.add(playGUI);
   fixedTabPage4.add(button5);
   fixedTabPage4.add(setModelFile);
   fixedTabPage4.move(textbox2, 10, 10);
   fixedTabPage4.move(playGUI, 130, 80);
   fixedTabPage4.move(showBoard, 220, 80);
+  fixedTabPage4.move(showBoardImg, 395, 80);  
   fixedTabPage4.move(button2, 10, 80);
   fixedTabPage4.move(button5, 10, 40);
   fixedTabPage4.move(setModelFile, 80, 40);
@@ -536,8 +545,8 @@ void Form :: changeMetrics(std::string path) {
 	update_metrics();
 }
 
-int Form :: openPopUp() {
-  boardShow = new PopUp;
+int Form :: openPopUp(bool textMode) {
+  boardShow = new PopUp(textMode);
   boardShow->show();
   return 0;
 }

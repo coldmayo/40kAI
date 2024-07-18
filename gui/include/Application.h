@@ -18,7 +18,7 @@ class Form : public Window {
 
 public : 
   Form();
-  int openPopUp();
+  int openPopUp(bool textMode);
   void update_picture();
   void update_metrics();
   void updateInits(std::string model, std::string enemy);
@@ -79,6 +79,7 @@ private:
   Button button5;
   Button button6;
   Button showBoard;
+  Button showBoardImg;
   Label textbox;
   Label textbox2;
   Label textbox1;
