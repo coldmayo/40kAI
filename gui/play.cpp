@@ -60,11 +60,11 @@ Play :: Play() {
 	numBox.set_text("Enter Response Here");
 
 	enter.set_label("Enter");
-	enter.signal_button_release_event().connect([&](GdkEventButton*) {
+	enter.signal_button_release_event().connect([&](GdkEventButton*) {	
 		ofstream file("response.txt", ios::out | ios::trunc);
 		file << numBox.get_text();
 		file.close();
-
+		numBox.set_text("");
 		return true;
 	});
 

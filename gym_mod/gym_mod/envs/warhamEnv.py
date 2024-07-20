@@ -698,8 +698,7 @@ class Warhammer40kEnv(gym.Env):
                     ans = recieveGUI()
 
         for i in range(len(self.enemy_health)):
-            self.updateBoard()
-            self.showBoard()
+            
             playerName = i+11
             if self.playType == False:
                 print("For unit", playerName)
@@ -785,9 +784,6 @@ class Warhammer40kEnv(gym.Env):
                                 self.unitInAttack[j][1] = i
                                 self.enemyCP -= 2
 
-                                self.updateBoard()
-                                self.showBoard()
-
                                 if self.playType == False:
                                     print("Heroic Intervention Successfully used!")
                                 else:
@@ -816,6 +812,12 @@ class Warhammer40kEnv(gym.Env):
                         sendToGUI("Heroic Intervention failed")
 
             if self.enemyInAttack[i][0] == 0 and self.enemy_health[i] > 0:
+
+                self.enemy_coords[i] = bounds(self.enemy_coords[i], self.b_len, self.b_hei)
+                for j in range(len(self.enemy_health)):
+                    if self.enemy_coords[i] == self.unit_coords[j]:
+                        self.enemy_coords[i][0] -= 1
+
                 self.updateBoard()
                 self.showBoard()
                 if self.playType == False:
@@ -841,7 +843,8 @@ class Warhammer40kEnv(gym.Env):
                     if self.playType == False:
                         move_len = input("What how many inches would you like to move your unit: ")
                     else:
-                        sendToGUI("What how many inches would you like to move your unit: ")
+                        inp = "How many inches would you like to move your unit (Max: " + str(movement) + "): "
+                        sendToGUI(inp)
                         move_len = recieveGUI()
                     response = False
                     while response == False:
@@ -1193,6 +1196,7 @@ class Warhammer40kEnv(gym.Env):
         return self.game_over, info
 
     def updateBoard(self):
+        self.render(mode = "test")
         self.board = np.zeros((self.b_len,self.b_hei))
 
         for i in range(len(self.unit_health)):
@@ -1210,13 +1214,14 @@ class Warhammer40kEnv(gym.Env):
         return self.board
 
     def render(self, mode='train'):
-        self.updateBoard()
         
         fig = plt.figure()
         ax = fig.add_subplot()
         fig.subplots_adjust(top=0.85)
-
-        title = "Turn "+str(self.iter)+" Lifetime "+str(self.restarts)
+        if mode == 'train':
+            title = "Turn "+str(self.iter)+" Lifetime "+str(self.restarts)
+        else:
+            title = "Turn "+str(self.iter) 
         fig.suptitle(title)
 
         health = "Model Unit health: {}, CP: {}; Enemy Unit health: {}, CP {}\nVP {}".format(self.unit_health, self.modelCP, self.enemy_health, self.enemyCP, [self.modelVP, self.enemyVP])
@@ -1226,31 +1231,31 @@ class Warhammer40kEnv(gym.Env):
         y1 = np.zeros(10)
         x2 = np.zeros(10)
         y2 = np.linspace(0, self.b_hei,10)
-        ax.set_xlim(-5,self.b_len*1.43333)
-        ax.set_ylim(-3,self.b_hei + 4)
-        ax.plot(x1,y1,color="black")
-        ax.plot(x2,y2,color="black")
-        ax.plot(x1,y1+self.b_hei,color="black")
-        ax.plot(x2+self.b_len,y2,color="black")
+        ax.set_ylim(-5,self.b_len+5)
+        ax.set_xlim(-3,self.b_hei*1.65)
+        ax.plot(y1,x1,color="black")
+        ax.plot(y2,x2,color="black")
+        ax.plot(y1+self.b_hei,x1,color="black")
+        ax.plot(y2,x2+self.b_len,color="black")
 
         for i in range(len(self.unit_health)):
             if i == 0:
-                ax.plot(self.unit_coords[i][0],self.unit_coords[i][1], 'bo', label="Model Unit")
+                ax.plot(self.unit_coords[i][1],self.unit_coords[i][0], 'bo', label="Model Unit")
             else:
-                ax.plot(self.unit_coords[i][0],self.unit_coords[i][1], 'bo')
-        for i in range(len(self.enemy_health)):
+                ax.plot(self.unit_coords[i][1],self.unit_coords[i][0], 'bo')
+        for i in range(len(self.enemy_coords)):
             if i == 0:
-                ax.plot(self.enemy_coords[i][0],self.enemy_coords[i][1], 'ro', label="Enemy Unit")
+                ax.plot(self.enemy_coords[i][1],self.enemy_coords[i][0], 'go', label="Player Unit")
             else:
-                ax.plot(self.enemy_coords[i][0],self.enemy_coords[i][1], 'ro')
+                ax.plot(self.enemy_coords[i][1],self.enemy_coords[i][0], 'go')
         
         for i in range(len(self.coordsOfOM)):
             if i == 0:
-                ax.plot(self.coordsOfOM[i][0], self.coordsOfOM[i][1], 'o', color="black", label="Objective Marker(s)")
+                ax.plot(self.coordsOfOM[i][1], self.coordsOfOM[i][0], 'o', color="black", label="Objective Marker(s)")
             elif i == self.relic and self.vicCond == 2:
-                ax.plot(self.coordsOfOM[i][0], self.coordsOfOM[i][1], 'o', color="gold", label="Relic") 
+                ax.plot(self.coordsOfOM[i][1], self.coordsOfOM[i][0], 'o', color="gold", label="Relic") 
             else:
-                ax.plot(self.coordsOfOM[i][0], self.coordsOfOM[i][1], 'o', color="black")
+                ax.plot(self.coordsOfOM[i][1], self.coordsOfOM[i][0], 'o', color="black")
 
         ax.legend(loc = "right")
         if mode == "train":
